@@ -1,8 +1,9 @@
 import { test, expect } from '@playwright/test';
+import { beginObservation } from './poe-helpers.js';
 test('마찰, 전하 보존, 전기력 비교, 초기화',async({page})=>{
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
- await page.goto('/simulations/friction-electricity/');
- await expect(page.locator('#note-title')).toContainText('아직은');
+ await page.goto('/simulations/friction-electricity/');await beginObservation(page);
+ await expect(page.locator('#note-title')).toContainText('문지르기 전');
  await page.locator('#rub-button').click();
  await expect(page.locator('#charge-cards')).toContainText('− 7');
  await expect(page.locator('#charge-cards')).toContainText('− 9');
@@ -14,55 +15,52 @@ test('마찰, 전하 보존, 전기력 비교, 초기화',async({page})=>{
  await expect(page.locator('.particles circle')).toHaveCount(0);
  await page.locator('#show-charges').check();
  await page.locator('#force-tab').click();await page.locator('#observe-button').click();
- await expect(page.locator('#note-title')).toContainText('인력');
+ await expect(page.locator('#note-title')).toContainText('움직임을 비교');
  await expect(page.locator('#observe-button')).toBeEnabled();
  await expect(page.locator('#fur')).toHaveAttribute('transform','translate(400 280)');
  await expect(page.locator('#balloon-object')).toHaveAttribute('transform','translate(470 230)');
  await page.locator('[data-pair="repel"]').click();await page.locator('#observe-button').click();
- await expect(page.locator('#note-title')).toContainText('척력');
+ await expect(page.locator('#note-title')).toContainText('움직임을 비교');
  await expect(page.locator('#fur')).toHaveAttribute('transform','translate(155 261)');
- await page.locator('[data-answer="nucleus"]').click();await expect(page.locator('#feedback')).toContainText('다시');
- await page.locator('[data-answer="electron"]').click();await expect(page.locator('#feedback')).toContainText('맞아요');
- for(const term of ['마찰 전기','대전','대전체','전기력','척력','인력'])await expect(page.locator('.term-buttons')).toContainText(term);
  await expect(page.locator('body')).not.toContainText('INTERACTIVE SCIENCE LAB');
  await expect(page.locator('body')).not.toContainText('수업 자료 및 모형 안내');
- await page.locator('#reset').click();await expect(page.locator('#note-title')).toContainText('아직은');
+ await page.locator('#reset').click();await expect(page.locator('#note-title')).toContainText('문지르기 전');
  expect(errors).toEqual([]);
 });
 test('마우스 마찰과 비접촉 이동',async({page})=>{
- await page.goto('/simulations/friction-electricity/');const svg=await page.locator('#scene').boundingBox();
+ await page.goto('/simulations/friction-electricity/');await beginObservation(page);const svg=await page.locator('#scene').boundingBox();
  const p=(x,y)=>({x:svg.x+x*svg.width/800,y:svg.y+y*svg.height/440});
  let a=p(590,145),b=p(570,125);await page.mouse.move(a.x,a.y);await page.mouse.down();await page.mouse.move(b.x,b.y,{steps:5});await page.mouse.up();
- await expect(page.locator('#note-title')).toContainText('아직은');
+ await expect(page.locator('#note-title')).toContainText('문지르기 전');
  a=p(570,125);b=p(450,245);await page.mouse.move(a.x,a.y);await page.mouse.down();await page.mouse.move(b.x,b.y,{steps:20});
  for(let i=0;i<3;i++){const c=p(i%2?450:390,245);await page.mouse.move(c.x,c.y,{steps:8});}await page.mouse.up();
- await expect(page.locator('#note-title')).toContainText('전자가');
+ await expect(page.locator('#note-title')).toContainText('풍선을 들어');
 });
 test('모바일 버튼 조작, 화면 넘침 없음',async({page})=>{
- await page.setViewportSize({width:390,height:844});await page.goto('/simulations/friction-electricity/');
- await page.locator('#rub-button').click();await expect(page.locator('#note-title')).toContainText('전자가');
+ await page.setViewportSize({width:390,height:844});await page.goto('/simulations/friction-electricity/');await beginObservation(page);
+ await page.locator('#rub-button').click();await expect(page.locator('#note-title')).toContainText('풍선을 들어');
  expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
  await page.screenshot({path:'/tmp/science-mobile.png',fullPage:true});
 });
-test('데스크톱 화면',async({page})=>{await page.setViewportSize({width:1440,height:1100});await page.goto('/simulations/friction-electricity/');await page.screenshot({path:'/tmp/science-desktop.png',fullPage:true});});
+test('데스크톱 화면',async({page})=>{await page.setViewportSize({width:1440,height:1100});await page.goto('/simulations/friction-electricity/');await beginObservation(page);await page.screenshot({path:'/tmp/science-desktop.png',fullPage:true});});
 test('키보드로 마찰',async({page})=>{
- await page.goto('/simulations/friction-electricity/');await page.locator('#balloon-object').focus();
+ await page.goto('/simulations/friction-electricity/');await beginObservation(page);await page.locator('#balloon-object').focus();
  for(let i=0;i<5;i++)await page.keyboard.press('ArrowDown');
  for(let i=0;i<9;i++)await page.keyboard.press('ArrowLeft');
- await expect(page.locator('#note-title')).toContainText('전자가');
+ await expect(page.locator('#note-title')).toContainText('풍선을 들어');
 });
 test('터치로 물체를 이동하여 마찰',async({browser})=>{
- const context=await browser.newContext({viewport:{width:390,height:844},hasTouch:true,isMobile:true});const page=await context.newPage();await page.goto('http://127.0.0.1:5173/simulations/friction-electricity/');
+ const context=await browser.newContext({viewport:{width:390,height:844},hasTouch:true,isMobile:true});const page=await context.newPage();await page.goto('http://127.0.0.1:5173/simulations/friction-electricity/');await beginObservation(page);
  const client=await context.newCDPSession(page);
  const coords=await page.locator('#scene').evaluate(el=>{const m=el.getScreenCTM();return Array.from({length:21},(_,i)=>{const p=new DOMPoint(590-i*10,145+i*5).matrixTransform(m);return {x:p.x,y:p.y};});});
  await client.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[coords[0]]});
  for(const p of coords.slice(1))await client.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[p]});
  await client.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
- await expect(page.locator('#note-title')).toContainText('전자가');await context.close();
+ await expect(page.locator('#note-title')).toContainText('풍선을 들어');await context.close();
 });
 
 test('사실적인 이미지, 마찰 후 들어 올리면 털이 끌림, 초기화', async({page})=>{
- await page.goto('/simulations/friction-electricity/');
+ await page.goto('/simulations/friction-electricity/');await beginObservation(page);
  await expect(page.locator('#lift-button')).toBeDisabled();
  await expect(page.locator('#fur .fur-backing image')).toHaveAttribute('href', /balloon-fur.png/);
  const response=await page.request.get('/images/balloon-fur.png');expect(response.ok()).toBe(true);
@@ -88,7 +86,7 @@ test('사실적인 이미지, 마찰 후 들어 올리면 털이 끌림, 초기�
  await expect(page.locator('#fur')).toHaveAttribute('transform','translate(400 280)');
 });
 test('직접 풍선을 위로 드래그해도 털이 끌리고 전자는 추가 이동하지 않음',async({page})=>{
- await page.goto('/simulations/friction-electricity/');await page.locator('#show-charges').check();await page.locator('#rub-button').click();
+ await page.goto('/simulations/friction-electricity/');await beginObservation(page);await page.locator('#show-charges').check();await page.locator('#rub-button').click();
  await expect(page.locator('#lift-button')).toBeEnabled();
  const before=await page.locator('#charge-cards').innerText();
  const points=await page.locator('#scene').evaluate(el=>{const m=el.getScreenCTM();return [new DOMPoint(367,235),new DOMPoint(367,115)].map(p=>{const q=p.matrixTransform(m);return {x:q.x,y:q.y};});});
@@ -97,7 +95,7 @@ test('직접 풍선을 위로 드래그해도 털이 끌리고 전자는 추가 
 });
 
 test('전하와 이동 중 전자가 이미지 내부에 있고 전체 전하 수 보존',async({page})=>{
- await page.goto('/simulations/friction-electricity/');await page.locator('#show-charges').check();
+ await page.goto('/simulations/friction-electricity/');await beginObservation(page);await page.locator('#show-charges').check();
  const inspect=()=>page.evaluate(async()=>{
   const {insideBody,chargeRadius}=await import('/src/model.js');
   const failures=[];
@@ -138,7 +136,7 @@ test('전하와 이동 중 전자가 이미지 내부에 있고 전체 전하 �
 });
 
 test('힘 관찰은 중간 위치를 거쳐 움직이고 재실행 및 초기화 가능',async({page})=>{
- await page.goto('/simulations/friction-electricity/');await page.locator('#force-tab').click();
+ await page.goto('/simulations/friction-electricity/');await beginObservation(page);await page.locator('#force-tab').click();
  const read=()=>page.locator('#balloon-object').getAttribute('transform');
  await page.locator('#observe-button').click();await page.waitForTimeout(450);
  const middle=(await read()).match(/[-\d.]+/g).map(Number);
@@ -154,14 +152,14 @@ test('힘 관찰은 중간 위치를 거쳐 움직이고 재실행 및 초기화
 });
 
 test('동작 줄이기 설정에서도 대전과 털끝 관찰 가능',async({page})=>{
- await page.emulateMedia({reducedMotion:'reduce'});await page.goto('/simulations/friction-electricity/');
+ await page.emulateMedia({reducedMotion:'reduce'});await page.goto('/simulations/friction-electricity/');await beginObservation(page);
  await page.locator('#rub-button').click();await expect(page.locator('#lift-button')).toBeEnabled();
  await page.locator('#lift-button').click();await expect(page.locator('#note-title')).toContainText('털끝');
  await expect(page.locator('#fur')).toHaveAttribute('transform','translate(400 280)');
 });
 
 test('교과서 색·크기와 실시간 내부 이동, 숨김 전환과 초기화',async({page})=>{
- await page.goto('/simulations/friction-electricity/');await page.locator('#show-charges').check();
+ await page.goto('/simulations/friction-electricity/');await beginObservation(page);await page.locator('#show-charges').check();
  const plus=page.locator('#balloon-object [data-id="p0"]');
  const minus=page.locator('#balloon-object [data-id="n0"]');
  await expect(plus.locator('circle')).toHaveAttribute('fill','#e84444');
@@ -187,7 +185,7 @@ test('교과서 색·크기와 실시간 내부 이동, 숨김 전환과 초기�
 });
 
 test('털은 중앙 아래에 고정되고 마우스 클릭 테두리는 생기지 않음',async({page})=>{
- await page.goto('/simulations/friction-electricity/');
+ await page.goto('/simulations/friction-electricity/');await beginObservation(page);
  const transform='translate(400 280)';
  await expect(page.locator('#fur')).toHaveAttribute('transform',transform);
  await expect(page.locator('#fur')).not.toHaveAttribute('tabindex','0');
@@ -209,7 +207,7 @@ test('털은 중앙 아래에 고정되고 마우스 클릭 테두리는 생기�
 });
 
 test('기호가 입자 안을 크게 채우며 더 큰 양전하도 이미지 안에 표시됨',async({page})=>{
- await page.goto('/simulations/friction-electricity/');await page.locator('#show-charges').check();
+ await page.goto('/simulations/friction-electricity/');await beginObservation(page);await page.locator('#show-charges').check();
  const geometry=await page.locator('.charge').evaluateAll(nodes=>nodes.map(n=>{
   const radius=Number(n.querySelector('circle').getAttribute('r'));
   const sign=n.querySelector('.charge-sign'),box=sign.getBBox();

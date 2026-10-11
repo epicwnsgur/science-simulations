@@ -1,4 +1,7 @@
 import './style.css';
+import './poe.css';
+import { setupPOE } from './src/poe.js';
+let poe;
 import { charges, LIMIT, rubbingDistance, interaction, attractionOffset, chargeLayout, baseSites, nextTransfer, contactPoint, smooth, settle, chargeRadius, stepBoundCharge } from './src/model.js';
 const $ = (s) => document.querySelector(s);
 let mode = 'rub', count = 0, distance = 0, pair = 'attract', observed = false, show = false;
@@ -112,6 +115,7 @@ function animateTo(target,duration,complete=()=>{},curve=smooth) {
   motion={from:structuredClone(pos),to:target,start:performance.now(),duration:reducedMotion.matches?1:duration,complete,curve};
 }
 function follow(now) {
+  if(poe && poe.stage!=='observe'){lastFrame=now;requestAnimationFrame(follow);return;}
   const dt=Math.min(.05,(now-(lastFrame||now))/1000);lastFrame=now;
   if(motion) {
     const active=motion,t=Math.min(1,(now-active.start)/active.duration),f=active.curve(t);
@@ -130,6 +134,7 @@ function follow(now) {
   }
   updateChargeMotion(dt);paintCharges(now);
   if(mode==='force'&&observed) drawForces();
+  poe?.update({count,flight,motion,attracted,mode,show});
   requestAnimationFrame(follow);
 }
 function render() {
@@ -144,6 +149,7 @@ function render() {
  $('#stage-state').textContent=mode==='rub'?(count?'마찰 후 · 두 물체가 대전됨':'마찰 전 · 전기를 띠지 않음'):'전기력 · '+(pair==='attract'?'다른 종류의 전하':'같은 종류의 전하');
  if(mode==='rub') {$('#guide').textContent=count?'이제 풍선을 털 가까이에서 들어 올려 보세요.':'풍선을 털 위로 가져와 문질러 보세요.';$('#subguide').textContent=count?'털이 어떻게 움직이나요? 풍선을 멀리 옮겨 비교해 보세요.':'풍선을 잡고 아래쪽 털에 대고 좌우로 문질러 보세요.';$('#note-title').textContent=attracted?'가까운 털끝이 풍선 쪽으로 휘어요':count?'전자가 털에서 풍선으로 이동해요':'아직은 전기를 띠지 않아요';$('#note-text').textContent=attracted?'풍선 가까이에 있는 털끝이 인력을 받아 휘어요. 털의 밑부분은 제자리에 있어요.':count?'전자를 잃은 털은 (+)전하로, 전자를 얻은 풍선은 (−)전하로 대전돼요. 이렇게 전기를 띤 물체를 대전체라고 해요.':'털과 풍선 모두 (+)전하량과 (−)전하량이 같아요. 먼저 두 물체를 문질러 볼까요?';$('#discovery').textContent=count?'원자핵은 다른 물체로 이동하지 않아요. 전자를 얻은 만큼 다른 물체는 전자를 잃어요.':'전기를 띠지 않아도 두 종류의 전하는 있어요.';}
  else {$('#note-title').textContent=observed?(pair==='attract'?'서로 끌어당기는 힘, 인력':'서로 밀어내는 힘, 척력'):'놓으면 어떻게 움직일까요?';$('#note-text').textContent=observed?(pair==='attract'?'풍선은 털 쪽으로 다가가고, 가까운 털끝은 풍선 쪽으로 휘어요. 털의 밑부분은 바닥에 놓여 있어요.':'같은 종류의 전하를 띤 두 풍선 사이에는 서로 밀어내는 척력이 작용해요.'):'두 물체는 이미 대전되어 있어요. 관찰 버튼을 누르면 두 물체 사이에 작용하는 전기력의 방향을 볼 수 있어요.';$('#discovery').textContent='대전되어도 (+)전하와 (−)전하는 모두 남아 있어요.';}
+ poe?.update({count,flight,motion,attracted,mode,show},true);
 }
 function transfer() {
   if(count>=LIMIT||flight)return;
@@ -153,7 +159,7 @@ function transfer() {
   const source=chargeStates.get(`fur:n${record.donor}`)||donor;
   transfers.push(record);count=transfers.length;
   flight={record,source:{x:source.x,y:source.y},start:performance.now(),duration:reducedMotion.matches?1:650};
-  render();$('#stage-hint').textContent='맞닿은 곳에서 전자가 털 → 풍선으로 이동해요';
+  render();$('#stage-hint').textContent='풍선을 살짝 들어 올려 변화를 관찰해 보세요';
 }
 function setMode(next) {
   chargeStates.clear();
@@ -206,6 +212,10 @@ $('#observe-button').onclick=()=>{
 };
 document.querySelectorAll('[data-answer]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-answer]').forEach(v=>v.classList.toggle('chosen',v===b));$('#feedback').textContent=b.dataset.answer==='electron'?'맞아요! 털에서 풍선으로 일부 전자가 이동해요.':'다시 생각해 볼까요? 원자핵은 다른 물체로 이동하지 않아요. 이동하는 (−)전하 표시를 관찰해 보세요.';});
 document.querySelectorAll('[data-term]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-term]').forEach(v=>v.classList.toggle('active',v===b));const [t,d]=terms[+b.dataset.term];$('#term-definition').innerHTML=`<strong>${t}</strong> ${d}`;});
+poe=setupPOE({spriteUrl,
+ onStageChange:()=>{motion=null;drag=null;$('#observe-button').disabled=false;render();},
+ onRestart:()=>{show=false;$('#show-charges').checked=false;$('#reset').click();$('[data-term="0"]').click();}
+});
 render();
 
 requestAnimationFrame(follow);

@@ -1,0 +1,74 @@
+import { test, expect } from '@playwright/test';
+import { beginObservation } from './poe-helpers.js';
+const url='/simulations/friction-electricity/';
+
+test('예상 화면은 실험과 정답을 숨기고 선택과 이유를 먼저 받음',async({page})=>{
+ await page.goto(url);
+ await expect(page.locator('#predict-panel')).toBeVisible();
+ await expect(page.locator('#scene')).not.toBeVisible();
+ await expect(page.locator('.vocabulary')).not.toBeVisible();
+ await expect(page.locator('#concept-review')).not.toBeVisible();
+ await page.locator('#start-observation').click();
+ await expect(page.locator('#predict-panel')).toBeVisible();
+ await page.locator('input[name="prediction"][value="2"]').check();
+ await page.locator('#prediction-reason').fill('   ');await page.locator('#start-observation').click();
+ await expect(page.locator('#predict-panel')).toBeVisible();
+ await page.locator('#prediction-reason').fill('<b>변화가 없을 것 같아요.</b>');
+ await page.locator('#start-observation').click();
+ await expect(page.locator('#observe-panel')).toBeVisible();
+ await expect(page.locator('#show-charges')).not.toBeChecked();
+ await expect(page.locator('#to-explanation')).toBeDisabled();
+ await expect(page.locator('.mission')).not.toBeVisible();
+ await expect(page.locator('#discovery')).not.toBeVisible();
+ await page.locator('#back-predict').click();
+ await expect(page.locator('#prediction-reason')).toHaveValue('<b>변화가 없을 것 같아요.</b>');
+ await expect(page.locator('#prediction-reason')).toHaveAttribute('readonly','');
+ await page.locator('#start-observation').click();
+ await page.locator('.prediction-reminder summary').click();
+ await expect(page.locator('.prediction-reminder [data-reason]')).toHaveText('<b>변화가 없을 것 같아요.</b>');
+ await expect(page.locator('.prediction-reminder b')).toHaveCount(0);
+});
+
+test('예상→실제 조작→기록→자기 설명→개념 확인과 전체 재시작',async({page})=>{
+ const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ await page.emulateMedia({reducedMotion:'reduce'});await page.goto(url);await beginObservation(page);
+ await page.locator('#show-charges').check();
+ await page.locator('#rub-button').click();await expect(page.locator('#lift-button')).toBeEnabled();
+ await expect(page.locator('#to-explanation')).toBeDisabled();
+ await page.locator('#lift-button').click();await expect(page.locator('#to-explanation')).toBeEnabled();
+ await page.locator('#to-explanation').click();await expect(page.locator('#observe-panel')).toBeVisible();
+ const observation='풍선을 들어 올렸더니 가까운 털끝이 따라 움직였어요.';
+ await page.locator('#observation-record').fill(observation);await page.locator('#to-explanation').click();
+ await expect(page.locator('#explain-panel')).toBeVisible();
+ await expect(page.locator('#saved-observation')).toHaveText(observation);
+ await expect(page.locator('#concept-review')).not.toBeVisible();
+ await page.locator('#reveal-concepts').click();await expect(page.locator('#concept-review')).not.toBeVisible();
+ await page.locator('#explanation-record').fill('전자가 이동해서 서로 끌어당기게 된 것 같아요.');
+ await page.locator('#return-observation').click();
+ await expect(page.locator('#observation-record')).toHaveValue(observation);
+ await page.locator('#reset').click();await expect(page.locator('#observation-record')).toHaveValue(observation);
+ await page.locator('#to-explanation').click();
+ await expect(page.locator('#explanation-record')).toHaveValue('전자가 이동해서 서로 끌어당기게 된 것 같아요.');
+ await page.locator('#reveal-concepts').click();await expect(page.locator('#concept-review')).toBeVisible();
+ for(const term of ['마찰 전기','대전','대전체','전기력','척력','인력'])await expect(page.locator('.term-buttons')).toContainText(term);
+ await page.locator('[data-answer="nucleus"]').click();await expect(page.locator('#feedback')).toContainText('다시');
+ await page.locator('[data-answer="electron"]').click();await expect(page.locator('#feedback')).toContainText('맞아요');
+ await page.locator('#compare-forces').click();await expect(page.locator('#force-tab')).toHaveAttribute('aria-selected','true');
+ await page.locator('#to-explanation').click();await page.locator('#restart-poe').click();
+ await expect(page.locator('#predict-panel')).toBeVisible();
+ await expect(page.locator('#prediction-reason')).toHaveValue('');
+ await expect(page.locator('input[name="prediction"]:checked')).toHaveCount(0);
+ await beginObservation(page);await expect(page.locator('#to-explanation')).toBeDisabled();
+ await expect(page.locator('#observation-record')).toHaveValue('');
+ await expect(page.locator('#show-charges')).not.toBeChecked();
+ expect(errors).toEqual([]);
+});
+
+for(const width of [390,1440])test(`POE 모든 단계 화면 ${width}`,async({page})=>{
+ await page.setViewportSize({width,height:1000});await page.emulateMedia({reducedMotion:'reduce'});await page.goto(url);
+ const capture=async name=>{expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);await page.screenshot({path:`/tmp/poe-${name}-${width}.png`,fullPage:true});};
+ await capture('predict');await beginObservation(page);await capture('observe');
+ await page.locator('#rub-button').click();await expect(page.locator('#lift-button')).toBeEnabled();await page.locator('#lift-button').click();await expect(page.locator('#to-explanation')).toBeEnabled();
+ await page.locator('#observation-record').fill('털끝이 풍선을 따라 움직였어요.');await page.locator('#to-explanation').click();await capture('explain');
+ await page.locator('#explanation-record').fill('풍선과 털 사이에 끌어당기는 힘이 생겼어요.');await page.locator('#reveal-concepts').click();await capture('concepts');
+});
