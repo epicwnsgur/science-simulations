@@ -8,7 +8,7 @@ export function interaction(a, b) {
   if (!a || !b) return 'unmodeled';
   return a * b > 0 ? 'repel' : 'attract';
 }
-// Conservative areas inside the opaque silhouettes. Markers have radius 6.
+// Conservative areas inside the opaque silhouettes. Marker radii are defined by chargeRadius.
 export function insideBody(kind, p, margin = 0) {
   if (kind === 'fur') return Math.abs(p.x) <= 98 - margin && Math.abs(p.y) <= 60 - margin;
   return (p.x / (64 - margin)) ** 2 + ((p.y + 28) / (78 - margin)) ** 2 <= 1;
@@ -21,11 +21,11 @@ export function baseSites(kind) {
 export function chargeLayout(kind, transfers = [], prepared = false) {
   const records = prepared ? [0,1,2].map(i=>({ donor: [3,7,2][i], side: -1, slot:i })) : transfers;
   const out = baseSites(kind).flatMap((p,i) => [
-    { id:`p${i}`, sign:1, x:p.x-7, y:p.y },
-    ...((kind === 'fur' && records.some(t=>t.donor===i)) ? [] : [{id:`n${i}`,sign:-1,x:p.x+7,y:p.y}])
+    { id:`p${i}`, sign:1, x:p.x-9, y:p.y },
+    ...((kind === 'fur' && records.some(t=>t.donor===i)) ? [] : [{id:`n${i}`,sign:-1,x:p.x+9,y:p.y}])
   ]);
   if (kind === 'balloon') for (let i=0;i<records.length;i++) {
-    const t=records[i];out.push({id:`extra${i}`,sign:-1,x:t.side*43,y:-57+t.slot*21});
+    const t=records[i];out.push({id:`extra${i}`,sign:-1,x:t.side*48,y:-57+t.slot*21});
   }
   return out;
 }
@@ -45,7 +45,7 @@ export function rubbingDistance(a,b,distance) { return contactPoint(a,b) ? dista
 export function nextTransfer(balloon,fur,records) {
   const contact=contactPoint(balloon,fur);
   if(!contact || records.length>=LIMIT) return null;
-  const donors=baseSites('fur').map((p,i)=>({id:i,x:p.x+7,y:p.y}))
+  const donors=baseSites('fur').map((p,i)=>({id:i,x:p.x+9,y:p.y}))
     .filter(p=>!records.some(t=>t.donor===p.id))
     .sort((a,b)=>Math.hypot(fur.x+a.x-contact.x,fur.y+a.y-contact.y)-Math.hypot(fur.x+b.x-contact.x,fur.y+b.y-contact.y));
   const side=contact.x<balloon.x?-1:1;
@@ -62,3 +62,47 @@ export function attractionOffset(balloon, fur, transferred) {
 export const smooth = t => {t=Math.max(0,Math.min(1,t));return t*t*t*(t*(t*6-15)+10);};
 // Damped approach to rest: zero initial speed, continuous acceleration/deceleration.
 export const settle = t => t>=1 ? 1 : (1-(1+8*t)*Math.exp(-8*t))/(1-9*Math.exp(-8));
+
+export const chargeRadius = sign => sign > 0 ? 7 : 5.2;
+
+// Bound-charge response, in visual units (not SI or a quantum electron trajectory).
+// External Coulomb-force direction + local restoring force + damping.
+// An insulating material keeps charges near their material sites; no free-charge gas.
+export function stepBoundCharge(state, site, kind, origin, source, sourceCharge, dt, instant = false) {
+  const next = state ? {...state} : {x:site.x,y:site.y,vx:0,vy:0};
+  const stiffness = site.sign > 0 ? 520 : 85;
+  const damping = 2 * Math.sqrt(stiffness) * .9;
+  const limit = site.sign > 0 ? .7 : 3.4;
+  const margin = chargeRadius(site.sign) + .6;
+  const constrain = () => {
+    let dx=next.x-site.x,dy=next.y-site.y;
+    const length=Math.hypot(dx,dy);
+    if(length>limit){dx*=limit/length;dy*=limit/length;next.vx=0;next.vy=0;}
+    // The inset silhouette is convex and contains each original site.
+    if(!insideBody(kind,{x:site.x+dx,y:site.y+dy},margin)) {
+      let low=0,high=1;
+      for(let i=0;i<18;i++){
+        const mid=(low+high)/2;
+        if(insideBody(kind,{x:site.x+dx*mid,y:site.y+dy*mid},margin))low=mid;else high=mid;
+      }
+      dx*=low;dy*=low;next.vx=0;next.vy=0;
+    }
+    next.x=site.x+dx;next.y=site.y+dy;
+  };
+  const force = () => {
+    const dx=origin.x+next.x-source.x,dy=origin.y+next.y-source.y;
+    // Softening represents a finite object rather than a singular point charge.
+    const factor=site.sign*sourceCharge*2800000/Math.pow(dx*dx+dy*dy+4000,1.5);
+    return {x:dx*factor,y:dy*factor};
+  };
+  if(instant){const f=force();next.x=site.x+f.x/stiffness;next.y=site.y+f.y/stiffness;next.vx=0;next.vy=0;constrain();return next;}
+  const elapsed=Math.max(0,Math.min(.05,dt));
+  const steps=Math.max(1,Math.ceil(elapsed/(1/240))),h=elapsed/steps;
+  for(let i=0;i<steps;i++){
+    const f=force();
+    next.vx+=(f.x-stiffness*(next.x-site.x)-damping*next.vx)*h;
+    next.vy+=(f.y-stiffness*(next.y-site.y)-damping*next.vy)*h;
+    next.x+=next.vx*h;next.y+=next.vy*h;constrain();
+  }
+  return next;
+}

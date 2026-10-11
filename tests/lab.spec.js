@@ -98,13 +98,13 @@ test('직접 풍선을 위로 드래그해도 털이 끌리고 전자는 추가 
 test('전하와 이동 중 전자가 이미지 내부에 있고 전체 전하 수 보존',async({page})=>{
  await page.goto('/');await page.locator('#show-charges').check();
  const inspect=()=>page.evaluate(async()=>{
-  const {insideBody}=await import('/src/model.js');
+  const {insideBody,chargeRadius}=await import('/src/model.js');
   const failures=[];
   for(const group of document.querySelectorAll('#fur, #balloon-object')) {
    const kind=group.dataset.shape;
    for(const node of group.querySelectorAll('.charge')){
     const [x,y]=node.getAttribute('transform').match(/[-\d.]+/g).map(Number);
-    if(!insideBody(kind,{x,y},6))failures.push({kind,x,y});
+    if(!insideBody(kind,{x,y},chargeRadius(Number(node.dataset.sign))))failures.push({kind,x,y});
    }
   }
   return {failures,total:document.querySelectorAll('.charge').length};
@@ -125,7 +125,8 @@ test('전하와 이동 중 전자가 이미지 내부에 있고 전체 전하 �
   for(const group of document.querySelectorAll('#fur, #balloon-object')) for(const node of group.querySelectorAll('.charge')){
    const [x,y]=node.getAttribute('transform').match(/[-\d.]+/g).map(Number);
    for(let i=0;i<12;i++){
-    const px=x+6*Math.cos(i*Math.PI/6),py=y+6*Math.sin(i*Math.PI/6);
+    const radius=Number(node.querySelector('circle').getAttribute('r'));
+    const px=x+radius*Math.cos(i*Math.PI/6),py=y+radius*Math.sin(i*Math.PI/6);
     const sx=group.dataset.shape==='fur'?730+(px+125)*806/250:(px+88)*710/176;
     const sy=group.dataset.shape==='fur'?205+(py+85)*650/185:(py+130)*1024/240;
     if(ctx.getImageData(Math.round(sx),Math.round(sy),1,1).data[3]<200)out.push({x,y});
@@ -156,4 +157,30 @@ test('동작 줄이기 설정에서도 대전과 털끝 관찰 가능',async({pa
  await page.locator('#rub-button').click();await expect(page.locator('#lift-button')).toBeEnabled();
  await page.locator('#lift-button').click();await expect(page.locator('#note-title')).toContainText('털끝');
  await expect(page.locator('#fur')).toHaveAttribute('transform','translate(215 245)');
+});
+
+test('교과서 색·크기와 실시간 내부 이동, 숨김 전환과 초기화',async({page})=>{
+ await page.goto('/');await page.locator('#show-charges').check();
+ const plus=page.locator('#balloon-object [data-id="p0"]');
+ const minus=page.locator('#balloon-object [data-id="n0"]');
+ await expect(plus.locator('circle')).toHaveAttribute('fill','#e84444');
+ await expect(minus.locator('circle')).toHaveAttribute('fill','#2787d9');
+ await expect(plus.locator('text')).toHaveAttribute('fill','#fff');
+ await expect(minus.locator('text')).toHaveAttribute('fill','#fff');
+ expect(Number(await plus.locator('circle').getAttribute('r'))).toBeGreaterThan(Number(await minus.locator('circle').getAttribute('r')));
+ const start=await minus.getAttribute('transform');
+ await page.locator('#rub-button').click();await expect(page.locator('#lift-button')).toBeEnabled();
+ await page.waitForTimeout(400);
+ const charged=await minus.getAttribute('transform');expect(charged).not.toBe(start);
+ const numbers=(s)=>s.match(/[-\d.]+/g).map(Number);
+ const before=numbers(charged);
+ // Move the balloon itself; local particle transforms must also respond.
+ await page.locator('#balloon-object').focus();for(let i=0;i<15;i++)await page.keyboard.press('ArrowRight');
+ await page.waitForTimeout(600);
+ const after=numbers(await minus.getAttribute('transform'));
+ expect(Math.hypot(after[0]-before[0],after[1]-before[1])).toBeGreaterThan(.2);
+ await page.locator('#show-charges').uncheck();await expect(page.locator('.charge')).toHaveCount(0);
+ await page.locator('#show-charges').check();await expect(page.locator('.charge')).toHaveCount(32);
+ await page.locator('#reset').click();await expect(minus).toHaveAttribute('transform',start);
+ await page.screenshot({path:'/tmp/science-live-charges.png',fullPage:true});
 });

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { charges, LIMIT, interaction, rubbingDistance, attractionOffset, insideBody, chargeLayout, nextTransfer, smooth, settle } from './model.js';
+import { charges, LIMIT, interaction, rubbingDistance, attractionOffset, insideBody, chargeLayout, nextTransfer, smooth, settle, stepBoundCharge, chargeRadius } from './model.js';
 test('마찰 전 중성, 마찰 후 전자 이동과 전체 전하 보존',()=>{
  for(let n=0;n<=LIMIT;n++){
  const {fur,balloon}=charges(n);
@@ -56,5 +56,37 @@ test('보간은 시작과 끝이 연속이며 범위를 넘지 않음',()=>{
  for(const curve of [smooth,settle]){
   assert.equal(curve(0),0);assert.equal(curve(1),1);
   let previous=0;for(let i=1;i<=100;i++){const v=curve(i/100);assert.ok(v>=previous && v<=1);previous=v;}
+ }
+});
+
+test('실시간 전기력 반응: 같은 부호는 밀리고 다른 부호는 당겨짐',()=>{
+ const run=(sign,q)=>{
+  const site={x:0,y:0,sign};let state;
+  for(let i=0;i<240;i++)state=stepBoundCharge(state,site,'fur',{x:0,y:0},{x:180,y:0},q,1/120);
+  return state;
+ };
+ assert.ok(run(-1,3).x>0);assert.ok(run(1,3).x<0);
+ assert.ok(run(-1,-3).x<0);assert.ok(run(1,-3).x>0);
+ assert.ok(Math.abs(run(-1,3).x)>Math.abs(run(1,3).x));
+});
+test('외부 전기력이 사라지면 원래 자리 부근으로 감쇠 복귀',()=>{
+ const site={x:0,y:0,sign:-1};let state;
+ for(let i=0;i<120;i++)state=stepBoundCharge(state,site,'fur',{x:0,y:0},{x:150,y:0},4,1/60);
+ assert.ok(state.x>1);
+ for(let i=0;i<180;i++)state=stepBoundCharge(state,site,'fur',{x:0,y:0},{x:150,y:0},0,1/60);
+ assert.ok(Math.abs(state.x)<.001);assert.ok(Math.abs(state.vx)<.001);
+});
+test('움직이는 전하 원 전체가 윤곽 안에 있고 국소 범위를 벗어나지 않음',()=>{
+ for(const kind of ['fur','balloon'])for(const side of [-1,1]){
+  const records=Array.from({length:4},(_,i)=>({donor:i,side,slot:i}));
+  for(const site of chargeLayout(kind,records)){
+   let state;
+   for(let i=0;i<360;i++){
+    const angle=i*Math.PI/90;
+    state=stepBoundCharge(state,site,kind,{x:0,y:0},{x:100*Math.cos(angle),y:100*Math.sin(angle)},i<180?4:-4,1/60);
+    assert.ok(insideBody(kind,state,chargeRadius(site.sign)+.59));
+    assert.ok(Math.hypot(state.x-site.x,state.y-site.y)<=(site.sign>0?.701:3.401));
+   }
+  }
  }
 });

@@ -1,9 +1,10 @@
 import './style.css';
-import { charges, LIMIT, rubbingDistance, interaction, attractionOffset, chargeLayout, baseSites, nextTransfer, contactPoint, smooth, settle } from './src/model.js';
+import { charges, LIMIT, rubbingDistance, interaction, attractionOffset, chargeLayout, baseSites, nextTransfer, contactPoint, smooth, settle, chargeRadius, stepBoundCharge } from './src/model.js';
 const $ = (s) => document.querySelector(s);
 let mode = 'rub', count = 0, distance = 0, pair = 'attract', observed = false, show = false;
 let pos = { balloon: { x: 590, y: 215 }, fur: { x: 215, y: 245 } };
 let offset = { x: 0, y: 0 }, attracted = false, motion = null, flight = null;
+const chargeStates = new Map();
 let transfers = [], drag = null, lastFrame = 0;
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 const spriteUrl = `${import.meta.env.BASE_URL}images/balloon-fur.png`;
@@ -16,7 +17,7 @@ $('#app').innerHTML = `
 <div class="instruction"><span class="step-icon">↔</span><div><strong id="guide">풍선을 털 위로 가져와 문질러 보세요.</strong><p id="subguide">풍선이나 털을 잡고, 서로 닿도록 좌우로 움직여 보세요.</p></div><label class="toggle"><input type="checkbox" id="show-charges"><span>전하 보기</span></label></div>
 <div id="pair-controls" class="pair-controls" hidden><button data-pair="attract" class="selected">풍선 − 와 털 +</button><button data-pair="repel">풍선 − 와 풍선 −</button><p>미리 털로 문질러 대전시킨 물체를 비교해요.</p></div>
 <div class="stage"><div class="stage-label"><span></span> <span id="stage-state">마찰 전 · 전기를 띠지 않음</span></div><svg id="scene" viewBox="0 0 800 440" aria-label="풍선과 털을 움직이는 실험 공간"><defs><clipPath id="balloon-interior"><ellipse cx="0" cy="-28" rx="64" ry="78"/></clipPath><clipPath id="fur-interior"><rect x="-98" y="-60" width="196" height="120" rx="8"/></clipPath><radialGradient id="tuft-fade"><stop offset="45%" stop-color="white"/><stop offset="100%" stop-color="black"/></radialGradient><mask id="tuft-mask-0" maskUnits="userSpaceOnUse" x="-99" y="-82" width="68" height="88"><ellipse cx="-65" cy="-38" rx="34" ry="44" fill="url(#tuft-fade)"/></mask><mask id="tuft-mask-1" maskUnits="userSpaceOnUse" x="-34" y="-82" width="68" height="88"><ellipse cx="0" cy="-38" rx="34" ry="44" fill="url(#tuft-fade)"/></mask><mask id="tuft-mask-2" maskUnits="userSpaceOnUse" x="31" y="-82" width="68" height="88"><ellipse cx="65" cy="-38" rx="34" ry="44" fill="url(#tuft-fade)"/></mask><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10" fill="#466455"/></marker></defs><ellipse class="table-shadow" cx="215" cy="333" rx="115" ry="10"/><g id="force-arrows"></g><g id="fur" class="draggable" role="button" tabindex="0" aria-label="털, 방향키로 이동"><g class="shape"></g><g class="particles"></g><text class="object-name" y="117" text-anchor="middle">털</text><text class="object-state" y="141" text-anchor="middle"></text></g><g id="balloon-object" class="draggable" role="button" tabindex="0" aria-label="풍선, 방향키로 이동"><g class="shape"></g><g class="particles"></g><text class="object-name" y="117" text-anchor="middle">풍선</text><text class="object-state" y="141" text-anchor="middle"></text></g><g id="transfer"></g></svg><div class="stage-hint" id="stage-hint">↔ 잡고 움직여 보세요</div></div>
-<div class="lab-bottom"><div class="legend"><span><b class="positive">+</b> 원자핵의 (+)전하</span><span><b class="negative">−</b> 전자의 (−)전하</span></div><button id="rub-button" class="primary">한 번 문지르기</button><button id="lift-button" class="secondary" disabled>풍선 들어 올리기 ↑</button><button id="observe-button" class="primary" hidden>놓아서 힘 관찰하기</button></div><p class="model-note">전하 표시는 물체를 이루는 전하를 간단히 나타낸 그림이에요. 문질러 옮겨 간 전자는 문지른 부근에 남아요.</p></section>
+<div class="lab-bottom"><div class="legend"><span><b class="positive">+</b> 원자핵의 (+)전하</span><span><b class="negative">−</b> 전자의 (−)전하</span></div><button id="rub-button" class="primary">한 번 문지르기</button><button id="lift-button" class="secondary" disabled>풍선 들어 올리기 ↑</button><button id="observe-button" class="primary" hidden>놓아서 힘 관찰하기</button></div><p class="model-note">풍선과 털 속 전하는 제자리 부근에서 반응해요. 문지를 때 일부 전자가 다른 물체로 이동해요. 입자의 크기와 움직임은 보기 쉽게 나타냈어요.</p></section>
 <aside><section class="observation"><div class="section-label"><span>◉</span> 무엇이 달라졌나요?</div><h2 id="note-title">아직은 전기를 띠지 않아요</h2><p id="note-text">털과 풍선 모두 (+)전하량과 (−)전하량이 같아요. 먼저 두 물체를 문질러 볼까요?</p><div id="charge-cards"></div><div class="discovery" aria-live="polite" id="discovery">전기를 띠지 않아도 두 종류의 전하는 있어요.</div></section><section class="mission"><span class="small-tag">생각해 보기</span><h3>마찰할 때, 무엇이 이동할까요?</h3><div class="answers"><button data-answer="nucleus">원자핵</button><button data-answer="electron">전자</button><button data-answer="both">둘 다</button></div><p id="feedback" aria-live="polite">실험을 관찰한 뒤 골라 보세요.</p></section></aside></div>
 <section class="vocabulary"><div class="vocab-heading"><h2>실험 속 핵심 개념</h2><span>단어를 누르면 뜻을 확인할 수 있어요.</span></div><div class="term-buttons">${terms.map(([t], i) => `<button data-term="${i}" class="${i === 0 ? 'active' : ''}">${t}</button>`).join('')}</div><p id="term-definition"><strong>마찰 전기</strong> ${terms[0][1]}</p></section>
 </main>`;
@@ -46,16 +47,42 @@ function positionObjects() {
   }
 }
 function symbol(p) {
-  return `<g class="charge" data-id="${p.id}" data-sign="${p.sign}" transform="translate(${p.x} ${p.y})"><circle r="6" fill="${p.sign>0?'#fff0e9':'#f4f0ff'}" stroke="${p.sign>0?'#ba654c':'#7357a6'}"/><text text-anchor="middle" y="3.3" font-size="11" fill="${p.sign>0?'#9d442e':'#604196'}">${p.sign>0?'+':'−'}</text></g>`;
+  const positive=p.sign>0;
+  return `<g class="charge" data-id="${p.id}" data-sign="${p.sign}" transform="translate(${p.x} ${p.y})"><circle r="${chargeRadius(p.sign)}" fill="${positive?'#e84444':'#2787d9'}"/><text text-anchor="middle" dominant-baseline="central" font-size="${positive?12:10}" font-family="Arial,sans-serif" font-weight="700" fill="#fff">${positive?'+':'−'}</text></g>`;
+}
+function updateChargeMotion(dt) {
+  const active=new Set();
+  for(const key of ['fur','balloon']) {
+    const otherKey=key==='fur'?'balloon':'fur';
+    const kind=key==='balloon'||(mode==='force'&&pair==='repel')?'balloon':'fur';
+    const otherKind=otherKey==='balloon'||(mode==='force'&&pair==='repel')?'balloon':'fur';
+    const q=(mode==='rub'?count:3)*(otherKind==='balloon'?-1:1);
+    const source={x:pos[otherKey].x,y:pos[otherKey].y+(otherKind==='balloon'?-28:0)};
+    for(const site of chargeLayout(kind,transfers,mode==='force')) {
+      const id=`${key}:${site.id}`;active.add(id);
+      chargeStates.set(id,stepBoundCharge(chargeStates.get(id),site,kind,pos[key],source,q,dt,reducedMotion.matches));
+    }
+  }
+  for(const id of chargeStates.keys())if(!active.has(id))chargeStates.delete(id);
+}
+function displaySite(site,key) {
+  const state=chargeStates.get(`${key}:${site.id}`);
+  return state?{...site,x:state.x,y:state.y}:site;
+}
+function syncChargeLayer(layer,sites) {
+  const signature=sites.map(p=>`${p.id}:${p.sign}`).join(',');
+  if(layer.dataset.signature!==signature){layer.innerHTML=sites.map(symbol).join('');layer.dataset.signature=signature;}
+  const children=layer.children;
+  sites.forEach((p,i)=>children[i].setAttribute('transform',`translate(${p.x} ${p.y})`));
 }
 function paintCharges(now=performance.now()) {
   for(const [id,key] of [['#fur','fur'],['#balloon-object','balloon']]) {
     const kind=key==='balloon'||(mode==='force'&&pair==='repel')?'balloon':'fur';
     const layer=$(id).querySelector('.particles');
     layer.setAttribute('clip-path',`url(#${kind}-interior)`);
-    if(!show){layer.replaceChildren();continue;}
-    let sites=chargeLayout(kind,transfers,mode==='force');
-    let moving='';
+    if(!show){layer.replaceChildren();delete layer.dataset.signature;continue;}
+    let sites=chargeLayout(kind,transfers,mode==='force').map(p=>displaySite(p,key));
+    let moving=null;
     if(flight && mode==='rub') {
       const t=Math.min(1,(now-flight.start)/flight.duration);
       const i=transfers.length-1;
@@ -63,18 +90,19 @@ function paintCharges(now=performance.now()) {
       // Interpolate within each object's silhouette, meeting at the shared contact point.
       const contact=contactPoint(pos.balloon,pos.fur);
       if(contact) {
-        const source={...baseSites('fur')[flight.record.donor]};source.x+=7;
-        const destination=chargeLayout('balloon',transfers).find(p=>p.id===`extra${i}`);
+        const source=flight.source;
+        const destination=displaySite(chargeLayout('balloon',transfers).find(p=>p.id===`extra${i}`),'balloon');
         const owner=t<.5?'fur':'balloon';
         if(key===owner) {
           const seam={x:contact.x-pos[key].x,y:contact.y-pos[key].y};
           const from=t<.5?source:seam,to=t<.5?seam:destination;
           const progress=smooth(t<.5?t*2:(t-.5)*2);
-          moving=symbol({id:'moving-electron',sign:-1,x:from.x+(to.x-from.x)*progress,y:from.y+(to.y-from.y)*progress});
+          moving={id:'moving-electron',sign:-1,x:from.x+(to.x-from.x)*progress,y:from.y+(to.y-from.y)*progress};
         }
-      } else if(key==='balloon') sites.push(chargeLayout('balloon',transfers).find(p=>p.id===`extra${i}`));
+      } else if(key==='balloon') sites.push(displaySite(chargeLayout('balloon',transfers).find(p=>p.id===`extra${i}`),'balloon'));
     }
-    layer.innerHTML=sites.map(symbol).join('')+moving;
+    if(moving)sites.push(moving);
+    syncChargeLayer(layer,sites);
   }
 }
 function animateTo(target,duration,complete=()=>{},curve=smooth) {
@@ -95,8 +123,9 @@ function follow(now) {
   const next=Math.hypot(target.x,target.y)>2;
   if(next!==attracted){attracted=next;render();}
   if(flight) {
-    if(now-flight.start>=flight.duration){flight=null;render();}else paintCharges(now);
+    if(now-flight.start>=flight.duration){flight=null;render();}
   }
+  updateChargeMotion(dt);paintCharges(now);
   if(mode==='force'&&observed) drawForces();
   requestAnimationFrame(follow);
 }
@@ -116,11 +145,14 @@ function transfer() {
   if(count>=LIMIT||flight)return;
   const record=nextTransfer(pos.balloon,pos.fur,transfers);
   if(!record)return;
+  const donor={...baseSites('fur')[record.donor]};donor.x+=9;
+  const source=chargeStates.get(`fur:n${record.donor}`)||donor;
   transfers.push(record);count=transfers.length;
-  flight={record,start:performance.now(),duration:reducedMotion.matches?1:650};
+  flight={record,source:{x:source.x,y:source.y},start:performance.now(),duration:reducedMotion.matches?1:650};
   render();$('#stage-hint').textContent='맞닿은 곳에서 전자가 털 → 풍선으로 이동해요';
 }
 function setMode(next) {
+  chargeStates.clear();
   motion=null;flight=null;drag=null;offset={x:0,y:0};attracted=false;distance=0;mode=next;observed=false;
   $('#force-arrows').replaceChildren();$('#transfer').replaceChildren();
   pos={balloon:{x:590,y:next==='force'?145:215},fur:{x:215,y:245}};
