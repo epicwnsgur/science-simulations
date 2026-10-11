@@ -1,4 +1,15 @@
 import { defineConfig } from 'vite';
+import { fileURLToPath } from 'node:url';
 
-// Resolve assets correctly under the GitHub Pages repository path.
-export default defineConfig({ base: './' });
+// Emit real HTML pages so direct links also work on GitHub Pages.
+export default defineConfig({
+  base: './',
+  build: {
+    rollupOptions: {
+      input: {
+        home: fileURLToPath(new URL('./index.html', import.meta.url)),
+        friction: fileURLToPath(new URL('./simulations/friction-electricity/index.html', import.meta.url)),
+      },
+    },
+  },
+});
