@@ -9,6 +9,9 @@ test('학년 폴더와 실험 사이를 이동하고 새로고침 후 목록으�
   await page.getByRole('link',{name:'중학교 2학년 과학 폴더 열기'}).click();
   await page.reload();
   await expect(page.getByRole('heading',{name:'중학교 2학년 과학',exact:true})).toBeVisible();
+  await expect(page.locator('.unit-folder')).toHaveCount(8);
+  await page.getByRole('link',{name:'VII. 전기와 자기 폴더 열기',exact:true}).click();
+  await page.reload();
   await expect(page.locator('.folder-tab')).toHaveText(['실험','실험','실험']);
   await expect(page.locator('.future-folder')).toHaveCount(2);
   await expect(page.locator('.future-folder a, .future-folder button')).toHaveCount(0);
@@ -19,7 +22,8 @@ test('학년 폴더와 실험 사이를 이동하고 새로고침 후 목록으�
   const sprite=await page.locator('#balloon-object image').getAttribute('href');
   expect((await page.request.get(sprite)).status()).toBe(200);
   await page.getByRole('link',{name:'← 실험 목록'}).click();
-  await expect(page).toHaveURL(/\/grades\/middle-school-2\/$/);
+  await expect(page).toHaveURL(/\/grades\/middle-school-2\/unit-7\/$/);
+  await page.getByRole('link',{name:'← 단원 목록',exact:true}).click();
   await page.getByRole('link',{name:'← 학년 목록'}).click();
   await expect(page.getByRole('link',{name:'중학교 2학년 과학 폴더 열기'})).toBeVisible();
   expect(errors).toEqual([]);
@@ -27,10 +31,22 @@ test('학년 폴더와 실험 사이를 이동하고 새로고침 후 목록으�
 
 for(const width of [1440,390]) test(`메인과 학년 폴더 화면 ${width}px`, async ({ page })=>{
   await page.setViewportSize({width,height:1000});
-  for(const [name,path] of [['home','/'],['grade','/grades/middle-school-2/']]){
+  for(const [name,path] of [['home','/'],['grade','/grades/middle-school-2/'],['unit','/grades/middle-school-2/unit-7/']]){
     await page.goto(path);
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
-    if(name==='grade')expect(await page.locator('.experiment-art img').evaluate(img=>img.complete&&img.naturalWidth>0)).toBe(true);
+    if(name==='unit')expect(await page.locator('.experiment-art img').evaluate(img=>img.complete&&img.naturalWidth>0)).toBe(true);
     await page.screenshot({path:`/tmp/science-${name}-${width}.png`,fullPage:true});
   }
 });
+
+ test('8개 단원 이름과 빈 폴더 직접 접속',async({page})=>{
+  const names=['I. 물질의 특성','II. 지권의 변화','III. 빛과 파동','IV. 물질의 구성','V. 식물과 에너지','VI. 동물과 에너지','VII. 전기와 자기','VIII. 별과 우주'];
+  await page.goto('/grades/middle-school-2/');
+  await expect(page.locator('.unit-folder h3')).toHaveText(names);
+  await expect(page.getByText('어떤 실험을 해 볼까요?')).toHaveCount(0);
+  for(let i=1;i<=8;i++){
+    await page.goto(`/grades/middle-school-2/unit-${i}/`);await page.reload();
+    await expect(page.locator('h1')).toHaveText(names[i-1]);
+    if(i!==7)await expect(page.locator('.empty-unit')).toBeVisible();
+  }
+ });

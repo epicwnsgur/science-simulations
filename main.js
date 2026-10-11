@@ -12,7 +12,7 @@ const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 const spriteUrl = new URL('../../images/balloon-fur.png', document.baseURI).href;
 const terms = [['마찰 전기','두 물체를 마찰하여 생기는 전기예요.'],['대전','물체가 전기를 띠는 현상이에요.'],['대전체','전기를 띠고 있는 물체예요.'],['전기력','전기를 띤 두 물체 사이에 작용하는 힘이에요.'],['척력','같은 종류의 전하를 띤 물체 사이에 작용하는, 서로 밀어내는 힘이에요.'],['인력','다른 종류의 전하를 띤 물체 사이에 작용하는, 서로 끌어당기는 힘이에요.']];
 $('#app').innerHTML = `
-<header><a class="brand" href="../../grades/middle-school-2/">← 실험 목록</a><span class="grade">중학교 2학년 <i></i> 과학</span></header>
+<header><a class="brand" href="../../grades/middle-school-2/unit-7/">← 실험 목록</a><span class="grade">중학교 2학년 <i></i> 과학</span></header>
 <main><div class="breadcrumb">VII. 전기와 자기 <span>/</span> 01 마찰 전기</div>
 <section class="intro"><div><h1>풍선과 털을 문지르면?</h1><p>문지르고, 들어 올리고, 두 물체 사이의 힘을 관찰해 보세요.</p></div></section>
 <div class="workspace"><section class="lab"><div class="lab-toolbar"><div class="tabs" role="tablist" aria-label="실험 선택"><button id="rub-tab" role="tab" aria-selected="true">01 <span>문질러 대전시키기</span></button><button id="force-tab" role="tab" aria-selected="false">02 <span>전기력 관찰하기</span></button></div><button id="reset" class="reset">↻ <span>처음으로</span></button></div>
