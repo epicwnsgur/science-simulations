@@ -22,7 +22,8 @@ test('마찰, 전하 보존, 전기력 비교, 초기화',async({page})=>{
  await page.locator('[data-answer="nucleus"]').click();await expect(page.locator('#feedback')).toContainText('다시');
  await page.locator('[data-answer="electron"]').click();await expect(page.locator('#feedback')).toContainText('맞아요');
  for(const term of ['마찰 전기','대전','대전체','전기력','척력','인력'])await expect(page.locator('.term-buttons')).toContainText(term);
- await page.locator('#source-button').click();await expect(page.locator('#sources')).toBeVisible();await page.keyboard.press('Escape');
+ await expect(page.locator('body')).not.toContainText('INTERACTIVE SCIENCE LAB');
+ await expect(page.locator('body')).not.toContainText('수업 자료 및 모형 안내');
  await page.locator('#reset').click();await expect(page.locator('#note-title')).toContainText('아직은');
  expect(errors).toEqual([]);
 });
@@ -55,4 +56,36 @@ test('터치로 물체를 이동하여 마찰',async({browser})=>{
  for(const p of coords.slice(1))await client.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[p]});
  await client.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
  await expect(page.locator('#note-title')).toContainText('전자가');await context.close();
+});
+
+test('사실적인 이미지, 마찰 후 들어 올리면 털이 끌림, 초기화', async({page})=>{
+ await page.goto('/');
+ await expect(page.locator('#lift-button')).toBeDisabled();
+ await expect(page.locator('#fur image')).toHaveAttribute('href', /balloon-fur.png/);
+ const response=await page.request.get('/images/balloon-fur.png');expect(response.ok()).toBe(true);
+ await page.locator('#rub-button').click();
+ const before=await page.locator('#charge-cards').innerText();
+ await page.locator('#lift-button').click();
+ await expect(page.locator('#note-title')).toContainText('끌려와요');
+ await page.waitForTimeout(1200);
+ const transform=await page.locator('#fur').getAttribute('transform');
+ const [x,y]=transform.match(/[-\d.]+/g).map(Number);
+ expect(x).toBeGreaterThan(335);expect(x).toBeLessThan(360);
+ expect(y).toBeLessThan(235);expect(y).toBeGreaterThan(210);
+ expect(await page.locator('#charge-cards').innerText()).toBe(before);
+ await page.locator('#balloon-object').focus();
+ for(let i=0;i<12;i++)await page.keyboard.press('ArrowRight');
+ await page.waitForTimeout(1200);
+ const far=await page.locator('#fur').getAttribute('transform');
+ const [fx,fy]=far.match(/[-\d.]+/g).map(Number);
+ expect(Math.abs(fx-335)).toBeLessThan(1);expect(Math.abs(fy-235)).toBeLessThan(1);
+ await page.locator('#reset').click();await expect(page.locator('#lift-button')).toBeDisabled();
+ await expect(page.locator('#fur')).toHaveAttribute('transform','translate(215 245)');
+});
+test('직접 풍선을 위로 드래그해도 털이 끌리고 전자는 추가 이동하지 않음',async({page})=>{
+ await page.goto('/');await page.locator('#show-charges').check();await page.locator('#rub-button').click();
+ const before=await page.locator('#charge-cards').innerText();
+ const points=await page.locator('#scene').evaluate(el=>{const m=el.getScreenCTM();return [new DOMPoint(460,210),new DOMPoint(460,115)].map(p=>{const q=p.matrixTransform(m);return {x:q.x,y:q.y};});});
+ await page.mouse.move(points[0].x,points[0].y);await page.mouse.down();await page.mouse.move(points[1].x,points[1].y,{steps:20});await page.mouse.up();
+ await expect(page.locator('#note-title')).toContainText('끌려와요');expect(await page.locator('#charge-cards').innerText()).toBe(before);
 });

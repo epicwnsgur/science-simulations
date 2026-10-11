@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { charges, LIMIT, interaction, rubbingDistance } from './model.js';
+import { charges, LIMIT, interaction, rubbingDistance, attractionOffset } from './model.js';
 test('마찰 전 중성, 마찰 후 전자 이동과 전체 전하 보존',()=>{
  for(let n=0;n<=LIMIT;n++){
  const {fur,balloon}=charges(n);
@@ -17,4 +17,13 @@ test('같은 전하 척력, 다른 전하 인력; 중성은 이 모형의 범위
 test('떨어져서 움직이면 마찰되지 않음',()=>{
  assert.equal(rubbingDistance({x:100,y:100},{x:500,y:100},80),0);
  assert.equal(rubbingDistance({x:100,y:100},{x:225,y:100},80),80);
+});
+
+test('대전 후 가까이 들어 올릴 때만 털이 조금 끌림',()=>{
+ const fur={x:335,y:235}, near={x:420,y:115};
+ assert.deepEqual(attractionOffset(near,fur,0),{x:0,y:0});
+ assert.deepEqual(attractionOffset({x:650,y:115},fur,2),{x:0,y:0});
+ assert.deepEqual(attractionOffset({x:420,y:235},fur,2),{x:0,y:0});
+ const offset=attractionOffset(near,fur,2);
+ assert.ok(offset.x>0 && offset.y<0);assert.ok(Math.hypot(offset.x,offset.y)<=24.001);
 });

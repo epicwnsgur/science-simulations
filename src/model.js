@@ -11,3 +11,14 @@ export function interaction(a, b) {
 export function rubbingDistance(a, b, distance) {
   return Math.hypot(a.x - b.x, a.y - b.y) < 150 ? distance : 0;
 }
+
+// A small qualitative displacement, not a calculated force or levitation model.
+export function attractionOffset(balloon, fur, transferred) {
+  const dx = balloon.x - fur.x;
+  const dy = balloon.y - fur.y;
+  const separation = Math.hypot(dx, dy);
+  if (!transferred || dy >= -45 || separation >= 260 || separation < 1) return { x: 0, y: 0 };
+  const proximity = Math.min(1, (260 - separation) / 90);
+  const lift = Math.min(1, (-dy - 45) / 65);
+  return { x: dx / separation * 24 * proximity * lift, y: dy / separation * 24 * proximity * lift };
+}
