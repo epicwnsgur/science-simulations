@@ -90,3 +90,20 @@ test('움직이는 전하 원 전체가 윤곽 안에 있고 국소 범위를 �
   }
  }
 });
+
+test('추가 전자 위치는 접촉 위치를 따르며 이전 전자는 재배열하지 않음',()=>{
+ const fur={x:0,y:0};
+ const left=nextTransfer({x:120,y:-25},fur,[]);
+ const right=nextTransfer({x:-120,y:-25},fur,[]);
+ assert.ok(left.target.x<0);assert.ok(right.target.x>0);
+ let records=[];
+ for(let i=0;i<4;i++){
+  const offset=[-65,65,-25,25][i];
+  const before=chargeLayout('balloon',records);
+  const r=nextTransfer({x:400+offset+(offset<0?32:-32),y:235},{x:400,y:280},records);
+  assert.ok(r);records.push(r);
+  for(const old of before)assert.deepEqual(chargeLayout('balloon',records).find(p=>p.id===old.id),old);
+ }
+ assert.ok(records.some(r=>r.target.x>5));assert.ok(records.some(r=>r.target.x< -5));
+ assert.equal(new Set(records.map(r=>`${r.target.x},${r.target.y}`)).size,4);
+});

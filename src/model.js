@@ -18,14 +18,15 @@ export function baseSites(kind) {
     ? { x: -63 + (i % 4) * 42, y: -23 + Math.floor(i / 4) * 45 }
     : { x: -22 + (i % 2) * 44, y: -65 + Math.floor(i / 2) * 27 });
 }
+const preparedSites=[{x:-46,y:-52},{x:0,y:-25},{x:44,y:3},{x:0,y:29}];
 export function chargeLayout(kind, transfers = [], prepared = false) {
-  const records = prepared ? [0,1,2].map(i=>({ donor: [3,7,2][i], side: -1, slot:i })) : transfers;
+  const records = prepared ? [0,1,2].map(i=>({ donor: [3,7,2][i], target: preparedSites[i] })) : transfers;
   const out = baseSites(kind).flatMap((p,i) => [
     { id:`p${i}`, sign:1, x:p.x-9, y:p.y },
     ...((kind === 'fur' && records.some(t=>t.donor===i)) ? [] : [{id:`n${i}`,sign:-1,x:p.x+9,y:p.y}])
   ]);
   if (kind === 'balloon') for (let i=0;i<records.length;i++) {
-    const t=records[i];out.push({id:`extra${i}`,sign:-1,x:t.side*48,y:-57+t.slot*21});
+    const t=records[i],target=t.target || preparedSites[i];out.push({id:`extra${i}`,sign:-1,...target});
   }
   return out;
 }
@@ -48,9 +49,19 @@ export function nextTransfer(balloon,fur,records) {
   const donors=baseSites('fur').map((p,i)=>({id:i,x:p.x+9,y:p.y}))
     .filter(p=>!records.some(t=>t.donor===p.id))
     .sort((a,b)=>Math.hypot(fur.x+a.x-contact.x,fur.y+a.y-contact.y)-Math.hypot(fur.x+b.x-contact.x,fur.y+b.y-contact.y));
-  const side=contact.x<balloon.x?-1:1;
-  const slot=records.filter(t=>t.side===side).length;
-  return {donor:donors[0].id,side,slot,contact};
+  const local={x:contact.x-balloon.x,y:contact.y-balloon.y};
+  const occupied=chargeLayout('balloon',records);
+  let target=null,best=Infinity;
+  // Select a free site near this actual contact, not a fixed left/right column.
+  for(let x=-48;x<=48;x+=3)for(let y=-88;y<=32;y+=3){
+    const candidate={x,y};
+    if(!insideBody('balloon',candidate,9.5))continue;
+    if(occupied.some(p=>Math.hypot(x-p.x,y-p.y)<chargeRadius(p.sign)+chargeRadius(-1)+4.3))continue;
+    const score=(x-local.x)**2+(y-local.y)**2;
+    if(score<best){best=score;target=candidate;}
+  }
+  if(!target)return null;
+  return {donor:donors[0].id,target,contact};
 }
 // A qualitative response of the fiber tips, NOT translation of the fur backing.
 export function attractionOffset(balloon, fur, transferred) {
@@ -63,7 +74,7 @@ export const smooth = t => {t=Math.max(0,Math.min(1,t));return t*t*t*(t*(t*6-15)
 // Damped approach to rest: zero initial speed, continuous acceleration/deceleration.
 export const settle = t => t>=1 ? 1 : (1-(1+8*t)*Math.exp(-8*t))/(1-9*Math.exp(-8));
 
-export const chargeRadius = sign => sign > 0 ? 7 : 5.2;
+export const chargeRadius = sign => sign > 0 ? 8 : 5.2;
 
 // Bound-charge response, in visual units (not SI or a quantum electron trajectory).
 // External Coulomb-force direction + local restoring force + damping.
