@@ -8,6 +8,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         home: fileURLToPath(new URL('./index.html', import.meta.url)),
+        grade2: fileURLToPath(new URL('./grades/middle-school-2/index.html', import.meta.url)),
         friction: fileURLToPath(new URL('./simulations/friction-electricity/index.html', import.meta.url)),
       },
     },

@@ -80,6 +80,6 @@ CHROMIUM_PATH=/usr/bin/chromium npm run test:e2e
 
 ## 메인 페이지와 실험 폴더
 
-`/`는 어두운 우주 배경의 실험 목록입니다. A 폴더는 `/simulations/friction-electricity/`로 연결되며 B·C는 준비 중으로 표시합니다. 기존 실험 상단의 ‘← 실험 목록’으로 돌아올 수 있습니다.
+`/`는 준혁T의 과학 실험실 메인 화면입니다. ‘중학교 2학년 과학’ 폴더를 열면 `/grades/middle-school-2/`에서 마찰 전기와 준비 중인 실험 두 개를 볼 수 있습니다. 카드 탭은 모두 ‘실험’으로 표시합니다. 마찰 전기는 `/simulations/friction-electricity/`로 연결되며, 상단의 ‘← 실험 목록’으로 학년 폴더에 돌아올 수 있습니다.
 
-`index.html`과 `home.css`가 메인 화면을 담당하며, 기존 `main.js`와 `style.css`는 실험 화면에서만 사용합니다. Vite 다중 페이지 빌드로 각 주소의 HTML을 실제 생성하므로 GitHub Pages 하위 경로와 Netlify에서 직접 접속·새로고침이 가능합니다. 새 실험은 `simulations/실험이름/index.html`을 만들고 `vite.config.js`의 빌드 입력 및 메인 폴더 링크에 추가합니다. 아직 준비되지 않은 폴더에는 링크를 넣지 않습니다.
+`index.html`과 `home.css`가 메인 화면을 담당하며, 기존 `main.js`와 `style.css`는 실험 화면에서만 사용합니다. Vite 다중 페이지 빌드로 각 주소의 HTML을 실제 생성하므로 GitHub Pages 하위 경로와 Netlify에서 직접 접속·새로고침이 가능합니다. 새 실험은 `simulations/실험이름/index.html`을 만들고 `vite.config.js`의 빌드 입력 및 해당 학년 폴더 링크에 추가합니다. 아직 준비되지 않은 폴더에는 링크를 넣지 않습니다.
