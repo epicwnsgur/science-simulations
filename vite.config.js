@@ -14,6 +14,7 @@ export default defineConfig({
           fileURLToPath(new URL(`./grades/middle-school-2/unit-${i + 1}/index.html`, import.meta.url)),
         ])),
         friction: fileURLToPath(new URL('./simulations/friction-electricity/index.html', import.meta.url)),
+        induction: fileURLToPath(new URL('./simulations/electrostatic-induction/index.html', import.meta.url)),
       },
     },
   },

@@ -1,0 +1,27 @@
+/* 정전기 유도 실험 전용 스타일. 공통 모양은 style.css, 학습 흐름은 poe.css를 따릅니다. */
+.choice-row{display:flex;flex-wrap:wrap;gap:8px 0;align-items:center}
+.choice-row [role=group]{display:flex;flex-wrap:wrap;gap:8px 0;margin-right:10px}
+.choice-row button[aria-pressed=true]{background:#e2e9d9;border-color:#8ea27c;color:#3b5433;font-weight:600}
+.choice-row p{width:100%;margin:6px 0 0}
+.spoon-body{fill:url(#metal);stroke:#8c959c;stroke-width:1.2}
+.part-label{fill:#7a8073;font-size:12px}
+.jar{fill:url(#glass);stroke:#9ccbe6;stroke-width:2}
+.stopper{fill:#3d8fc9;stroke:#2c6f9f}
+.leaf{fill:#e3cf86;stroke:#b8a050;stroke-width:1;opacity:.95}
+.scope-labels path{stroke:#a3aa9c;stroke-width:1;stroke-dasharray:3 3;fill:none}
+.scope-labels text{fill:#6f766a;font-size:13px}
+.glove{fill:#eef1f4;stroke:#a9b2bb;stroke-width:1.5}
+.glove-cuff{fill:#dfe5ea;stroke:#a9b2bb;stroke-width:1.5}
+.glove-line{stroke:#cbd2d8;stroke-width:1.5;fill:none}
+#charged-object:focus{outline:none}
+#charged-object:focus-visible .shape{filter:drop-shadow(0 0 3px #426449)}
+.answers.stacked{flex-direction:column}
+.answers.stacked button{padding:9px 10px;text-align:left}
+.mission h3+.answers+p+h3{margin-top:22px}
+.prediction-illustration svg{display:block;width:100%;height:245px;margin:12px 0}
+.concept-note{font-size:13px;line-height:1.8;color:#5b6751;background:#f1f4ec;border-left:3px solid #8ea27c;padding:10px 14px;margin:8px 0 0}
+/* 이 실험은 모형 안내를 관찰 중에도 보여 줍니다. */
+body[data-poe=observe] .model-note{display:block}
+@media(max-width:800px){.prediction-illustration svg{height:200px}}
+@media(max-width:600px){.prediction-illustration svg{height:170px;margin:0}}
+@media(max-width:480px){.choice-row [role=group]{margin-right:0}.choice-row button{font-size:11px;margin-right:6px}.choice-row{padding:8px 13px}}
