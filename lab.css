@@ -1,0 +1,60 @@
+/* 3~8차시 실험 공통 스타일: 어두운 실험 무대와 빛나는 효과. 기본 모양은 style.css, 학습 흐름은 poe.css를 따릅니다. */
+.stage.night{background:radial-gradient(ellipse at 50% 0%,#24305a 0%,#121a33 55%,#0b1022 100%);border-bottom-color:#1d2747;border-radius:6px}
+.stage.night .stage-label{color:#aab4d6}
+.stage.night .stage-hint{color:#8f9bc4}
+.stage.night text{fill:#d8def5}
+.stage.night .muted{fill:#8f9bc4}
+.stage.night .object-name{fill:#eef1ff;font-size:15px;font-weight:600}
+.choice-row{display:flex;flex-wrap:wrap;gap:8px 0;align-items:center}
+.choice-row [role=group]{display:flex;flex-wrap:wrap;gap:8px 0;margin-right:10px;align-items:center}
+.choice-row .group-label{font-size:11px;color:#7a8371;margin-right:8px}
+.choice-row button[aria-pressed=true]{background:#e2e9d9;border-color:#8ea27c;color:#3b5433;font-weight:600}
+.choice-row p{width:100%;margin:6px 0 0}
+.actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.primary.hold{user-select:none;-webkit-user-select:none;touch-action:none}
+.primary.hold[aria-pressed=true]{background:#d9822b;border-color:#d9822b;box-shadow:0 0 0 4px #f4c38d66}
+.toast{position:absolute;left:50%;top:14px;transform:translate(-50%,-20px);opacity:0;pointer-events:none;background:linear-gradient(90deg,#ffd166,#ff9f6e);color:#3b2400;font-weight:700;font-size:13px;padding:9px 16px;border-radius:30px;box-shadow:0 6px 24px #ffb44a66;transition:opacity .25s,transform .25s;white-space:nowrap}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.answers button.right{background:#dff0d4;border-color:#6f9a5a;color:#2f5a21}
+.answers.stacked{flex-direction:column}
+.answers.stacked button{padding:9px 10px;text-align:left}
+.mission h3{margin-top:20px}
+.mission h3:first-of-type{margin-top:10px}
+#readout{margin:18px 0}
+.readout-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.readout-card{background:#eeeee7;border-radius:5px;padding:11px 10px}
+.readout-card strong{display:block;font-size:11px;color:#5c6650}
+.readout-card b{display:block;font-size:22px;margin-top:6px;color:#2c3a29;font-variant-numeric:tabular-nums}
+.readout-card small{font-size:10px;color:#7a8371}
+.data-table{width:100%;border-collapse:collapse;font-size:12px;margin:8px 0;font-variant-numeric:tabular-nums}
+.data-table th,.data-table td{border:1px solid #d4d9cc;padding:6px 4px;text-align:center}
+.data-table th{background:#eef1e8;color:#4d5a44;font-weight:600}
+.data-table td.fresh{animation:pop .6s ease-out;background:#fff4c7}
+@keyframes pop{0%{transform:scale(.6);background:#ffe27a}100%{transform:scale(1)}}
+.flow-dot{pointer-events:none}
+.legend-swatch{display:inline-block;width:22px;height:4px;border-radius:2px;vertical-align:middle;margin-right:5px}
+body[data-poe=observe] .model-note{display:block}
+.prediction-illustration svg{display:block;width:100%;height:245px;margin:12px 0;border-radius:8px}
+.concept-note{font-size:13px;line-height:1.8;color:#5b6751;background:#f1f4ec;border-left:3px solid #8ea27c;padding:10px 14px;margin:8px 0 0}
+#scene [role=button],#scene .draggable{cursor:pointer}
+#scene [role=button]:focus{outline:none}
+#scene [role=button]:focus-visible{filter:drop-shadow(0 0 4px #9fd4ff)}
+@keyframes spark{0%,100%{opacity:.25}50%{opacity:1}}
+@media(prefers-reduced-motion:reduce){.toast{transition:none}.data-table td.fresh{animation:none}}
+@media(max-width:800px){.prediction-illustration svg{height:200px}}
+@media(max-width:600px){.prediction-illustration svg{height:170px;margin:0}}
+@media(max-width:480px){.choice-row [role=group]{margin-right:0}.choice-row button{font-size:11px;margin-right:6px}.choice-row{padding:8px 13px}.actions{justify-content:stretch}.actions button{flex:1}.toast{font-size:11px;white-space:normal;width:86%;text-align:center}}
+.record-card{font-size:12px}
+.record-block{margin:10px 0}
+.record-block strong{display:block;font-size:12px;color:#4d5a44;margin-bottom:4px}
+.record-row{display:flex;align-items:center;gap:10px;margin:5px 0}
+.record-row>span{width:46px;color:#5c6650}
+.cells{display:flex;gap:4px}
+.cell{width:30px;height:20px;border:1px solid #b9c2ad;border-radius:3px;background:#fff;padding:0}
+.cell.on{background:linear-gradient(#ffe27a,#ffb627);border-color:#d9a020;box-shadow:0 0 8px #ffd16699}
+.cell:disabled{opacity:1;cursor:default}
+.field-line{fill:none;stroke:#8fd3ff;stroke-width:1.6;opacity:.75;stroke-dasharray:6 10;animation:field-flow 1.2s linear infinite}
+@keyframes field-flow{to{stroke-dashoffset:-16}}
+#field-lines{transition:opacity .4s}
+.compass.probe{cursor:grab}
+@media(prefers-reduced-motion:reduce){.field-line{animation:none}}

@@ -14,3 +14,33 @@
   from = "/simulations/electrostatic-induction"
   to = "/simulations/electrostatic-induction/"
   status = 301
+
+[[redirects]]
+  from = "/simulations/electric-current"
+  to = "/simulations/electric-current/"
+  status = 301
+
+[[redirects]]
+  from = "/simulations/ohms-law"
+  to = "/simulations/ohms-law/"
+  status = 301
+
+[[redirects]]
+  from = "/simulations/series-parallel"
+  to = "/simulations/series-parallel/"
+  status = 301
+
+[[redirects]]
+  from = "/simulations/coil-magnetic-field"
+  to = "/simulations/coil-magnetic-field/"
+  status = 301
+
+[[redirects]]
+  from = "/simulations/electric-swing"
+  to = "/simulations/electric-swing/"
+  status = 301
+
+[[redirects]]
+  from = "/simulations/electric-motor"
+  to = "/simulations/electric-motor/"
+  status = 301
