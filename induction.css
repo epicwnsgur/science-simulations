@@ -25,3 +25,4 @@ body[data-poe=observe] .model-note{display:block}
 @media(max-width:800px){.prediction-illustration svg{height:200px}}
 @media(max-width:600px){.prediction-illustration svg{height:170px;margin:0}}
 @media(max-width:480px){.choice-row [role=group]{margin-right:0}.choice-row button{font-size:11px;margin-right:6px}.choice-row{padding:8px 13px}}
+.stage.night .jar{opacity:.5}

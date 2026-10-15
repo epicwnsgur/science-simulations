@@ -123,7 +123,7 @@ test('끌기·키보드 조작과 모바일 화면 넘침 없음', async ({ page
   await page.mouse.move(grab.x, grab.y); await page.mouse.down();
   await page.mouse.move(t.x, t.y, { steps: 10 }); await page.mouse.up();
   await expect.poll(() => angleOf(page)).toBeLessThan(-2);
-  await page.locator('#reset').click(); expect(await angleOf(page)).toBe(0);
+  await page.locator('#reset').click(); await expect.poll(() => angleOf(page)).toBe(0);
   await page.locator('#charged-object').focus();
   for (let i = 0; i < 6; i++) await page.keyboard.press('ArrowDown');
   for (let i = 0; i < 6; i++) await page.keyboard.press('ArrowLeft');

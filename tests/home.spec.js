@@ -13,9 +13,9 @@ test('학년 폴더와 실험 사이를 이동하고 새로고침 후 목록으�
   await expect(page.locator('.unit-folder')).toHaveCount(8);
   await page.getByRole('link',{name:'VII. 전기와 자기 폴더 열기',exact:true}).click();
   await page.reload();
-  await expect(page.locator('.folder-tab')).toHaveText(['실험','실험','실험']);
-  await expect(page.locator('.future-folder')).toHaveCount(1);
-  await expect(page.locator('.active-folder')).toHaveCount(2);
+  await expect(page.locator('.folder-tab')).toHaveCount(8);
+  await expect(page.locator('.future-folder')).toHaveCount(0);
+  await expect(page.locator('.active-folder')).toHaveCount(8);
   await expect(page.getByRole('link',{name:'정전기 유도 실험 열기'})).toHaveAttribute('href','../../../simulations/electrostatic-induction/');
   await expect(page.locator('.future-folder a, .future-folder button')).toHaveCount(0);
   await page.getByRole('link',{name:'마찰 전기 실험 열기'}).click();
@@ -24,7 +24,7 @@ test('학년 폴더와 실험 사이를 이동하고 새로고침 후 목록으�
   await expect(page.locator('#predict-panel')).toBeVisible();
   await beginObservation(page);
   await expect(page.locator('#scene')).toBeVisible();
-  const sprite=await page.locator('#balloon-object image').getAttribute('href');
+  const sprite=await page.locator('#balloon image').getAttribute('href');
   expect((await page.request.get(sprite)).status()).toBe(200);
   await page.getByRole('link',{name:'← 실험 목록'}).click();
   await expect(page).toHaveURL(/\/grades\/middle-school-2\/unit-7\/$/);

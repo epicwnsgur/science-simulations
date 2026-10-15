@@ -1,6 +1,8 @@
 import './style.css';
 import './poe.css';
+import './lab.css';
 import './induction.css';
+import { FX_DEFS, toast, burst } from './src/lab-shell.js';
 import { setupPOEFlow } from './src/poe-flow.js';
 import {
   SPOON_OBJECTS, SCOPE_OBJECTS, RUB_LEVELS, scopeCharge, closeness, segmentDistance, clamp,
@@ -53,8 +55,9 @@ $('#app').innerHTML = `
 <div class="instruction"><span class="step-icon">↔</span><div><strong id="guide"></strong><p id="subguide"></p></div><label class="toggle"><input type="checkbox" id="show-charges"><span>전하 보기</span></label></div>
 <div id="spoon-controls" class="pair-controls choice-row" role="group" aria-label="가까이 할 물체">${Object.entries(SPOON_OBJECTS).map(([key, o]) => `<button data-spoon="${key}" aria-pressed="${key === spoonKey}">${o.label}</button>`).join('')}</div>
 <div id="scope-controls" class="pair-controls choice-row" hidden><div role="group" aria-label="가까이 할 물체">${Object.entries(SCOPE_OBJECTS).map(([key, o]) => `<button data-scope="${key}" aria-pressed="${key === scopeKey}">${o.label}</button>`).join('')}</div><div role="group" aria-label="문지른 정도">${RUB_LEVELS.map(l => `<button data-rub="${l.id}" aria-pressed="${l.id === rubLevel}">${l.label}</button>`).join('')}</div><p id="rub-note"></p></div>
-<div class="stage"><div class="stage-label"><span id="stage-state" aria-live="polite"></span></div>
+<div class="stage night"><div class="stage-label"><span id="stage-state" aria-live="polite"></span></div>
 <svg id="scene" viewBox="0 0 800 440" aria-label="대전체를 금속 물체에 가까이 하는 실험 공간">
+${FX_DEFS}
 <defs>
 <linearGradient id="metal" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4f6f8"/><stop offset=".45" stop-color="#c9cfd5"/><stop offset="1" stop-color="#9aa3ab"/></linearGradient>
 <radialGradient id="metal-bowl" cx=".4" cy=".35" r=".75"><stop offset="0" stop-color="#ffffff"/><stop offset=".6" stop-color="#c5ccd2"/><stop offset="1" stop-color="#8f99a2"/></radialGradient>
@@ -88,8 +91,8 @@ $('#app').innerHTML = `
   <g class="particles" id="scope-particles"></g>
   <g class="scope-labels"><path d="M196 192 H150"/><text x="146" y="196" text-anchor="end">금속판</text><path d="M296 300 H150"/><text x="146" y="304" text-anchor="end">금속 막대</text><path d="M284 392 H150"/><text x="146" y="396" text-anchor="end">금속박</text></g>
 </g>
-<g id="charged-object" class="draggable" role="button" tabindex="0" aria-label="대전체, 방향키로 이동"><g class="shape"></g><g class="particles" id="object-particles"></g><text class="object-name" id="object-name" text-anchor="middle"></text></g>
-</svg><div class="stage-hint" id="stage-hint">↔ 물체를 잡고 움직여 보세요</div></div>
+<g id="charged-object" class="draggable" role="button" tabindex="0" aria-label="대전체, 방향키로 이동"><ellipse id="object-aura" rx="70" ry="70" opacity="0" filter="url(#glow-strong)"/><g class="shape"></g><g class="particles" id="object-particles"></g><text class="object-name" id="object-name" text-anchor="middle"></text></g>
+<g id="fx"></g></svg><div class="stage-hint" id="stage-hint">↔ 물체를 잡고 움직여 보세요</div><div class="toast" id="toast" role="status" aria-live="polite"></div></div>
 <div class="lab-bottom"><div class="legend"><span><b class="positive">+</b> 원자핵의 (+)전하</span><span><b class="negative">−</b> 전자의 (−)전하</span></div><button id="approach-button" class="primary">가까이 가져가기</button><button id="withdraw-button" class="secondary">멀리 하기</button></div>
 <p class="model-note" id="model-note"></p></section>
 <aside><section class="observation"><div class="section-label"><span>◉</span> 무엇이 달라졌나요?</div><h2 id="note-title"></h2><p id="note-text"></p><div id="charge-cards"></div><div class="discovery" id="discovery"></div></section>
@@ -108,7 +111,11 @@ function charge(p, id) {
 function syncLayer(layer, sites) {
   const signature = sites.map(p => `${p.id}:${p.sign}`).join(',');
   if (layer.dataset.signature !== signature) { layer.innerHTML = sites.map(p => charge(p)).join(''); layer.dataset.signature = signature; }
-  [...layer.children].forEach((child, i) => child.setAttribute('transform', `translate(${sites[i].x.toFixed(1)} ${sites[i].y.toFixed(1)})`));
+  [...layer.children].forEach((child, i) => {
+    child.setAttribute('transform', `translate(${sites[i].x.toFixed(1)} ${sites[i].y.toFixed(1)})`);
+    // 이동 중인 전자는 빛나게 나타내요.
+    if (sites[i].glow) child.setAttribute('filter', 'url(#glow)'); else child.removeAttribute('filter');
+  });
 }
 function clearLayer(layer) { layer.replaceChildren(); delete layer.dataset.signature; }
 const OBJECT_ROTATE = `rotate(${(Math.atan2(OBJECT_DIR.y, OBJECT_DIR.x) * 180 / Math.PI).toFixed(2)})`;
@@ -267,6 +274,9 @@ function arrivedCounts(now) {
   return { plate: { plus: PLATE_SITES, minus: parts.plate }, left: { plus: LEAF_SITES, minus: parts.left }, right: { plus: LEAF_SITES, minus: parts.right } };
 }
 function paintScope(now) {
+  // 금속박이 벌어질수록 빛나게 나타내요.
+  const spread = clamp((leafShown - 4) / 24, 0, 1);
+  for (const id of ['#leaf-left', '#leaf-right']) { $(id).setAttribute('filter', spread > .15 ? 'url(#glow)' : ''); $(id).style.fill = spread > .15 ? `rgb(${255} ${222 - spread * 30} ${134 - spread * 60})` : ''; }
   $('#leaf-left').setAttribute('transform', `translate(${-LEAF_OFFSET} 0) rotate(${leafShown.toFixed(2)})`);
   $('#leaf-right').setAttribute('transform', `translate(${LEAF_OFFSET} 0) rotate(${(-leafShown).toFixed(2)})`);
   const layer = $('#scope-particles');
@@ -275,7 +285,7 @@ function paintScope(now) {
     ...PLATE_NUCLEI.map((x, i) => ({ id: `pp${i}`, sign: 1, x: PLATE.x + x, y: PLATE.y - 6 })),
     ...['left', 'right'].flatMap(side => LEAF_NUCLEI.map((y, i) => ({ id: `${side}p${i}`, sign: 1, ...leafPoint(side, 0, y) }))),
   ];
-  const electrons = [...scopeState.values()].map(e => ({ id: e.id, sign: -1, ...scopeElectronPoint(e, now) }));
+  const electrons = [...scopeState.values()].map(e => ({ id: e.id, sign: -1, glow: !!e.from && now - e.start < e.duration, ...scopeElectronPoint(e, now) }));
   syncLayer(layer, [...nuclei, ...electrons]);
 }
 
@@ -293,6 +303,11 @@ function paintObject() {
   label.setAttribute('x', labelAt.x.toFixed(0)); label.setAttribute('y', labelAt.y.toFixed(0));
   label.textContent = o.name;
   el.setAttribute('aria-label', `${o.name}, ${o.charge ? (o.charge < 0 ? '(−)전하를 띰' : '(+)전하를 띰') : '전기를 띠지 않음'}. 방향키로 이동`);
+  // 대전된 물체 둘레의 빛: (−)는 파란빛, (+)는 붉은빛. 대전된 정도가 클수록 밝아요.
+  const aura = $('#object-aura'), at = o.shape === 'balloon' ? { x: 0, y: -84 } : { x: OBJECT_DIR.x * 70, y: OBJECT_DIR.y * 70 };
+  aura.setAttribute('cx', at.x.toFixed(1)); aura.setAttribute('cy', at.y.toFixed(1));
+  aura.setAttribute('fill', o.charge < 0 ? '#3aa0ff' : '#ff5a5a');
+  aura.setAttribute('opacity', o.amount ? (.18 + Math.min(1, o.amount / 5) * .32).toFixed(2) : 0);
   const layer = $('#object-particles');
   if (!show || !o.amount) return clearLayer(layer);
   syncLayer(layer, objectCharges(o));
@@ -393,6 +408,12 @@ function renderControls() {
   $('#approach-button').textContent = `${o.name} 가까이 가져가기`;
 }
 
+// 관찰 하나를 마칠 때 숟가락 손잡이 끝에서 빛이 퍼져요.
+function celebrate(msg) {
+  const tip = { x: PIVOT.x + SPOON_TIP * Math.cos(angle), y: PIVOT.y + SPOON_TIP * Math.sin(angle) };
+  burst($('#fx'), tip.x, tip.y, '#ffe27a', 14); toast(msg);
+}
+
 /* ---------- 반복 ---------- */
 function frame(now) {
   const dt = Math.min(.05, (now - (lastFrame || now)) / 1000); lastFrame = now;
@@ -404,10 +425,13 @@ function frame(now) {
   }
   if (mode === 'spoon') {
     stepSpoon(dt); paintSpoon();
-    if (Math.abs(angle) > .07) { if (spoonKey === 'straw') seen.spoonMinus = true; if (spoonKey === 'glove') seen.spoonPlus = true; }
+    if (Math.abs(angle) > .07) {
+      if (spoonKey === 'straw' && !seen.spoonMinus) { seen.spoonMinus = true; celebrate('🥄 (−)빨대가 숟가락을 끌어당겨요!'); }
+      if (spoonKey === 'glove' && !seen.spoonPlus) { seen.spoonPlus = true; celebrate('🧤 (+)장갑도 숟가락을 끌어당겨요!'); }
+    }
   } else {
     stepScope(now, dt); paintScope(now);
-    if (leafShown > 6 && rubLevel) seen.levels.add(rubLevel);
+    if (leafShown > 6 && rubLevel && !seen.levels.has(rubLevel)) { seen.levels.add(rubLevel); burst($('#fx'), LEAF_PIVOT.x, LEAF_PIVOT.y + 50, '#ffe27a', 16); toast(rubLevel === 2 ? '✨ 많이 문지르니 금속박이 더 크게 벌어져요!' : '✨ 금속박이 벌어졌어요!'); }
   }
   paintObject(); renderText(now);
   flow?.update(progress());
