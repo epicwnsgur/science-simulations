@@ -24,7 +24,7 @@ test('학년 폴더와 실험 사이를 이동하고 새로고침 후 목록으�
   await expect(page.locator('#predict-panel')).toBeVisible();
   await beginObservation(page);
   await expect(page.locator('#scene')).toBeVisible();
-  const sprite=await page.locator('#balloon-object image').getAttribute('href');
+  const sprite=await page.locator('#balloon image').getAttribute('href');
   expect((await page.request.get(sprite)).status()).toBe(200);
   await page.getByRole('link',{name:'← 실험 목록'}).click();
   await expect(page).toHaveURL(/\/grades\/middle-school-2\/unit-7\/$/);

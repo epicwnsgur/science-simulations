@@ -157,10 +157,12 @@ function touch() {
     if (charge > 0) {
       const count = charge, lights = rubs >= MIN_RUBS_TO_LIGHT;
       flight = { start: performance.now(), duration: reducedMotion.matches ? 1 : 650, count };
+      const firstLight = lights && !seen.lit;
+      if (lights) seen.lit = true;
       setTimeout(() => {
         if (lights) {
           flash = 1; burst($('#neon-fx'), BULB.x, BULB.y, '#ffb36b', 18);
-          if (!seen.lit) { seen.lit = true; toast('✨ 네온전구에 불이 켜졌어요!'); }
+          if (firstLight) toast('✨ 네온전구에 불이 켜졌어요!');
         } else toast('불빛이 보이지 않아요. 더 여러 번 문질러 볼까요?');
       }, reducedMotion.matches ? 0 : 420);
       charge = 0; discharged = true;

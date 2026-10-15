@@ -75,11 +75,12 @@ function stepMotor(dt) {
   if (!on) omega *= Math.exp(-dt * 1.2);
   angle += omega * dt;
   turns += Math.abs(omega * dt) / (2 * Math.PI);
-  if (on && turns > 1.2) {
-    if (!seen.spin) { seen.spin = true; toast('🌀 코일이 회전해요!'); }
+  if (on && turns > 1 && !seen.spin) { seen.spin = true; toast('🌀 코일이 회전해요!'); }
+  // 빠르게 돌던 방향이 반대로 바뀌면 회전 방향을 비교한 것으로 봐요.
+  if (on && Math.abs(omega) > 1) {
     const sign = Math.sign(omega);
-    if (lastSign && sign && sign !== lastSign && !seen.reversed) { seen.reversed = true; toast('↺ 회전 방향이 바뀌었어요'); }
-    if (sign) lastSign = sign;
+    if (lastSign && sign !== lastSign && !seen.reversed) { seen.reversed = true; toast('↺ 회전 방향이 바뀌었어요'); }
+    lastSign = sign;
   }
 }
 function paintMotor() {
