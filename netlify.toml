@@ -9,3 +9,8 @@
   from = "/simulations/friction-electricity"
   to = "/simulations/friction-electricity/"
   status = 301
+
+[[redirects]]
+  from = "/simulations/electrostatic-induction"
+  to = "/simulations/electrostatic-induction/"
+  status = 301
