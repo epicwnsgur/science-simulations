@@ -158,10 +158,10 @@ function frame(now) {
   if (!flow || flow.stage === 'observe') {
     paint(dt);
     flow?.update(checklist([
-      ['과정 2: 처음 상태에서 그네 관찰하기', seen.first],
-      ['과정 3: 전류의 방향을 바꾸어 관찰하기', seen.reversed],
-      ['과정 4: 자석의 극을 바꾸어 관찰하기', seen.flipped],
-      ['과정 5: 전압을 바꾸어 움직이는 정도 비교하기', seen.voltage],
+      ['과정 2: 처음 상태에서 그네 관찰하기', seen.first, '‘스위치 누르고 있기’를 눌러 움직이는 방향을 봐요'],
+      ['과정 3: 전류의 방향을 바꾸어 관찰하기', seen.reversed, '‘전류의 방향 바꾸기’ 뒤 스위치를 눌러요'],
+      ['과정 4: 자석의 극을 바꾸어 관찰하기', seen.flipped, '‘자석의 N극과 S극 바꾸기’ 뒤 스위치를 눌러요'],
+      ['과정 5: 전압을 바꾸어 움직이는 정도 비교하기', seen.voltage, '전압을 바꾸어 두 번 이상 스위치를 눌러요'],
     ]));
   }
   requestAnimationFrame(frame);

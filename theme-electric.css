@@ -122,8 +122,12 @@ aside{color:var(--ink)}
 .mission p{color:var(--muted)}
 .answers button{background:#0a1029;border-color:var(--line-2);color:#cfe6ff}
 .answers button:hover{border-color:var(--current)}
-.answers button.chosen{background:#3a1420;border-color:#ff6b7a;color:#ffd1d6}
-.answers button.right{background:#0f3b2a;border-color:var(--ok);color:#c9ffe0;box-shadow:0 0 12px #5dff9a44}
+/* 고른 보기: 옳으면 초록색, 틀리면 붉은색 */
+.answers button.chosen{border-width:2px}
+.answers button.chosen.wrong{background:#3a1420;border-color:#ff6b7a;color:#ffd1d6}
+.answers button.chosen.right{background:#0f3b2a;border-color:var(--ok);color:#c9ffe0;box-shadow:0 0 14px #5dff9a55}
+.mission p.right{color:#7dffb0!important;font-weight:600}
+.mission p.wrong{color:#ff9aa6!important}
 .vocabulary{border-top-color:var(--line)}
 .term-buttons button{background:#0a1029;border-color:var(--line-2);color:#cfe6ff}
 .term-buttons button.active{background:#0d2a4d;border-color:var(--current);color:#fff;box-shadow:var(--glow-c)}
@@ -144,3 +148,44 @@ aside{color:var(--ink)}
 
 @media(prefers-reduced-motion:reduce){header::after,.toast.show,.stage.flash::after{animation:none}}
 @media(max-width:480px){.poe-steps li>span{width:18px;height:18px}}
+
+/* 글자 수 안내 */
+.char-count{margin:6px 0 0;font-size:12px;color:var(--volt);text-align:right}
+.char-count.enough{color:var(--ok)}
+
+/* 관찰하기 단계: 왼쪽 실험 순서 안내 */
+body[data-poe=observe] main{max-width:1640px}
+.observe-body{display:grid;grid-template-columns:270px minmax(0,1fr);gap:24px;align-items:start}
+.step-guide{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow:auto;padding:20px 18px;border-radius:12px;background:linear-gradient(180deg,#132050,#0c1433);border:1px solid var(--line-2);box-shadow:0 0 0 1px #38e1ff22,0 10px 30px #0008}
+.step-guide[hidden]{display:none}
+.guide-kicker{margin:0 0 12px;font-size:15px;font-weight:700;color:#fff}
+.guide-progress{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.guide-bar{flex:1;height:8px;border-radius:8px;background:#0a1029;border:1px solid var(--line);overflow:hidden}
+.guide-bar span{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--current),var(--volt));box-shadow:0 0 10px #38e1ffaa;transition:width .5s}
+.guide-count{font-size:13px;color:var(--volt);font-variant-numeric:tabular-nums}
+.guide-steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;position:relative}
+.guide-steps li{display:flex;gap:10px;align-items:flex-start;padding:10px 10px;border-radius:10px;border:1px solid transparent;color:var(--muted);transition:background .3s,border-color .3s}
+.guide-num{flex:0 0 26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:700;background:#0a1029;border:1px solid var(--line-2);color:var(--muted)}
+.guide-steps b{display:block;font-size:13px;line-height:1.5;font-weight:600}
+.guide-steps small{display:block;font-size:12px;line-height:1.6;margin-top:3px;color:var(--faint)}
+.guide-steps li.done{opacity:.75}
+.guide-steps li.done b{text-decoration:line-through;text-decoration-color:#5dff9a88}
+.guide-steps li.done .guide-num{background:#0f3b2a;border-color:var(--ok);color:var(--ok)}
+.guide-steps li.current{background:#16264f;border-color:var(--volt);color:#fff;box-shadow:0 0 0 1px #ffd23f55,0 0 18px #ffd23f33}
+.guide-steps li.current .guide-num{background:var(--volt);border-color:var(--volt);color:#2a1600;animation:guide-pulse 1.6s ease-in-out infinite}
+.guide-steps li.current small{color:#cfe6ff}
+.guide-steps .guide-now{display:inline-block!important;margin:4px 0 2px;padding:1px 8px;border-radius:10px;background:var(--volt);color:#2a1600!important;font-weight:700;font-size:11px}
+@keyframes guide-pulse{0%,100%{box-shadow:0 0 0 0 #ffd23f88}50%{box-shadow:0 0 0 7px #ffd23f00}}
+.step-guide.advance{animation:guide-advance .7s ease-out}
+@keyframes guide-advance{0%{box-shadow:0 0 0 2px var(--ok),0 0 30px #5dff9a88}100%{box-shadow:0 0 0 1px #38e1ff22,0 10px 30px #0008}}
+/* 좁은 화면에서는 실험 위에 가로로 보여 줘요. */
+@media(max-width:1359px){
+  body[data-poe=observe] main{max-width:1280px}
+  .observe-body{grid-template-columns:1fr;gap:16px}
+  .step-guide{position:relative;top:0;max-height:none}
+  .guide-steps{flex-direction:row;flex-wrap:wrap}
+  .guide-steps li{flex:1 1 180px}
+  .guide-steps li.todo small:not(.guide-now){display:none}
+}
+@media(max-width:600px){.guide-steps li{flex:1 1 100%}.guide-steps li.done small{display:none}}
+@media(prefers-reduced-motion:reduce){.guide-steps li.current .guide-num,.step-guide.advance{animation:none}}

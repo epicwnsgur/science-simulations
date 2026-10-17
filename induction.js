@@ -3,7 +3,7 @@ import './poe.css';
 import './lab.css';
 import './induction.css';
 import './theme-electric.css';
-import { FX_DEFS, toast, burst } from './src/lab-shell.js';
+import { FX_DEFS, toast, burst, markAnswer, checklist } from './src/lab-shell.js';
 import { setupPOEFlow } from './src/poe-flow.js';
 import {
   SPOON_OBJECTS, SCOPE_OBJECTS, RUB_LEVELS, scopeCharge, closeness, segmentDistance, clamp,
@@ -361,14 +361,12 @@ function setText(selector, text) { const el = $(selector); if (el.textContent !=
 function setHTML(selector, html) { const el = $(selector); if (el.dataset.html !== html) { el.innerHTML = html; el.dataset.html = html; } }
 function progress() {
   const steps = [
-    ['(−)전하를 띤 빨대로 숟가락 움직이기', seen.spoonMinus],
-    ['(+)전하를 띤 장갑으로 숟가락 움직이기', seen.spoonPlus],
-    ['검전기: 2~3번 문지른 물체 가까이 하기', seen.levels.has(1)],
-    ['검전기: 10번 이상 문지른 물체 가까이 하기', seen.levels.has(2)],
+    ['(−)전하를 띤 빨대로 숟가락 움직이기', seen.spoonMinus, '‘쇠숟가락 움직이기’ 탭 → (−)빨대를 손잡이 끝에 가까이'],
+    ['(+)전하를 띤 장갑으로 숟가락 움직이기', seen.spoonPlus, '(+)장갑을 고르고 가까이 가져가요'],
+    ['검전기: 2~3번 문지른 물체 가까이 하기', seen.levels.has(1), '‘검전기 관찰하기’ 탭 → ‘2~3번 문지름’ → 가까이'],
+    ['검전기: 10번 이상 문지른 물체 가까이 하기', seen.levels.has(2), '‘10번 이상 문지름’으로 바꾸어 비교해요'],
   ];
-  const ready = steps.every(([, done]) => done);
-  const next = steps.find(([, done]) => !done);
-  return { ready, message: ready ? '네 가지 관찰을 모두 해 보았어요. 직접 본 결과를 기록해 주세요.' : `관찰 ${steps.filter(([, d]) => d).length}/4 · 다음: ${next[0]}` };
+  return checklist(steps);
 }
 function card(name, o, note) {
   return `<div class="charge-card"><div><strong>${name}</strong><span class="charge-badge">${o.plus === o.minus ? '중성' : o.plus > o.minus ? '(+) 많음' : '(−) 많음'}</span></div><div class="charge-amount"><span class="positive-text">+ ${o.plus}</span><span class="negative-text">− ${o.minus}</span></div><small>${note ?? chargeName(o)}</small></div>`;
@@ -485,12 +483,12 @@ document.querySelectorAll('[data-scope]').forEach(b => b.onclick = () => { scope
 // 문지른 정도만 바꾸면 대전체는 그 자리에 두고, 금속 속 전자가 새 상태로 이동하는 모습을 보여 줍니다.
 document.querySelectorAll('[data-rub]').forEach(b => b.onclick = () => { rubLevel = +b.dataset.rub; renderControls(); });
 document.querySelectorAll('[data-q1]').forEach(b => b.onclick = () => {
-  document.querySelectorAll('[data-q1]').forEach(v => v.classList.toggle('chosen', v === b));
-  $('#feedback-1').textContent = b.dataset.q1 === 'other' ? '맞아요! 가까운 쪽은 대전체와 다른 종류, 먼 쪽은 같은 종류의 전하가 유도돼요.' : '다시 생각해 볼까요? 빨대와 장갑을 가까이 했을 때 손잡이 끝의 전하 수를 비교해 보세요.';
+  const right = b.dataset.q1 === 'other';
+  markAnswer([...document.querySelectorAll('[data-q1]')], b, right, $('#feedback-1'), right ? '맞아요! 가까운 쪽은 대전체와 다른 종류, 먼 쪽은 같은 종류의 전하가 유도돼요.' : '다시 생각해 볼까요? 빨대와 장갑을 가까이 했을 때 손잡이 끝의 전하 수를 비교해 보세요.');
 });
 document.querySelectorAll('[data-q2]').forEach(b => b.onclick = () => {
-  document.querySelectorAll('[data-q2]').forEach(v => v.classList.toggle('chosen', v === b));
-  $('#feedback-2').textContent = b.dataset.q2 === 'more' ? '맞아요! 대전된 전하의 양이 많을수록 더 많은 전자가 이동해 금속박이 더 많이 벌어져요.' : '다시 생각해 볼까요? 문지른 횟수와 거리를 바꾸었을 때 금속박이 벌어진 정도를 떠올려 보세요.';
+  const right = b.dataset.q2 === 'more';
+  markAnswer([...document.querySelectorAll('[data-q2]')], b, right, $('#feedback-2'), right ? '맞아요! 대전된 전하의 양이 많을수록 더 많은 전자가 이동해 금속박이 더 많이 벌어져요.' : '다시 생각해 볼까요? 문지른 횟수와 거리를 바꾸었을 때 금속박이 벌어진 정도를 떠올려 보세요.');
 });
 document.querySelectorAll('[data-term]').forEach(b => b.onclick = () => {
   document.querySelectorAll('[data-term]').forEach(v => v.classList.toggle('active', v === b));
@@ -543,7 +541,8 @@ flow = setupPOEFlow({
     show = false; $('#show-charges').checked = false;
     seen.spoonMinus = false; seen.spoonPlus = false; seen.levels.clear();
     spoonKey = 'straw'; scopeKey = 'straw'; rubLevel = 1;
-    document.querySelectorAll('[data-q1],[data-q2]').forEach(b => b.classList.remove('chosen'));
+    document.querySelectorAll('[data-q1],[data-q2]').forEach(b => b.classList.remove('chosen', 'right', 'wrong'));
+    ['#feedback-1', '#feedback-2'].forEach(s => $(s).classList.remove('right', 'wrong'));
     $('#feedback-1').textContent = '실험을 떠올리며 골라 보세요.'; $('#feedback-2').textContent = '검전기 활동에서 비교한 결과를 떠올려 보세요.';
     $('[data-term="0"]').click(); setMode('spoon');
   },

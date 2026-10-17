@@ -334,10 +334,10 @@ function frame(now) {
       renderText();
     } else { followTool(now); stepSpoon(dt); paintSpoon(t); }
     flow?.update(checklist([
-      ['풍선을 털에 문지르기', seen.rubbed],
-      ['문지른 풍선을 털 가까이에서 들어 올리기', seen.lifted],
-      ['숟가락 ㉯를 숟가락 ㉮에 가까이 하기', seen.repel],
-      ['장갑을 숟가락 ㉮에 가까이 하기', seen.attract],
+      ['풍선을 털에 문지르기', seen.rubbed, '풍선을 끌어 털 위에서 좌우로, 또는 ‘한 번 문지르기’'],
+      ['문지른 풍선을 털 가까이에서 들어 올리기', seen.lifted, '‘풍선 들어 올리기’ 뒤 털끝을 살펴요'],
+      ['숟가락 ㉯를 숟가락 ㉮에 가까이 하기', seen.repel, '‘숟가락으로 힘 관찰하기’ 탭 → 장갑으로 문지르기 → 가까이 가져가기'],
+      ['장갑을 숟가락 ㉮에 가까이 하기', seen.attract, '‘장갑’을 고르고 가까이 가져가요'],
     ]));
   }
   requestAnimationFrame(frame);
