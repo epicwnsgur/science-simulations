@@ -192,10 +192,10 @@ function frame(now) {
     if (mode === 'motor') paintMotor(); else paintSimple();
     paintSpeed();
     flow?.update(checklist([
-      ['전동기에 전류를 흘려 회전 관찰하기', seen.spin],
-      ['전류의 방향이나 자석의 극을 바꾸어 회전 방향 비교하기', seen.reversed],
-      ['간이 전동기: 반만 벗긴 코일 회전시키기', seen.simpleSpin],
-      ['간이 전동기: 양쪽 모두 벗긴 코일과 비교하기', seen.fullStuck],
+      ['전동기에 전류를 흘려 회전 관찰하기', seen.spin, '‘전동기의 원리’ 탭 → ‘전류 흘리기’'],
+      ['전류의 방향이나 자석의 극을 바꾸어 회전 방향 비교하기', seen.reversed, '돌고 있을 때 ‘전류의 방향 바꾸기’나 ‘자석의 극 바꾸기’'],
+      ['간이 전동기: 반만 벗긴 코일 회전시키기', seen.simpleSpin, '‘간이 전동기 만들기’ 탭 → 전류 흘리기 → 코일 살짝 밀기'],
+      ['간이 전동기: 양쪽 모두 벗긴 코일과 비교하기', seen.fullStuck, '‘양쪽 모두 완전히 벗김’으로 바꾸고 코일을 밀어 봐요'],
     ]));
   }
   requestAnimationFrame(frame);

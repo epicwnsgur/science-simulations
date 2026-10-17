@@ -34,18 +34,24 @@ export function buildLab(cfg) {
   });
   $$('[data-quiz]').forEach(b => b.onclick = () => {
     const n = +b.dataset.quiz, q = cfg.quiz[n];
-    $$(`[data-quiz="${n}"]`).forEach(v => v.classList.toggle('chosen', v === b));
     const right = b.dataset.choice === q.answer;
-    b.classList.toggle('right', right);
-    $(`#quiz-feedback-${n}`).textContent = right ? q.right : q.wrong;
+    markAnswer($$(`[data-quiz="${n}"]`), b, right, $(`#quiz-feedback-${n}`), right ? q.right : q.wrong);
   });
   const resetQuiz = () => {
-    $$('[data-quiz]').forEach(b => b.classList.remove('chosen', 'right'));
-    cfg.quiz.forEach((q, n) => { $(`#quiz-feedback-${n}`).textContent = q.hint; });
+    $$('[data-quiz]').forEach(b => b.classList.remove('chosen', 'right', 'wrong'));
+    cfg.quiz.forEach((q, n) => { const f = $(`#quiz-feedback-${n}`); f.textContent = q.hint; f.classList.remove('right', 'wrong'); });
     $('[data-term="0"]').click();
   };
   const selectTab = id => cfg.tabs.forEach(t => $(`#tab-${t.id}`).setAttribute('aria-selected', t.id === id));
   return { resetQuiz, selectTab };
+}
+
+// 스스로 평가: 고른 보기를 옳으면 초록색(right), 틀리면 붉은색(wrong)으로 표시하고 피드백 글도 같은 색으로 보여 줘요.
+export function markAnswer(buttons, chosen, right, feedback, text) {
+  buttons.forEach(v => v.classList.remove('chosen', 'right', 'wrong'));
+  chosen.classList.add('chosen', right ? 'right' : 'wrong');
+  feedback.textContent = (right ? '⭕ ' : '❌ ') + text;
+  feedback.classList.toggle('right', right); feedback.classList.toggle('wrong', !right);
 }
 
 // 관찰 단계 체크리스트. steps: [[이름, 완료 여부], ...]
@@ -55,6 +61,8 @@ export function checklist(steps) {
   return {
     ready: done === steps.length,
     message: done === steps.length ? `${steps.length}가지 관찰을 모두 해 보았어요. 직접 본 결과를 기록해 주세요.` : `관찰 ${done}/${steps.length} · 다음: ${next[0]}`,
+    // 왼쪽 실험 순서 안내에 쓰는 단계 목록: [이름, 완료 여부, 하는 방법]
+    steps: steps.map(([label, isDone, hint]) => ({ label, done: !!isDone, hint: hint ?? '' })),
   };
 }
 

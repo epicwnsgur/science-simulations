@@ -209,10 +209,10 @@ function frame(now) {
     paint(dt);
     if (mode === 'magnet' && !seen.magnet && (magnetTime += dt) > 1.5) { seen.magnet = true; toast('🧲 막대자석 주위 나침반을 관찰했어요'); }
     flow?.update(checklist([
-      ['막대자석 주위 나침반 관찰하기', seen.magnet],
-      ['코일에 전류를 흘려 나침반 관찰하기', seen.current],
-      ['전류의 방향을 바꾸어 관찰하기', seen.reversed],
-      ['전류의 세기를 바꾸어 관찰하기', seen.stronger],
+      ['막대자석 주위 나침반 관찰하기', seen.magnet, '‘막대자석 주위’ 탭에서 바늘의 N극(빨강)을 살펴요'],
+      ['코일에 전류를 흘려 나침반 관찰하기', seen.current, '‘코일 주위’ 탭 → 스위치를 누르고 있어요'],
+      ['전류의 방향을 바꾸어 관찰하기', seen.reversed, '‘전류 방향 바꾸기’ 뒤 다시 스위치를 눌러요'],
+      ['전류의 세기를 바꾸어 관찰하기', seen.stronger, '전류의 세기를 바꾸고 다시 스위치를 눌러요'],
     ]));
   }
   requestAnimationFrame(frame);

@@ -1,4 +1,5 @@
 const $ = selector => document.querySelector(selector);
+export const MIN_CHARS = 20;
 
 // 예상하기 → 관찰하기 → 설명하기 학습 흐름. 실험 내용은 config로 받습니다.
 // 관찰 조건(progress)은 실험 쪽에서 알려 주며, 이 모듈은 기록과 화면 전환만 맡습니다.
@@ -31,7 +32,7 @@ export function setupPOEFlow(config) {
           ${predict.choices.map((label, i) => `<label class="prediction-choice"><input type="radio" name="prediction" value="${i}" required><span>${label}</span></label>`).join('')}
         </fieldset>
         <label class="writing-label" for="prediction-reason">2. 그렇게 생각한 까닭은 무엇인가요?</label>
-        <textarea id="prediction-reason" rows="3" maxlength="1200" required placeholder="${predict.placeholder}"></textarea>
+        <textarea id="prediction-reason" rows="3" maxlength="1200" required placeholder="${predict.placeholder}"></textarea><p class="char-count" data-for="prediction-reason" aria-live="polite"></p>
         <p class="poe-hint">예상은 맞고 틀림을 채점하지 않아요. 실험한 뒤 내 생각과 비교해 볼 거예요.</p>
         <button class="primary" id="start-observation" type="submit">예상 저장하고 실험하기 →</button>
       </form>
@@ -39,21 +40,30 @@ export function setupPOEFlow(config) {
     <section id="observe-panel" aria-labelledby="observe-title" hidden>
       <div class="poe-section-heading"><div><p class="poe-kicker">직접 확인해 봐요</p><h2 id="observe-title" tabindex="-1">${observe.title}</h2></div><button class="secondary" id="back-predict">← 내 예상 보기</button></div>
       <details class="prediction-reminder"><summary>내가 남긴 예상</summary><p data-prediction></p><p data-reason></p></details>
+      <div class="observe-body">
+      <aside id="step-guide" class="step-guide" aria-labelledby="step-guide-title">
+        <p class="guide-kicker" id="step-guide-title">🧭 실험 순서 안내</p>
+        <div class="guide-progress"><div class="guide-bar"><span></span></div><b class="guide-count"></b></div>
+        <ol class="guide-steps"></ol>
+      </aside>
+      <div class="observe-main">
       <div id="simulation-mount"></div>
       <form id="observation-form" class="poe-record">
         <h3>실제로 무엇을 보았나요?</h3>
         <p id="observation-progress" role="status"></p>
         <label class="writing-label" for="observation-record">${observe.recordLabel}</label>
-        <textarea id="observation-record" rows="3" maxlength="1500" required placeholder="${observe.placeholder}"></textarea>
+        <textarea id="observation-record" rows="3" maxlength="1500" required placeholder="${observe.placeholder}"></textarea><p class="char-count" data-for="observation-record" aria-live="polite"></p>
         <div class="poe-actions"><p class="poe-hint">전하 보기는 눈에 보이지 않는 전하를 나타낸 모형이에요.</p><button class="primary" id="to-explanation" disabled>관찰 저장하고 설명하기 →</button></div>
       </form>
+      </div>
+      </div>
     </section>
     <section id="explain-panel" class="poe-panel explanation-panel" aria-labelledby="explain-title" hidden>
       <p class="poe-kicker">예상과 관찰을 연결해 봐요</p><h2 id="explain-title" tabindex="-1">내 예상과 실제 관찰은 같았나요?</h2>
       <div class="poe-comparison"><article><h3>나의 처음 예상</h3><p data-prediction></p><p data-reason></p></article><article><h3>내가 관찰한 결과</h3><p id="saved-observation"></p></article></div>
       <form id="explanation-form" class="poe-form">
         <label class="writing-label" for="explanation-record">${explain.question}</label>
-        <textarea id="explanation-record" rows="4" maxlength="1800" required placeholder="직접 본 움직임과 전하 표시의 변화를 근거로 내 말로 설명해 보세요."></textarea>
+        <textarea id="explanation-record" rows="4" maxlength="1800" required placeholder="직접 본 움직임과 전하 표시의 변화를 근거로 내 말로 설명해 보세요."></textarea><p class="char-count" data-for="explanation-record" aria-live="polite"></p>
         <div class="poe-actions"><button class="secondary" id="return-observation" type="button">← 다시 실험하며 확인하기</button><button class="primary" id="reveal-concepts">내 설명 저장하고 개념 확인하기 →</button></div>
       </form>
       <section id="concept-review" hidden aria-labelledby="concept-title">
@@ -96,13 +106,45 @@ export function setupPOEFlow(config) {
     lastProgress = progress;
     $('#to-explanation').disabled = !progress.ready;
     $('#observation-progress').textContent = progress.message;
+    renderGuide(progress);
+  }
+  // 왼쪽 실험 순서 안내: 끝낸 단계는 ✓, 지금 할 단계는 강조, 모두 끝나면 마지막 ‘기록하기’ 단계를 강조해요.
+  let guideDone = -1;
+  function renderGuide(progress) {
+    const steps = progress.steps ?? [];
+    const guide = $('#step-guide');
+    guide.hidden = !steps.length;
+    if (!steps.length) return;
+    const done = steps.filter(v => v.done).length, current = steps.findIndex(v => !v.done);
+    const items = steps.map((v, i) => {
+      const state = v.done ? 'done' : i === current ? 'current' : 'todo';
+      return `<li class="${state}"${state === 'current' ? ' aria-current="step"' : ''}><span class="guide-num">${v.done ? '✓' : i + 1}</span><div><b>${v.label}</b>${state === 'current' ? `<small class="guide-now">지금 할 일</small>` : ''}${v.hint && !v.done ? `<small>${v.hint}</small>` : ''}</div></li>`;
+    });
+    const allDone = current === -1;
+    items.push(`<li class="${allDone ? 'current final' : 'todo final'}"${allDone ? ' aria-current="step"' : ''}><span class="guide-num">✎</span><div><b>관찰 결과 기록하기</b>${allDone ? '<small class="guide-now">지금 할 일</small>' : ''}<small>아래에 본 것을 적고 ‘관찰 저장하고 설명하기’를 눌러요</small></div></li>`);
+    guide.querySelector('.guide-steps').innerHTML = items.join('');
+    guide.querySelector('.guide-bar span').style.width = `${done / steps.length * 100}%`;
+    guide.querySelector('.guide-count').textContent = `${done} / ${steps.length}`;
+    if (done > guideDone && guideDone >= 0) { guide.classList.remove('advance'); void guide.offsetWidth; guide.classList.add('advance'); }
+    guideDone = done;
+  }
+  // 예상·관찰·설명은 공백을 빼고 최소 MIN_CHARS자 이상 써야 저장하고 다음 단계로 넘어갈 수 있어요.
+  const countChars = el => el.value.replace(/\s/g, '').length;
+  function showCount(el) {
+    const n = countChars(el), out = document.querySelector(`.char-count[data-for="${el.id}"]`);
+    if (!out) return;
+    out.textContent = n >= MIN_CHARS ? `✔ ${n}자 · 좋아요!` : `${n} / ${MIN_CHARS}자 (공백 제외) · ${MIN_CHARS - n}자 더 써 주세요`;
+    out.classList.toggle('enough', n >= MIN_CHARS);
   }
   function requireWriting(id) {
-    const el = $(id);
-    el.setCustomValidity(el.value.trim() ? '' : '내 생각을 한 문장으로 남겨 주세요.');
+    const el = $(id), n = countChars(el);
+    el.setCustomValidity(n >= MIN_CHARS ? '' : `내 생각을 공백을 빼고 ${MIN_CHARS}자 이상 써 주세요. (지금 ${n}자)`);
     return el.reportValidity();
   }
-  document.querySelectorAll('.poe-form textarea, .poe-record textarea').forEach(el => el.addEventListener('input', () => el.setCustomValidity('')));
+  document.querySelectorAll('.poe-form textarea, .poe-record textarea').forEach(el => {
+    el.addEventListener('input', () => { el.setCustomValidity(''); showCount(el); });
+    showCount(el);
+  });
   $('#prediction-form').onsubmit = e => {
     e.preventDefault(); if (!requireWriting('#prediction-reason')) return;
     if (!prediction) prediction = { choice: $('input[name="prediction"]:checked').nextElementSibling.textContent, reason: $('#prediction-reason').value.trim() };
@@ -132,6 +174,7 @@ export function setupPOEFlow(config) {
     $('#prediction-form fieldset').disabled = false; $('#prediction-reason').readOnly = false;
     $('#concept-review').hidden = true; $('#start-observation').textContent = '예상 저장하고 실험하기 →'; $('#reveal-concepts').textContent = '내 설명 저장하고 개념 확인하기 →';
     $('.prediction-scene .poe-hint').textContent = '아직 실험하지 않고, 내 생각을 먼저 남겨 보세요.';
+    document.querySelectorAll('.poe-form textarea, .poe-record textarea').forEach(showCount);
     copyPrediction(); $('#saved-observation').textContent = ''; config.onRestart?.(); changeStage('predict');
   };
   document.body.dataset.poe = stage;
