@@ -1,6 +1,7 @@
 import './style.css';
 import './poe.css';
 import './lab.css';
+import './theme-electric.css';
 import { setupPOEFlow } from './src/poe-flow.js';
 import { $, $$, setText, setHTML, buildLab, checklist, toast, burst, PathFlow, ELECTRON_GLYPH, reducedMotion } from './src/lab-shell.js';
 import { CIRCUITS, solve } from './src/circuit-model.js';
@@ -155,7 +156,7 @@ function renderControls() {
 function burstBulbs() { for (const b of BULBS[mode]) burst($('#fx'), b.x, b.y, '#ffe27a', 10); }
 function toggle(id) {
   closed[mode][id] = !closed[mode][id];
-  if (closed[mode][id]) burstBulbs();
+  if (closed[mode][id]) { burstBulbs(); const sw = SWITCHES[mode].find(v => v.id === id); burst($('#fx'), sw.x, sw.y, '#9fe8ff', 8); }
   renderControls();
 }
 function setMode(next) {

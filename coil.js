@@ -1,6 +1,7 @@
 import './style.css';
 import './poe.css';
 import './lab.css';
+import './theme-electric.css';
 import { setupPOEFlow } from './src/poe-flow.js';
 import { $, $$, setText, setHTML, buildLab, checklist, toast, reducedMotion } from './src/lab-shell.js';
 import { EARTH, coilField, magnetField, add, needleDeg, trace, toPath } from './src/magnet-model.js';
@@ -27,7 +28,7 @@ const scene = `
 <text x="664" y="80" font-size="11" class="muted">북 ↑</text>
 <g id="field-lines" opacity="0"></g>
 <g id="magnet-group" hidden><rect x="${MAGNET.x - MAGNET.half - 6}" y="${MAGNET.y - 18}" width="${MAGNET.half + 6}" height="36" rx="4" fill="#e04848"/><rect x="${MAGNET.x}" y="${MAGNET.y - 18}" width="${MAGNET.half + 6}" height="36" rx="4" fill="#3a6fd8"/><text x="${MAGNET.x - 46}" y="${MAGNET.y + 7}" font-size="20" font-weight="800" text-anchor="middle" style="fill:#fff">N</text><text x="${MAGNET.x + 46}" y="${MAGNET.y + 7}" font-size="20" font-weight="800" text-anchor="middle" style="fill:#fff">S</text></g>
-<g id="coil-group"><ellipse cx="${COIL.x}" cy="${COIL.y}" rx="12" ry="${COIL.r + 10}" fill="none" stroke="url(#copper)" stroke-width="9"/><ellipse id="coil-glow" cx="${COIL.x}" cy="${COIL.y}" rx="12" ry="${COIL.r + 10}" fill="none" stroke="#ffb36b" stroke-width="10" opacity="0" filter="url(#glow-strong)"/><g id="current-arrow" opacity="0"><path id="current-path" stroke="#ff6b6b" stroke-width="4" marker-end="url(#arrow-head)"/><text x="${COIL.x + 30}" y="${COIL.y + 4}" font-size="13" style="fill:#ff9a9a">전류</text></g><text x="${COIL.x}" y="${COIL.y + COIL.r + 34}" text-anchor="middle" font-size="12" class="muted">코일</text></g>
+<g id="coil-group"><ellipse cx="${COIL.x}" cy="${COIL.y}" rx="12" ry="${COIL.r + 10}" fill="none" stroke="url(#copper)" stroke-width="9"/><ellipse id="coil-glow" cx="${COIL.x}" cy="${COIL.y}" rx="12" ry="${COIL.r + 10}" fill="none" stroke="#ffb36b" stroke-width="10" opacity="0" filter="url(#glow-strong)"/><g id="current-arrow" opacity="0"><path id="current-path" stroke="#ff6b6b" stroke-width="4" marker-end="url(#arrow-head)"/><text x="${COIL.x + 38}" y="${COIL.y + 5}" font-size="13" style="fill:#ff9a9a">전류</text></g><text x="${COIL.x}" y="${COIL.y + COIL.r + 34}" text-anchor="middle" font-size="12" class="muted">코일</text></g>
 <g id="compasses">${RING.map(([x, y], i) => compassSVG(`c${i}`, x, y)).join('')}</g>
 ${compassSVG('probe', 700, 360, true)}
 <text x="700" y="404" text-anchor="middle" font-size="11" style="fill:#ffd166">끌어서 옮겨 보세요</text>
@@ -120,7 +121,9 @@ function paint(dt) {
     }
     $('#coil-glow').setAttribute('opacity', on ? (.35 + .2 * level).toFixed(2) : 0);
     $('#current-arrow').setAttribute('opacity', on ? 1 : 0);
-    $('#current-path').setAttribute('d', direction > 0 ? `M${COIL.x + 22} ${COIL.y + 30} V${COIL.y - 30}` : `M${COIL.x + 22} ${COIL.y - 30} V${COIL.y + 30}`);
+    // 위에서 본 모습: direction > 0이면 위쪽 도선에서 판 위로 나온 전류가 판 위의 코일을 따라 아래쪽 도선으로 들어가요.
+    // 자기장 모형(coilField)의 부호와 같은 방향이에요(오른손 법칙). 그래서 화살표는 화면 아래쪽을 향해요.
+    $('#current-path').setAttribute('d', direction > 0 ? `M${COIL.x + 26} ${COIL.y - 30} V${COIL.y + 30}` : `M${COIL.x + 26} ${COIL.y + 30} V${COIL.y - 30}`);
     setText('#supply-v', on ? ['1.0', '3.0', '5.0'][level] : '0.0');
   }
   paintCompasses(dt);
@@ -169,12 +172,12 @@ function renderText() {
   } else {
     setText('#guide', '스위치를 누르는 동안 코일 주위 나침반 바늘이 어떻게 움직이는지 관찰해 보세요.');
     setText('#subguide', '전류의 방향과 세기를 바꾸어 가며 비교해요. 관찰한 뒤에는 바로 손을 떼요.');
-    setText('#stage-state', `전류 ${on ? '흐름' : '흐르지 않음'} · ${direction > 0 ? '위쪽' : '아래쪽'} 방향 · ${LEVELS[level].label}`);
+    setText('#stage-state', `전류 ${on ? '흐름' : '흐르지 않음'} · ${direction > 0 ? '아래쪽' : '위쪽'} 방향 · ${LEVELS[level].label}`);
     setText('#note-title', on ? '나침반 바늘이 가리키는 방향을 살펴보세요' : '스위치를 눌러 전류를 흘려 보세요');
     setText('#note-text', '258쪽 막대자석 주위의 나침반과 비교해 보세요. 코일의 어느 쪽이 N극처럼 보이나요?');
     setText('#discovery', '전류가 흐르지 않을 때 나침반 바늘은 북쪽(화면 위)을 가리켜요.');
   }
-  setHTML('#readout', `<div class="readout-grid"><div class="readout-card"><strong>${mode === 'magnet' ? '관찰 대상' : '전류'}</strong><b>${mode === 'magnet' ? '막대자석' : on ? '흐름' : '멈춤'}</b><small>${mode === 'magnet' ? 'N극 왼쪽 · S극 오른쪽' : `${direction > 0 ? '위쪽' : '아래쪽'} 방향`}</small></div><div class="readout-card"><strong>전류의 세기</strong><b>${mode === 'magnet' ? '–' : ['약', '중', '강'][level]}</b><small>${mode === 'magnet' ? '' : LEVELS[level].label}</small></div></div>`);
+  setHTML('#readout', `<div class="readout-grid"><div class="readout-card"><strong>${mode === 'magnet' ? '관찰 대상' : '전류'}</strong><b>${mode === 'magnet' ? '막대자석' : on ? '흐름' : '멈춤'}</b><small>${mode === 'magnet' ? 'N극 왼쪽 · S극 오른쪽' : `${direction > 0 ? '아래쪽' : '위쪽'} 방향`}</small></div><div class="readout-card"><strong>전류의 세기</strong><b>${mode === 'magnet' ? '–' : ['약', '중', '강'][level]}</b><small>${mode === 'magnet' ? '' : LEVELS[level].label}</small></div></div>`);
   setText('#model-note', '나침반 바늘은 지구 자기장과 자석(코일)의 자기장이 합쳐진 방향을 가리켜요. 자기장의 모습은 교과서 그림처럼 선으로 나타냈고, 선 위의 무늬가 흐르는 방향이 자기장의 방향이에요. 바늘이 흔들리는 정도와 선의 모양은 보기 쉽게 나타낸 모형이에요.');
 }
 function setMode(next) {

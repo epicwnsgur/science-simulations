@@ -1,8 +1,9 @@
 import './style.css';
 import './poe.css';
 import './lab.css';
+import './theme-electric.css';
 import { setupPOEFlow } from './src/poe-flow.js';
-import { $, $$, setText, setHTML, buildLab, checklist, toast, burst, PathFlow, ELECTRON_GLYPH, reducedMotion } from './src/lab-shell.js';
+import { $, $$, setText, setHTML, buildLab, checklist, toast, burst, arc, PathFlow, ELECTRON_GLYPH, reducedMotion } from './src/lab-shell.js';
 
 // 교과서 242–243쪽, 지도서 552–557쪽(4차시).
 // 마찰 전기로 네온전구를 순간적으로 켜고, 전지를 연결한 회로와 수로 모형을 비교합니다.
@@ -120,14 +121,14 @@ function paintNeon(now) {
   $('#plate-b').setAttribute('transform', `translate(0 ${off})`);
   $('#lead-b').setAttribute('d', `M${BULB.x + 30} ${BULB.y} C${BULB.x + 50} ${BULB.y + 4} ${tip.x - 10} ${tip.y - 30} ${tip.x} ${tip.y}`);
   $('#lead-tip').setAttribute('cx', tip.x); $('#lead-tip').setAttribute('cy', tip.y);
-  const furShift = motion?.kind === 'rub' ? Math.sin(Math.min(1, (now - motion.start) / motion.duration) * Math.PI) * -(B.x - A.x - 40) : 0;
+  const furShift = motion?.kind === 'rub' ? Math.sin(Math.max(0, Math.min(1, (now - motion.start) / motion.duration)) * Math.PI) * -(B.x - A.x - 40) : 0;
   $('#fur').setAttribute('transform', `translate(${furShift} ${furShift ? -18 : 0})`);
   $('#neon-gas').setAttribute('opacity', (flash * .95).toFixed(2));
   $('#neon-glow').setAttribute('opacity', Math.min(1, flash * 1.3).toFixed(2));
   let html = chargeTokens();
   if (flight && show !== null) {
     const path = $('#discharge-path'), len = path.getTotalLength();
-    const t = Math.min(1, (now - flight.start) / flight.duration);
+    const t = Math.max(0, Math.min(1, (now - flight.start) / flight.duration));
     for (let k = 0; k < flight.count; k++) {
       const u = Math.min(1, Math.max(0, t * 1.4 - k / flight.count * .4));
       const p = path.getPointAtLength(u * len);
@@ -161,7 +162,7 @@ function touch() {
       if (lights) seen.lit = true;
       setTimeout(() => {
         if (lights) {
-          flash = 1; burst($('#neon-fx'), BULB.x, BULB.y, '#ffb36b', 18);
+          flash = 1; burst($('#neon-fx'), BULB.x, BULB.y, '#ffb36b', 18); arc($('#neon-fx'), BULB.x - 6, BULB.y, BULB.x + 6, BULB.y, '#ffb36b');
           if (firstLight) toast('✨ 네온전구에 불이 켜졌어요!');
         } else toast('불빛이 보이지 않아요. 더 여러 번 문질러 볼까요?');
       }, reducedMotion.matches ? 0 : 420);

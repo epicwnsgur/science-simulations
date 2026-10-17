@@ -1,6 +1,7 @@
 import './style.css';
 import './poe.css';
 import './lab.css';
+import './theme-electric.css';
 import { setupPOEFlow } from './src/poe-flow.js';
 import { $, $$, setText, setHTML, buildLab, checklist, toast, burst, PathFlow, ELECTRON_GLYPH, reducedMotion } from './src/lab-shell.js';
 import { WIRES, VOLTAGES, MAX_VOLTAGE, currentMA, MATERIALS, MATERIAL_VOLTAGE, materialCurrentMA, needleAngle } from './src/ohm-model.js';
@@ -165,6 +166,7 @@ function renderControls() {
 }
 function toggleSwitch() {
   closed = !closed; closedTime = 0; warned = false;
+  if (closed) burst($('#fx'), 301, 200, '#ffd166', 8);
   if (closed && mode === 'material') {
     const isNew = !tested.has(material);
     tested.add(material); paintClassify();

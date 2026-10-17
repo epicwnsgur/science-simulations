@@ -78,6 +78,9 @@ export function toast(text) {
   const el = $('#toast'); if (!el) return;
   el.textContent = text; el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
   clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), 2400);
+  // 관찰 하나를 마치면 무대 테두리가 번쩍여요.
+  const stage = el.closest('.stage');
+  if (stage) { stage.classList.remove('flash'); void stage.offsetWidth; stage.classList.add('flash'); }
 }
 
 // 불꽃 튀는 효과: 지정한 SVG 좌표에서 작은 빛 조각이 퍼집니다.
@@ -91,6 +94,25 @@ export function burst(layer, x, y, color = '#ffe27a', count = 14) {
     c.setAttribute('fill', color); c.setAttribute('filter', 'url(#glow)');
     layer.append(c);
     c.animate([{ transform: 'translate(0,0)', opacity: 1 }, { transform: `translate(${Math.cos(a) * d}px,${Math.sin(a) * d}px)`, opacity: 0 }], { duration: 650 + Math.random() * 300, easing: 'cubic-bezier(.2,.7,.3,1)' }).onfinish = () => c.remove();
+  }
+}
+
+// 번개 모양의 순간 방전 선: 두 점 사이에 들쭉날쭉한 빛줄기가 번쩍였다가 사라져요(장식 효과).
+export function arc(layer, x1, y1, x2, y2, color = '#bfefff') {
+  if (reducedMotion.matches || !layer) return;
+  const ns = 'http://www.w3.org/2000/svg', n = 9, dx = x2 - x1, dy = y2 - y1, len = Math.hypot(dx, dy) || 1;
+  for (let k = 0; k < 2; k++) {
+    let d = `M${x1} ${y1}`;
+    for (let i = 1; i < n; i++) {
+      const t = i / n, j = (Math.random() - .5) * len * .18;
+      d += ` L${(x1 + dx * t - dy / len * j).toFixed(1)} ${(y1 + dy * t + dx / len * j).toFixed(1)}`;
+    }
+    d += ` L${x2} ${y2}`;
+    const p = document.createElementNS(ns, 'path');
+    p.setAttribute('d', d); p.setAttribute('fill', 'none'); p.setAttribute('stroke', k ? '#fff' : color);
+    p.setAttribute('stroke-width', k ? 1.2 : 3); p.setAttribute('filter', 'url(#glow)');
+    layer.append(p);
+    p.animate([{ opacity: 1 }, { opacity: .2 }, { opacity: .9 }, { opacity: 0 }], { duration: 420, easing: 'ease-out' }).onfinish = () => p.remove();
   }
 }
 
