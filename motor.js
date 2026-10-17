@@ -1,6 +1,7 @@
 import './style.css';
 import './poe.css';
 import './lab.css';
+import './theme-electric.css';
 import { setupPOEFlow } from './src/poe-flow.js';
 import { $, $$, setText, setHTML, buildLab, checklist, toast, burst, reducedMotion } from './src/lab-shell.js';
 import { motorTorque, simpleMotorContact, simpleMotorTorque } from './src/force-model.js';
@@ -24,7 +25,7 @@ const scene = `
   <g id="field" opacity="0">${[170, 200, 230, 260, 290].map(y => `<path d="M520 ${y} H${300}" stroke="#5fe0ff" stroke-width="2.5" opacity=".7" marker-end="url(#arrow-head)" class="field-flow"/>`).join('')}<text x="410" y="132" text-anchor="middle" font-size="12" style="fill:#5fe0ff">자기장의 방향</text></g>
   <g id="rotor"></g>
   <g id="commutator"></g>
-  <path d="M352 372 V346 M448 372 V346" stroke="#b9bfcc" stroke-width="7" stroke-linecap="round"/>
+  <path d="M352 372 V300 H366 V236 M448 372 V300 H434 V236" stroke="#8f9bc4" stroke-width="3" fill="none"/>
   <g id="battery"><rect x="350" y="372" width="100" height="34" rx="6" fill="#2a3150" stroke="#8f9bc4"/><rect x="356" y="378" width="88" height="22" rx="4" fill="url(#copper)"/><text id="bat-left" x="340" y="396" text-anchor="end" font-size="16" font-weight="700">−</text><text id="bat-right" x="460" y="396" font-size="16" font-weight="700">+</text></g>
   <text x="400" y="430" text-anchor="middle" font-size="12" class="muted">전지와 브러시</text>
   <g id="force-vectors" opacity="0"></g>
@@ -92,8 +93,11 @@ function paintMotor() {
   const flowing = on;
   const dot = (p, out) => `<g transform="translate(${p.x.toFixed(1)} ${p.y.toFixed(1)})"><circle r="15" fill="#1b2340" stroke="${flowing ? '#7dff7a' : '#c46f2c'}" stroke-width="3"/>${flowing ? (out ? '<circle r="4" fill="#7dff7a"/>' : '<path d="M-7 -7 L7 7 M7 -7 L-7 7" stroke="#7dff7a" stroke-width="3"/>') : ''}</g>`;
   const outLeft = current > 0; // 정류 부분 덕분에 왼쪽 변의 전류 방향은 전지 연결 방향으로만 정해져요.
-  $('#rotor').innerHTML = `${flowing ? `<path d="M${L.x} ${L.y} L${R.x} ${R.y}" stroke="#ffb36b" stroke-width="16" opacity=".4" filter="url(#glow-strong)"/>` : ''}<path d="M${L.x} ${L.y} L${R.x} ${R.y}" stroke="url(#copper)" stroke-width="10" stroke-linecap="round"/><circle cx="${C.x}" cy="${C.y}" r="6" fill="#d8dde3"/>${dot(leftEnd, outLeft)}${dot(rightEnd, !outLeft)}`;
-  $('#commutator').innerHTML = `<g transform="translate(${C.x} 330) rotate(${(angle * 180 / Math.PI).toFixed(1)})"><path d="M-14 -3 A14 14 0 0 1 14 -3" stroke="#e8c15a" stroke-width="7" fill="none"/><path d="M-14 3 A14 14 0 0 0 14 3" stroke="#e8c15a" stroke-width="7" fill="none"/></g><path d="M${C.x} 316 V${C.y}" stroke="#8f9bc4" stroke-width="4"/>`;
+  $('#rotor').innerHTML = `${flowing ? `<path d="M${L.x} ${L.y} L${R.x} ${R.y}" stroke="#ffb36b" stroke-width="16" opacity=".4" filter="url(#glow-strong)"/>` : ''}<path d="M${L.x} ${L.y} L${R.x} ${R.y}" stroke="url(#copper)" stroke-width="10" stroke-linecap="round"/>${dot(leftEnd, outLeft)}${dot(rightEnd, !outLeft)}`;
+  // 앞에서 보면 회전축은 코일 가운데의 점이고, 정류 고리(금색)는 축에 붙어 코일과 함께 돌아요.
+  // 양쪽 브러시는 고정되어 있어, 반 바퀴마다 고리의 다른 쪽과 닿으며 코일의 전류 방향을 바꾸어 줘요.
+  const deg = (angle * 180 / Math.PI).toFixed(1);
+  $('#commutator').innerHTML = `<g transform="translate(${C.x} ${C.y}) rotate(${deg})"><path d="M-20 -4 A20 20 0 0 1 20 -4" stroke="#e8c15a" stroke-width="7" fill="none"/><path d="M-20 4 A20 20 0 0 0 20 4" stroke="#e8c15a" stroke-width="7" fill="none"/></g><circle cx="${C.x}" cy="${C.y}" r="6" fill="#d8dde3"/><rect x="${C.x - 34}" y="${C.y - 6}" width="10" height="12" rx="2" fill="#6d7898"/><rect x="${C.x + 24}" y="${C.y - 6}" width="10" height="12" rx="2" fill="#6d7898"/>`;
   const dirL = current * magnet > 0 ? 1 : -1; // +1: 왼쪽 변이 아래로, 오른쪽 변이 위로 힘을 받아요.
   $('#force-vectors').innerHTML = on ? `<path d="M${leftEnd.x} ${leftEnd.y + dirL * 20} v${dirL * 46}" stroke="#ff6b6b" stroke-width="4" marker-end="url(#arrow-head)"/><path d="M${rightEnd.x} ${rightEnd.y - dirL * 20} v${-dirL * 46}" stroke="#ff6b6b" stroke-width="4" marker-end="url(#arrow-head)"/><text x="${leftEnd.x - 24}" y="${leftEnd.y + dirL * 70}" font-size="13" text-anchor="end" style="fill:#ff9a9a">힘</text><text x="${rightEnd.x + 24}" y="${rightEnd.y - dirL * 62}" font-size="13" style="fill:#ff9a9a">힘</text>` : '';
   $('#force-vectors').setAttribute('opacity', show ? 1 : 0);

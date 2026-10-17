@@ -2,6 +2,7 @@ import './style.css';
 import './poe.css';
 import './lab.css';
 import './induction.css';
+import './theme-electric.css';
 import { FX_DEFS, toast, burst } from './src/lab-shell.js';
 import { setupPOEFlow } from './src/poe-flow.js';
 import {
@@ -106,7 +107,7 @@ ${FX_DEFS}
 function charge(p, id) {
   const positive = p.sign > 0, r = positive ? 7 : 5, arm = r * .66;
   const glyph = `M${-arm} 0H${arm}` + (positive ? `M0 ${-arm}V${arm}` : '');
-  return `<g class="charge" data-id="${id ?? p.id}" data-sign="${p.sign}" transform="translate(${p.x.toFixed(1)} ${p.y.toFixed(1)})"><circle r="${r}" fill="${positive ? '#e84444' : '#2787d9'}"/><path d="${glyph}" stroke="#fff" stroke-width="${positive ? 1.8 : 1.5}" stroke-linecap="round" fill="none"/></g>`;
+  return `<g class="charge" data-id="${id ?? p.id}" data-sign="${p.sign}" transform="translate(${p.x.toFixed(1)} ${p.y.toFixed(1)})"><circle r="${r}" fill="${positive ? '#e84444' : '#2f9bff'}"/><path d="${glyph}" stroke="#fff" stroke-width="${positive ? 1.8 : 1.5}" stroke-linecap="round" fill="none"/></g>`;
 }
 function syncLayer(layer, sites) {
   const signature = sites.map(p => `${p.id}:${p.sign}`).join(',');
@@ -498,11 +499,12 @@ document.querySelectorAll('[data-term]').forEach(b => b.onclick = () => {
 
 /* ---------- 학습 흐름 ---------- */
 const illustration = `<svg viewBox="0 0 520 250" role="img" aria-label="바닥에 놓인 쇠숟가락과 손잡이 끝으로 다가가는 빨대">
-  <ellipse cx="230" cy="190" rx="200" ry="14" fill="#554633" opacity=".08"/>
+  <rect width="520" height="250" rx="12" fill="#121a33"/>
+  <ellipse cx="230" cy="190" rx="200" ry="14" fill="#000" opacity=".3"/>
   <g transform="translate(90 170) rotate(0)"><path d="M40 -10 L330 -13 Q348 -13 348 0 Q348 13 330 13 L40 10 Z" fill="url(#p-metal)" stroke="#8c959c"/><ellipse rx="52" ry="34" fill="url(#p-bowl)" stroke="#8c959c"/><circle r="19" fill="#c79a4b" stroke="#7d5a22"/></g>
   <g transform="translate(450 120) rotate(-36.7)"><rect x="0" y="-8" width="200" height="16" rx="8" fill="#f2cf3a" stroke="#c39a14"/></g>
   <path d="M410 120 q14 -30 50 -40" fill="none" stroke="#9aa59a" stroke-dasharray="4 4"/>
-  <text x="360" y="215" font-size="15" fill="#5c6656">쇠숟가락 손잡이 끝</text><text x="455" y="70" font-size="15" fill="#5c6656">빨대</text>
+  <text x="330" y="222" font-size="15" fill="#aab4d6">쇠숟가락 손잡이 끝</text><text x="455" y="62" font-size="15" fill="#aab4d6">빨대</text>
   <defs><linearGradient id="p-metal" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4f6f8"/><stop offset="1" stop-color="#9aa3ab"/></linearGradient><radialGradient id="p-bowl" cx=".4" cy=".35"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#99a2aa"/></radialGradient></defs>
 </svg>`;
 flow = setupPOEFlow({

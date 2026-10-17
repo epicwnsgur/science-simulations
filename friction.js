@@ -1,6 +1,7 @@
 import './style.css';
 import './poe.css';
 import './lab.css';
+import './theme-electric.css';
 import { setupPOEFlow } from './src/poe-flow.js';
 import { $, $$, setText, setHTML, buildLab, checklist, toast, burst, reducedMotion } from './src/lab-shell.js';
 import { charges, MAX_TRANSFER, chargeLabel, interaction, SPOON_TOOLS, SPOON_A_SIGN } from './src/friction-model.js';
@@ -127,7 +128,7 @@ function paintRub(dt, t) {
   flights = flights.filter(f => now - f.start < f.duration);
   let trail = '';
   for (const f of flights) {
-    const k = Math.min(1, (now - f.start) / f.duration), e = k * k * (3 - 2 * k);
+    const k = Math.max(0, Math.min(1, (now - f.start) / f.duration)), e = k * k * (3 - 2 * k);
     const to = { x: pos.x + f.to.x, y: pos.y + f.to.y };
     const x = f.from.x + (to.x - f.from.x) * e, y = f.from.y + (to.y - f.from.y) * e - Math.sin(k * Math.PI) * 26;
     trail += `<path d="M${f.from.x} ${f.from.y} Q${(f.from.x + x) / 2} ${Math.min(f.from.y, y) - 20} ${x.toFixed(1)} ${y.toFixed(1)}" stroke="#5cc8ff" stroke-width="2" opacity="${(1 - k) * .7}" fill="none"/>` + mark(x, y, -1, true);
@@ -254,7 +255,8 @@ function rubOnce() {
 function liftBalloon() { if (!motion) animate([pos, { x: 430, y: 180 }], 900, () => renderControls()); }
 function followMotion(now) {
   if (!motion) return;
-  const k = Math.min(1, (now - motion.start) / motion.duration), n = motion.path.length - 1;
+  // 클릭 직후 프레임의 시각이 시작 시각보다 이를 수 있어 0~1로 제한해요.
+  const k = clamp((now - motion.start) / motion.duration, 0, 1), n = motion.path.length - 1;
   const seg = Math.min(n - 1, Math.floor(k * n)), u = k * n - seg, e = u * u * (3 - 2 * u);
   const a = motion.path[seg], b = motion.path[seg + 1];
   moveBalloon(a.x + (b.x - a.x) * e, a.y + (b.y - a.y) * e, true);
@@ -280,7 +282,7 @@ let toolAnim = null;
 function toolMotion(target) { toolAnim = { from: { ...toolPos }, to: target, start: performance.now(), duration: reducedMotion.matches ? 1 : 900 }; }
 function followTool(now) {
   if (!toolAnim) return;
-  const k = Math.min(1, (now - toolAnim.start) / toolAnim.duration), e = k * k * (3 - 2 * k);
+  const k = Math.max(0, Math.min(1, (now - toolAnim.start) / toolAnim.duration)), e = k * k * (3 - 2 * k);
   placeTool(toolAnim.from.x + (toolAnim.to.x - toolAnim.from.x) * e, toolAnim.from.y + (toolAnim.to.y - toolAnim.from.y) * e);
   if (k >= 1) toolAnim = null;
 }

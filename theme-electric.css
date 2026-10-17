@@ -1,0 +1,146 @@
+/* 전기와 자기 단원 공통 테마: 어두운 회로 기판 위에 전류(하늘색)·전압(노란색)·자기(빨강·파랑)가 빛나는 느낌.
+   style.css, poe.css, lab.css 다음에 불러와 색과 효과를 덮어씁니다. */
+:root{
+  --ink:#e8eeff;--muted:#9eabcf;--faint:#6f7ca3;
+  --bg:#060a18;--panel:#0d1430;--panel-2:#111a3b;--line:#22305e;--line-2:#2f4180;
+  --current:#38e1ff;--current-2:#1e9bff;--volt:#ffd23f;--volt-2:#ff9f1c;
+  --north:#ff4d5e;--south:#3d7bff;--ok:#5dff9a;
+  --glow-c:0 0 12px #38e1ff66,0 0 28px #1e9bff33;--glow-v:0 0 12px #ffd23f66,0 0 28px #ff9f1c33;
+  color:var(--ink);background:var(--bg);color-scheme:dark;
+}
+body{min-height:100vh;background:
+  radial-gradient(900px 500px at 85% -10%,#1e9bff26,transparent 60%),
+  radial-gradient(700px 420px at -10% 30%,#7b5cff1f,transparent 60%),
+  radial-gradient(600px 400px at 60% 110%,#ffd23f12,transparent 60%),
+  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cg fill='none' stroke='%2338e1ff' stroke-opacity='.07' stroke-width='1.2'%3E%3Cpath d='M0 40h40l20 20h40l20-20h40M40 160v-40l20-20v-40M120 0v30l20 20v30l-20 20v60'/%3E%3C/g%3E%3Cg fill='%2338e1ff' fill-opacity='.12'%3E%3Ccircle cx='40' cy='40' r='2.5'/%3E%3Ccircle cx='120' cy='40' r='2.5'/%3E%3Ccircle cx='60' cy='100' r='2.5'/%3E%3Ccircle cx='120' cy='100' r='2.5'/%3E%3C/g%3E%3C/svg%3E"),
+  var(--bg);background-attachment:fixed}
+
+/* 머리글 */
+header{border-bottom:1px solid var(--line);position:relative}
+header::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:1px;background:linear-gradient(90deg,transparent,var(--current),var(--volt),transparent);opacity:.7;animation:wire-run 6s linear infinite;background-size:200% 100%}
+@keyframes wire-run{to{background-position:-200% 0}}
+.brand{color:var(--ink)}
+.brand::before{content:'⚡';margin-right:8px;color:var(--volt);text-shadow:var(--glow-v)}
+.grade{color:var(--muted)}
+.breadcrumb{color:var(--faint)}
+
+/* 제목 */
+.intro h1,h1{color:var(--ink);background:linear-gradient(100deg,#ffffff 0%,#bfefff 40%,var(--current) 70%,var(--volt) 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-1px}
+.intro p{color:var(--muted)}
+
+/* 탐구 단계 */
+.poe-steps li{background:var(--panel);color:var(--muted);border:1px solid var(--line)}
+.poe-steps li>span{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--line);color:var(--ink);opacity:1}
+.poe-steps li[aria-current=step]{background:linear-gradient(135deg,#0f3a66,#123a8a);color:#fff;border-color:var(--current);box-shadow:var(--glow-c)}
+.poe-steps li[aria-current=step]>span{background:var(--current);color:#04121f}
+
+/* 패널 */
+.poe-panel,.poe-record,.lab{background:linear-gradient(180deg,var(--panel-2),var(--panel));border:1px solid var(--line);box-shadow:0 10px 40px #00000055,inset 0 1px 0 #ffffff0d}
+.poe-panel p,.prediction-scene>p:not(.poe-kicker){color:var(--muted)}
+.poe-kicker,.small-tag,.section-label{color:var(--current)!important;letter-spacing:.5px}
+.poe-hint,.model-note,.vocab-heading span,#observation-progress{color:var(--muted)!important}
+#observation-progress{color:var(--volt)!important;font-weight:600}
+.poe-panel h2,.poe-section-heading h2,.observation h2,.poe-record h3,.mission h3,.vocab-heading h2,#concept-title{color:var(--ink)}
+.poe-form legend,.writing-label{color:var(--ink)}
+.poe-panel textarea,.poe-record textarea{background:#070c22;border-color:var(--line-2);color:var(--ink)}
+.poe-panel textarea:focus,.poe-record textarea:focus{outline-color:var(--current);box-shadow:var(--glow-c)}
+.poe-panel textarea:read-only{background:#0a1029}
+.poe-panel textarea::placeholder,.poe-record textarea::placeholder{color:var(--faint)}
+.prediction-choice{border-color:var(--line-2);background:#0a1029;color:var(--ink);transition:border-color .2s,box-shadow .2s}
+.prediction-choice:hover{border-color:var(--current)}
+.prediction-choice:has(input:checked){background:#0d2a4d;border-color:var(--current);box-shadow:var(--glow-c)}
+.prediction-choice input{accent-color:var(--current)}
+.prediction-reminder{background:#0d2140;color:var(--muted);border:1px solid var(--line)}
+.poe-comparison article{background:#0a1029;border-color:var(--line)}
+.poe-comparison h3{color:var(--current)}
+.poe-comparison p{color:var(--ink)}
+#concept-review{border-top-color:var(--line)}
+.concept-sequence li{color:var(--ink)}
+.concept-sequence li::marker{color:var(--volt);font-weight:700}
+.concept-sequence p{color:var(--muted)}
+.concept-sequence b{color:var(--volt);font-weight:700}
+.concept-note{background:#1a1640;border-left-color:var(--volt);color:#ffe9a8}
+
+/* 버튼 */
+.primary{background:linear-gradient(135deg,var(--current-2),#5b5cff);border:1px solid #6fd8ff;color:#fff;font-weight:600;box-shadow:0 0 0 0 #38e1ff00;transition:box-shadow .2s,transform .1s,filter .2s}
+.primary:hover:enabled{background:linear-gradient(135deg,#29b6ff,#6d6eff);box-shadow:var(--glow-c)}
+.primary:active:enabled{transform:translateY(1px)}
+.secondary{background:#0a1029;border:1px solid var(--line-2);color:#cfe6ff}
+.secondary:hover:enabled{background:#0f1a40;border-color:var(--current);box-shadow:var(--glow-c)}
+.primary.hold[aria-pressed=true]{background:linear-gradient(135deg,var(--volt),var(--volt-2));border-color:var(--volt);color:#2a1600;box-shadow:var(--glow-v)}
+button:disabled{opacity:.35}
+button:focus-visible,a:focus-visible,[tabindex]:focus-visible{outline-color:var(--current)}
+
+/* 실험 도구 막대 */
+.lab-toolbar{border-bottom-color:var(--line)}
+.tabs button{color:var(--muted)}
+.tabs button[aria-selected=true]{color:#fff;border-color:var(--current);text-shadow:0 0 10px #38e1ff99}
+.reset{color:var(--muted)}
+.reset:hover{color:var(--current)}
+.instruction strong{color:var(--ink)}
+.instruction p{color:var(--muted)}
+.toggle{color:var(--muted)}
+.toggle input{accent-color:var(--current)}
+.choice-row .group-label,.pair-controls p{color:var(--muted)}
+.pair-controls button,.choice-row button{background:#0a1029;border-color:var(--line-2);color:#cfe6ff}
+.pair-controls button:hover,.choice-row button:hover{border-color:var(--current)}
+.choice-row button[aria-pressed=true],.pair-controls button.selected{background:#0d2a4d;border-color:var(--current);color:#fff;box-shadow:var(--glow-c)}
+.legend{color:var(--muted)}
+
+/* 실험 무대: 회로 기판 무늬와 가장자리 빛 */
+.stage,.stage.night{border-radius:10px;border:1px solid #1d2a57;background:
+  radial-gradient(ellipse at 50% 0%,#1d2f6a 0%,#0e1736 55%,#070b1d 100%)}
+.stage::before{content:'';position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(#38e1ff0b 1px,transparent 1px),linear-gradient(90deg,#38e1ff0b 1px,transparent 1px);background-size:32px 32px;mask-image:radial-gradient(ellipse at center,#000 40%,transparent 85%)}
+.stage::after{content:'';position:absolute;inset:0;pointer-events:none;border-radius:10px;box-shadow:inset 0 0 60px #000a,inset 0 0 0 1px #38e1ff14}
+.stage #scene{position:relative}
+.stage .stage-label{color:#9fdcff;font-weight:600;letter-spacing:.3px;z-index:1}
+.stage-hint{color:var(--faint)}
+.stage text{fill:#d8def5}
+.stage .muted{fill:#8f9bc4}
+.stage .object-name{fill:#eef1ff}
+
+/* 오른쪽 관찰 정보 */
+aside{color:var(--ink)}
+.observation{border-bottom-color:var(--line)}
+.observation>p{color:var(--muted)}
+.discovery{color:#bfe9ff;border-left-color:var(--current)}
+.readout-card,.charge-card{background:linear-gradient(160deg,#0f1a40,#0a1029);border:1px solid var(--line);border-radius:8px}
+.readout-card strong,.charge-card strong{color:var(--muted)}
+.readout-card b{color:#fff;text-shadow:0 0 12px #38e1ff55}
+.readout-card small,.charge-card small,.charge-badge{color:var(--faint)}
+.positive-text{color:#ff6b7a}.negative-text{color:#4fb4ff}
+.data-table th,.data-table td{border-color:var(--line)}
+.data-table th{background:#0f1a40;color:#bcd2ff}
+.data-table td{color:var(--ink);background:#0a1029}
+.data-table td.fresh{background:#3a3000;color:var(--volt)}
+@keyframes pop{0%{transform:scale(.6);background:#ffd23f;color:#2a1600}100%{transform:scale(1)}}
+.record-block strong,.record-row>span,.record-card{color:var(--muted)}
+.cell{background:#0a1029;border-color:var(--line-2)}
+.cell.on{background:linear-gradient(var(--volt),var(--volt-2));border-color:var(--volt);box-shadow:var(--glow-v)}
+
+/* 스스로 평가와 핵심 개념 */
+.mission p{color:var(--muted)}
+.answers button{background:#0a1029;border-color:var(--line-2);color:#cfe6ff}
+.answers button:hover{border-color:var(--current)}
+.answers button.chosen{background:#3a1420;border-color:#ff6b7a;color:#ffd1d6}
+.answers button.right{background:#0f3b2a;border-color:var(--ok);color:#c9ffe0;box-shadow:0 0 12px #5dff9a44}
+.vocabulary{border-top-color:var(--line)}
+.term-buttons button{background:#0a1029;border-color:var(--line-2);color:#cfe6ff}
+.term-buttons button.active{background:#0d2a4d;border-color:var(--current);color:#fff;box-shadow:var(--glow-c)}
+#term-definition{color:var(--muted)}
+#term-definition strong{color:var(--volt)}
+
+/* 알림: 번개 모양이 번쩍이며 나타나요. */
+.toast{background:linear-gradient(90deg,var(--volt),var(--volt-2));box-shadow:0 0 0 1px #fff6,0 6px 30px #ffb44a88}
+.toast.show{animation:zap .5s ease-out}
+@keyframes zap{0%{filter:brightness(2.2)}30%{filter:brightness(.8)}50%{filter:brightness(1.6)}100%{filter:none}}
+
+/* 관찰 완료를 알리는 무대 테두리 번쩍임 */
+.stage.flash::after{animation:edge-flash .7s ease-out}
+@keyframes edge-flash{0%{box-shadow:inset 0 0 60px #000a,inset 0 0 0 2px #ffd23f,inset 0 0 40px #ffd23f88}100%{box-shadow:inset 0 0 60px #000a,inset 0 0 0 1px #38e1ff14}}
+
+/* 예상 그림 */
+.prediction-illustration svg,.prediction-illustration img{border-radius:10px;box-shadow:0 0 0 1px var(--line),0 10px 30px #0008}
+
+@media(prefers-reduced-motion:reduce){header::after,.toast.show,.stage.flash::after{animation:none}}
+@media(max-width:480px){.poe-steps li>span{width:18px;height:18px}}
