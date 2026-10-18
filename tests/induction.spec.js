@@ -98,9 +98,9 @@ test('네 가지 관찰 후 기록→설명→개념 확인과 스스로 평가'
   await expect(page.locator('#concept-review')).toContainText('정전기 유도');
   await expect(page.locator('#concept-review')).toContainText('(+)전하만 있는 것은 아니에요');
   for (const term of ['정전기 유도', '검전기', '대전체', '전기력', '인력', '척력']) await expect(page.locator('.term-buttons')).toContainText(term);
-  await page.locator('[data-q1="same"]').click(); await expect(page.locator('#feedback-1')).toContainText('다시');
-  await page.locator('[data-q1="other"]').click(); await expect(page.locator('#feedback-1')).toContainText('맞아요');
-  await page.locator('[data-q2="more"]').click(); await expect(page.locator('#feedback-2')).toContainText('맞아요');
+  await page.locator('[data-quiz="0"][data-choice="X"]').click(); await expect(page.locator('#quiz-feedback-0')).toContainText('다시');
+  await page.locator('[data-quiz="0"][data-choice="O"]').click(); await expect(page.locator('#quiz-feedback-0')).toContainText('맞아요');
+  await page.locator('[data-quiz="1"][data-choice="X"]').click(); await expect(page.locator('#quiz-feedback-1')).toContainText('맞아요');
   await page.locator('#restart-poe').click();
   await expect(page.locator('#predict-panel')).toBeVisible();
   await expect(page.locator('#prediction-reason')).toHaveValue('');

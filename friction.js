@@ -72,11 +72,6 @@ const lab = buildLab({
   scene,
   legend: '<span><b class="positive">+</b> 원자핵의 (+)전하</span><span><b class="negative">−</b> 전자의 (−)전하</span>',
   terms,
-  quiz: [
-    { question: '두 물체를 마찰할 때 다른 물체로 이동하는 것은?', options: [['electron', '전자'], ['nucleus', '원자핵'], ['both', '둘 다']], answer: 'electron', hint: '‘전하 보기’를 켜고 움직이는 입자를 살펴보세요.', right: '맞아요! 털에서 풍선으로 일부 전자가 이동해요.', wrong: '다시 생각해 볼까요? 원자핵은 다른 물체로 이동하지 않아요.' },
-    { question: '같은 종류의 전하를 띤 두 물체 사이에 작용하는 힘은?', options: [['repel', '척력'], ['attract', '인력'], ['none', '힘이 없어요']], answer: 'repel', hint: '숟가락 ㉯를 숟가락 ㉮에 가까이 가져가 보세요.', right: '맞아요! 같은 종류의 전하 사이에는 서로 밀어내는 척력이 작용해요.', wrong: '다시 확인해 볼까요? 같은 장갑으로 문지른 두 숟가락은 어떻게 움직였나요?' },
-    { question: '마찰할 때 전자를 잃은 물체는 어떤 전하를 띨까요?', options: [['plus', '(+)전하'], ['minus', '(−)전하'], ['zero', '전기를 띠지 않아요']], answer: 'plus', hint: '털의 전하 수를 비교해 보세요.', right: '맞아요! 전자를 잃은 물체는 (+)전하, 전자를 얻은 물체는 (−)전하를 띠어요.', wrong: '다시 생각해 볼까요? 전자는 (−)전하를 띠어요. 그것을 잃으면 어떻게 될까요?' },
-  ],
 });
 
 /* ---------- 상태 ---------- */

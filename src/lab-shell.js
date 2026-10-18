@@ -12,7 +12,6 @@ export const josa = (word, withFinal, without) => { const code = word.charCodeAt
 
 export function buildLab(cfg) {
   const tabs = cfg.tabs.map((t, i) => `<button id="tab-${t.id}" role="tab" aria-selected="${i === 0}">${String(i + 1).padStart(2, '0')} <span>${t.label}</span></button>`).join('');
-  const quiz = cfg.quiz.map((q, n) => `<h3>${n + 1}. ${q.question}</h3><div class="answers${q.stacked ? ' stacked' : ''}">${q.options.map(([id, label]) => `<button data-quiz="${n}" data-choice="${id}">${label}</button>`).join('')}</div><p id="quiz-feedback-${n}" aria-live="polite">${q.hint}</p>`).join('');
   $('#app').innerHTML = `
 <header><a class="brand" href="../../grades/middle-school-2/unit-7/">← 실험 목록</a><span class="grade">중학교 2학년 <i></i> 과학</span></header>
 <main class="lab-page"><div class="breadcrumb">VII. 전기와 자기 <span>/</span> ${cfg.crumb}</div>
@@ -25,23 +24,14 @@ export function buildLab(cfg) {
 <div class="lab-bottom">${cfg.legend ? `<div class="legend">${cfg.legend}</div>` : ''}<div id="actions" class="actions"></div></div>
 <p class="model-note" id="model-note"></p></section>
 <aside><section class="observation"><div class="section-label"><span>◉</span> 무엇이 달라졌나요?</div><h2 id="note-title"></h2><p id="note-text"></p><div id="readout"></div><div class="discovery" id="discovery"></div></section>
-<section class="mission"><span class="small-tag">스스로 평가</span>${quiz}</section></aside></div>
+<section class="mission"></section></aside></div>
 <section class="vocabulary"><div class="vocab-heading"><h2>실험 속 핵심 개념</h2><span>단어를 누르면 뜻을 확인할 수 있어요.</span></div><div class="term-buttons">${cfg.terms.map(([t], i) => `<button data-term="${i}" class="${i === 0 ? 'active' : ''}">${t}</button>`).join('')}</div><p id="term-definition"><strong>${cfg.terms[0][0]}</strong> ${cfg.terms[0][1]}</p></section>
 </main>`;
   $$('[data-term]').forEach(b => b.onclick = () => {
     $$('[data-term]').forEach(v => v.classList.toggle('active', v === b));
     const [t, d] = cfg.terms[+b.dataset.term]; $('#term-definition').innerHTML = `<strong>${t}</strong> ${d}`;
   });
-  $$('[data-quiz]').forEach(b => b.onclick = () => {
-    const n = +b.dataset.quiz, q = cfg.quiz[n];
-    const right = b.dataset.choice === q.answer;
-    markAnswer($$(`[data-quiz="${n}"]`), b, right, $(`#quiz-feedback-${n}`), right ? q.right : q.wrong);
-  });
-  const resetQuiz = () => {
-    $$('[data-quiz]').forEach(b => b.classList.remove('chosen', 'right', 'wrong'));
-    cfg.quiz.forEach((q, n) => { const f = $(`#quiz-feedback-${n}`); f.textContent = q.hint; f.classList.remove('right', 'wrong'); });
-    $('[data-term="0"]').click();
-  };
+  const resetQuiz = () => $('[data-term="0"]').click();
   const selectTab = id => cfg.tabs.forEach(t => $(`#tab-${t.id}`).setAttribute('aria-selected', t.id === id));
   return { resetQuiz, selectTab };
 }

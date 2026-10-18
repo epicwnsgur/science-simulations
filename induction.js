@@ -3,7 +3,7 @@ import './poe.css';
 import './lab.css';
 import './induction.css';
 import './theme-electric.css';
-import { FX_DEFS, toast, burst, markAnswer, checklist } from './src/lab-shell.js';
+import { FX_DEFS, toast, burst, checklist } from './src/lab-shell.js';
 import { setupPOEFlow } from './src/poe-flow.js';
 import {
   SPOON_OBJECTS, SCOPE_OBJECTS, RUB_LEVELS, scopeCharge, closeness, segmentDistance, clamp,
@@ -97,9 +97,7 @@ ${FX_DEFS}
 <div class="lab-bottom"><div class="legend"><span><b class="positive">+</b> 원자핵의 (+)전하</span><span><b class="negative">−</b> 전자의 (−)전하</span></div><button id="approach-button" class="primary">가까이 가져가기</button><button id="withdraw-button" class="secondary">멀리 하기</button></div>
 <p class="model-note" id="model-note"></p></section>
 <aside><section class="observation"><div class="section-label"><span>◉</span> 무엇이 달라졌나요?</div><h2 id="note-title"></h2><p id="note-text"></p><div id="charge-cards"></div><div class="discovery" id="discovery"></div></section>
-<section class="mission"><span class="small-tag">스스로 평가</span>
-<h3>1. 금속 물체에 대전체를 가까이 하면, 대전체와 가까운 쪽에는 어떤 전하가 유도될까요?</h3><div class="answers"><button data-q1="same">같은 종류</button><button data-q1="other">다른 종류</button><button data-q1="none">유도되지 않음</button></div><p id="feedback-1" aria-live="polite">실험을 떠올리며 골라 보세요.</p>
-<h3>2. 검전기의 금속박을 더 많이 벌어지게 하려면 어떻게 해야 할까요?</h3><div class="answers stacked"><button data-q2="more">털가죽으로 더 많이 문지른 빨대를 가까이 해요.</button><button data-q2="neutral">대전되지 않은 빨대를 가까이 해요.</button><button data-q2="far">빨대를 금속판에서 더 멀리 해요.</button></div><p id="feedback-2" aria-live="polite">검전기 활동에서 비교한 결과를 떠올려 보세요.</p></section></aside></div>
+<section class="mission"></section></aside></div>
 <section class="vocabulary"><div class="vocab-heading"><h2>실험 속 핵심 개념</h2><span>단어를 누르면 뜻을 확인할 수 있어요.</span></div><div class="term-buttons">${terms.map(([t], i) => `<button data-term="${i}" class="${i === 0 ? 'active' : ''}">${t}</button>`).join('')}</div><p id="term-definition"><strong>${terms[0][0]}</strong> ${terms[0][1]}</p></section>
 </main>`;
 
@@ -482,14 +480,6 @@ document.querySelectorAll('[data-spoon]').forEach(b => b.onclick = () => { spoon
 document.querySelectorAll('[data-scope]').forEach(b => b.onclick = () => { scopeKey = b.dataset.scope; resetScene(); });
 // 문지른 정도만 바꾸면 대전체는 그 자리에 두고, 금속 속 전자가 새 상태로 이동하는 모습을 보여 줍니다.
 document.querySelectorAll('[data-rub]').forEach(b => b.onclick = () => { rubLevel = +b.dataset.rub; renderControls(); });
-document.querySelectorAll('[data-q1]').forEach(b => b.onclick = () => {
-  const right = b.dataset.q1 === 'other';
-  markAnswer([...document.querySelectorAll('[data-q1]')], b, right, $('#feedback-1'), right ? '맞아요! 가까운 쪽은 대전체와 다른 종류, 먼 쪽은 같은 종류의 전하가 유도돼요.' : '다시 생각해 볼까요? 빨대와 장갑을 가까이 했을 때 손잡이 끝의 전하 수를 비교해 보세요.');
-});
-document.querySelectorAll('[data-q2]').forEach(b => b.onclick = () => {
-  const right = b.dataset.q2 === 'more';
-  markAnswer([...document.querySelectorAll('[data-q2]')], b, right, $('#feedback-2'), right ? '맞아요! 대전된 전하의 양이 많을수록 더 많은 전자가 이동해 금속박이 더 많이 벌어져요.' : '다시 생각해 볼까요? 문지른 횟수와 거리를 바꾸었을 때 금속박이 벌어진 정도를 떠올려 보세요.');
-});
 document.querySelectorAll('[data-term]').forEach(b => b.onclick = () => {
   document.querySelectorAll('[data-term]').forEach(v => v.classList.toggle('active', v === b));
   const [t, d] = terms[+b.dataset.term]; $('#term-definition').innerHTML = `<strong>${t}</strong> ${d}`;
@@ -541,9 +531,6 @@ flow = setupPOEFlow({
     show = false; $('#show-charges').checked = false;
     seen.spoonMinus = false; seen.spoonPlus = false; seen.levels.clear();
     spoonKey = 'straw'; scopeKey = 'straw'; rubLevel = 1;
-    document.querySelectorAll('[data-q1],[data-q2]').forEach(b => b.classList.remove('chosen', 'right', 'wrong'));
-    ['#feedback-1', '#feedback-2'].forEach(s => $(s).classList.remove('right', 'wrong'));
-    $('#feedback-1').textContent = '실험을 떠올리며 골라 보세요.'; $('#feedback-2').textContent = '검전기 활동에서 비교한 결과를 떠올려 보세요.';
     $('[data-term="0"]').click(); setMode('spoon');
   },
 });

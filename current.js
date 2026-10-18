@@ -73,11 +73,6 @@ const lab = buildLab({
   scene,
   legend: '<span><b class="negative">−</b> 전자</span><span><b class="positive">+</b> (+)전하</span>',
   terms,
-  quiz: [
-    { question: '전하의 흐름을 무엇이라고 할까요?', options: [['current', '전류'], ['electron', '전자'], ['voltage', '전압']], answer: 'current', hint: '242–243쪽 활동을 떠올려 보세요.', right: '맞아요! 전하의 흐름을 전류라고 하고, 단위는 A(암페어)예요.', wrong: '다시 생각해 볼까요? 네온전구를 지나간 것은 전하의 흐름이었어요.' },
-    { question: '전기 회로에서 전류를 계속 흐르게 하는 능력은?', options: [['voltage', '전압'], ['current', '전류'], ['bulb', '전구']], answer: 'voltage', hint: '수로 모형에서 펌프가 만드는 것을 떠올려 보세요.', right: '맞아요! 전압은 전류를 흐르게 하는 능력이고, 단위는 V(볼트)예요.', wrong: '다시 생각해 볼까요? 펌프가 물의 높이 차를 만들어 물이 계속 흐르는 것처럼, 전지는 무엇을 만들까요?' },
-    { question: '전지를 연결한 회로에서 전자는 어느 쪽으로 이동할까요?', options: [['minus-plus', '(−)극 → (+)극'], ['plus-minus', '(+)극 → (−)극'], ['none', '이동하지 않아요']], answer: 'minus-plus', hint: '‘전하·방향 보기’로 확인해 보세요.', right: '맞아요! 전자는 (−)극에서 (+)극으로 이동하고, 전류의 방향은 그 반대로 정했어요.', wrong: '다시 생각해 볼까요? (+)극→(−)극은 약속으로 정한 전류의 방향이에요.' },
-  ],
 });
 
 /* ---------- 상태 ---------- */

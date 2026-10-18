@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { beginObservation } from './poe-helpers.js';
+import { CONCEPT_QUIZZES } from '../src/concept-quizzes.js';
 
 async function hold(page, ms = 900) {
   const btn = page.locator('#press-btn');
@@ -15,6 +16,17 @@ async function finish(page, concept) {
   await page.locator('#explanation-record').fill('관찰한 결과의 까닭을 과학 개념으로 설명했어요.');
   await page.locator('#reveal-concepts').click();
   await expect(page.locator('#concept-review')).toContainText(concept);
+  const slug = new URL(page.url()).pathname.split('/').filter(Boolean).at(-1);
+  for (const [n, question] of CONCEPT_QUIZZES[slug].entries()) {
+    const buttons = page.locator(`[data-quiz="${n}"]`);
+    await expect(buttons).toHaveCount(n < 2 ? 2 : 5);
+    const wrong = question.options.find(([id]) => id !== question.answer)[0];
+    await page.locator(`[data-quiz="${n}"][data-choice="${wrong}"]`).click();
+    await expect(page.locator(`#quiz-feedback-${n}`)).toContainText('다시');
+    await page.locator(`[data-quiz="${n}"][data-choice="${question.answer}"]`).click();
+    await expect(page.locator(`#quiz-feedback-${n}`)).toContainText(question.explanation);
+  }
+  await expect(page.locator('.quiz-progress')).toContainText('3 / 3문제 정답');
 }
 
 const LABS = [
@@ -73,14 +85,18 @@ for (const [url, concept, run] of LABS) {
     await page.goto(url);
     await expect(page.locator('#predict-panel')).toBeVisible();
     await expect(page.locator('#scene')).not.toBeVisible();
+    await expect(page.locator('.mission')).not.toBeVisible();
     await beginObservation(page);
     await expect(page.locator('#to-explanation')).toBeDisabled();
+    await expect(page.locator('.mission')).not.toBeVisible();
     await run(page);
     await finish(page, concept);
     await page.locator('[data-quiz="0"]').first().click();
     await expect(page.locator('#quiz-feedback-0')).not.toHaveText('');
     await page.locator('#restart-poe').click();
     await expect(page.locator('#predict-panel')).toBeVisible();
+    await expect(page.locator('.quiz-progress')).toHaveText('0 / 3문제 정답');
+    await expect(page.locator('.mission .chosen')).toHaveCount(0);
     expect(errors).toEqual([]);
   });
   test(`${url} 모바일 화면 넘침 없음`, async ({ page }) => {

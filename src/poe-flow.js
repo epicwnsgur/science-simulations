@@ -1,3 +1,5 @@
+import { CONCEPT_QUIZZES } from './concept-quizzes.js';
+import { mountConceptQuiz } from './concept-quiz-ui.js';
 const $ = selector => document.querySelector(selector);
 export const MIN_CHARS = 20;
 
@@ -11,6 +13,8 @@ export function setupPOEFlow(config) {
   const workspace = $('.workspace');
   const vocabulary = $('.vocabulary');
   const mission = $('.mission');
+  const slug = location.pathname.replace(/\/index\.html$/, '/').split('/').filter(Boolean).at(-1);
+  const resetConceptQuiz = mountConceptQuiz(mission, config.quiz ?? CONCEPT_QUIZZES[slug]);
   const intro = $('.intro');
   intro.querySelector('p').textContent = '먼저 예상하고, 직접 실험한 뒤, 관찰한 까닭을 설명해 보세요.';
   intro.insertAdjacentHTML('afterend', `
@@ -79,7 +83,7 @@ export function setupPOEFlow(config) {
     </section>
   `);
   $('#simulation-mount').append(workspace);
-  $('#concept-activities').append(mission, vocabulary);
+  $('#concept-activities').append(vocabulary, mission);
   $('#reset').setAttribute('aria-label', '실험만 초기화');
   $('#reset').innerHTML = '↻ <span>실험 초기화</span>';
 
@@ -169,6 +173,7 @@ export function setupPOEFlow(config) {
   };
   $('#revisit-lab').onclick = () => changeStage('observe');
   $('#restart-poe').onclick = () => {
+    resetConceptQuiz();
     prediction = null;
     for (const id of ['prediction-form', 'observation-form', 'explanation-form']) $(`#${id}`).reset();
     $('#prediction-form fieldset').disabled = false; $('#prediction-reason').readOnly = false;
