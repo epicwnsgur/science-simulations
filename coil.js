@@ -178,7 +178,7 @@ function renderText() {
     setText('#discovery', '전류가 흐르지 않을 때 나침반 바늘은 북쪽(화면 위)을 가리켜요.');
   }
   setHTML('#readout', `<div class="readout-grid"><div class="readout-card"><strong>${mode === 'magnet' ? '관찰 대상' : '전류'}</strong><b>${mode === 'magnet' ? '막대자석' : on ? '흐름' : '멈춤'}</b><small>${mode === 'magnet' ? 'N극 왼쪽 · S극 오른쪽' : `${direction > 0 ? '아래쪽' : '위쪽'} 방향`}</small></div><div class="readout-card"><strong>전류의 세기</strong><b>${mode === 'magnet' ? '–' : ['약', '중', '강'][level]}</b><small>${mode === 'magnet' ? '' : LEVELS[level].label}</small></div></div>`);
-  setText('#model-note', '나침반 바늘은 지구 자기장과 자석(코일)의 자기장이 합쳐진 방향을 가리켜요. 자기장의 모습은 교과서 그림처럼 선으로 나타냈고, 선 위의 무늬가 흐르는 방향이 자기장의 방향이에요. 바늘이 흔들리는 정도와 선의 모양은 보기 쉽게 나타낸 모형이에요.');
+  setText('#model-note', '나침반 바늘은 지구 자기장과 자석(코일)의 자기장이 합쳐진 방향을 가리켜요. 선은 자석이나 코일이 만드는 자기장만 나타내고, 선 위의 무늬는 그 방향을 보여 줘요. 지구 자기장이 더해지는 나침반의 방향과는 다를 수 있어요. 바늘이 흔들리는 정도와 선의 모양은 보기 쉽게 나타낸 모형이에요.');
 }
 function setMode(next) {
   mode = next; lab.selectTab(next); press(false); linesKey = '';

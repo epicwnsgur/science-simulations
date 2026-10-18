@@ -87,7 +87,7 @@ function arrowsSVG() {
   const [cx0, cy0] = P(bx, by, current > 0 ? HALF : -HALF), [cx1, cy1] = P(bx, by, current > 0 ? -HALF : HALF);
   const dir = swingDirection(current, magnet), [fx, fy] = P(bx, by + 6, 0);
   const force = on ? `<path d="M${fx} ${fy + 22} h${dir > 0 ? -70 : 70}" stroke="#ff6b6b" stroke-width="4" marker-end="url(#arrow-head)"/><text x="${fx + (dir > 0 ? -76 : 76)}" y="${fy + 44}" font-size="13" text-anchor="middle" style="fill:#ff9a9a">힘</text>` : '';
-  return `${field}<text x="${P(355, 0, 0)[0] - 50}" y="314" font-size="12" style="fill:#5fe0ff">자기장</text><path d="M${cx0} ${cy0} L${cx1} ${cy1}" stroke="#7dff7a" stroke-width="4" marker-end="url(#arrow-head)"/><text x="${cx1 + 6}" y="${cy1 - 6}" font-size="12" style="fill:#9dff9a">전류</text>${force}`;
+  return `${field}<text x="${P(355, 0, 0)[0] - 50}" y="314" font-size="12" style="fill:#5fe0ff">자기장</text>${on ? `<g data-current-arrow><path d="M${cx0} ${cy0} L${cx1} ${cy1}" stroke="#7dff7a" stroke-width="4" marker-end="url(#arrow-head)"/><text x="${cx1 + 6}" y="${cy1 - 6}" font-size="12" style="fill:#9dff9a">전류</text></g>` : ''}${force}`;
 }
 function paint(dt) {
   // 바깥쪽(㉮)은 화면 왼쪽이에요.

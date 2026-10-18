@@ -126,7 +126,7 @@ function paintNeon(now) {
   $('#neon-gas').setAttribute('opacity', (flash * .95).toFixed(2));
   $('#neon-glow').setAttribute('opacity', Math.min(1, flash * 1.3).toFixed(2));
   let html = chargeTokens();
-  if (flight && show !== null) {
+  if (flight && show) {
     const path = $('#discharge-path'), len = path.getTotalLength();
     const t = Math.max(0, Math.min(1, (now - flight.start) / flight.duration));
     for (let k = 0; k < flight.count; k++) {
@@ -254,7 +254,7 @@ function setMode(next) {
 }
 function resetScene() {
   rubs = 0; placed = false; touching = false; charge = 0; discharged = false; motion = null; flight = null; flash = 0;
-  battery = false; pump = false; batteryTime = 0; pumpTime = 0; inCount = 0; outCount = 0; bulbLevel = 0;
+  battery = false; pump = false; batteryTime = 0; pumpTime = 0; inCount = 0; outCount = 0; bulbLevel = 0; electrons.offset = 0;
   setMode(mode);
 }
 $('#tab-neon').onclick = () => setMode('neon');
@@ -296,7 +296,7 @@ flow = setupPOEFlow({
     question: '네온전구에 불이 잠깐만 켜진 까닭은 무엇일까요? 전구에 불이 계속 켜지게 하려면 어떻게 해야 할지도 설명해 보세요.',
     concepts: [
       ['네온전구가 켜진 까닭', '마찰로 플라스틱 접시는 (−)전하, 털가죽은 (+)전하를 띠어요. 네온전구를 대는 순간 (−)전하가 네온전구를 지나 다른 접시로 이동하면서 불이 켜져요.'],
-      ['전류', '이렇게 전하가 흐르는 것을 <b>전류</b>라고 하고, 단위는 <b>A(암페어)</b>를 사용해요. 전하가 한 번 이동하고 나면 더 이동할 전하가 없어 불이 꺼져요.'],
+      ['전류', '이렇게 전하가 흐르는 것을 <b>전류</b>라고 하고, 단위는 <b>A(암페어)</b>를 사용해요. 전하가 이동하면서 두 접시 사이의 전압이 낮아져 방전을 유지하지 못하면 불이 꺼져요. 전자가 없어지는 것은 아니에요.'],
       ['전압', '펌프가 물의 높이 차를 만들어 물이 계속 흐르게 하듯이, 전지는 전류를 계속 흐르게 해요. 이렇게 전류를 흐르게 하는 능력을 <b>전압</b>이라고 하고, 단위는 <b>V(볼트)</b>를 사용해요.'],
       ['전자의 이동과 전류의 방향', '전지가 없으면 도선 속 전자는 불규칙하게 움직여 전류가 흐르지 않아요. 전지를 연결하면 전자가 (−)극에서 (+)극 쪽으로 이동해요. 전류의 방향은 (+)극에서 (−)극으로 정했으므로 전자의 이동 방향과 반대예요.'],
       ['전구를 지나도', '전구로 들어간 전자와 나온 전자의 수는 같아요. 전자는 전구에서 사라지지 않아요.'],

@@ -133,7 +133,7 @@ function paintRub(dt, t) {
     const x = f.from.x + (to.x - f.from.x) * e, y = f.from.y + (to.y - f.from.y) * e - Math.sin(k * Math.PI) * 26;
     trail += `<path d="M${f.from.x} ${f.from.y} Q${(f.from.x + x) / 2} ${Math.min(f.from.y, y) - 20} ${x.toFixed(1)} ${y.toFixed(1)}" stroke="#5cc8ff" stroke-width="2" opacity="${(1 - k) * .7}" fill="none"/>` + mark(x, y, -1, true);
   }
-  $('#trail').innerHTML = trail;
+  $('#trail').innerHTML = show ? trail : '';
   if (!show) { setHTML('#fur-charges', ''); setHTML('#balloon-charges', ''); return; }
   const fc = furCharge(), bc = balloonCharge();
   const furHTML = furSites.map((p, i) => { const w = wobble(i, t); return mark(p.x - 9 + w.x * .3, p.y + w.y * .3, 1) + (i < fc.minus ? mark(p.x + 9 + w.x, p.y + w.y, -1) : ''); }).join('');
@@ -144,7 +144,7 @@ function paintRub(dt, t) {
 }
 function transfer() {
   if (transfers >= MAX_TRANSFER) return;
-  const site = furSites[transfers % furSites.length];
+  const site = furSites[furCharge().minus - 1];
   transfers++;
   flights.push({ from: { x: site.x + 9, y: site.y }, to: { x: -36 + ((transfers - 1) % 4) * 24, y: 26 + Math.floor((transfers - 1) / 4) * 13 }, start: performance.now(), duration: reducedMotion.matches ? 1 : 600 });
   burst($('#rub-fx'), pos.x, pos.y + 46, '#8fd3ff', 10);

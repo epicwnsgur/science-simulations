@@ -30,7 +30,7 @@ const scene = `
 <g id="switch" role="button" tabindex="0" aria-label="스위치"><rect x="262" y="186" width="78" height="28" rx="6" fill="#2a3150" stroke="#8f9bc4"/><circle cx="276" cy="200" r="5" fill="#cfd6ec"/><circle cx="326" cy="200" r="5" fill="#cfd6ec"/><path id="lever" d="M276 200 L326 200" stroke="#ffd166" stroke-width="5" stroke-linecap="round"/><text x="301" y="236" font-size="12" text-anchor="middle" class="muted">스위치</text></g>
 ${meter('ammeter', 440, 290, 'mA', 500, [0, '', 200, '', 400, ''])}
 <text x="440" y="352" font-size="12" text-anchor="middle" class="muted">전류계</text>
-<g id="voltmeter-group"><path d="M180 380 C180 340 230 320 240 300 M380 380 C380 340 330 320 320 300" stroke="#8f9bc4" stroke-width="2" fill="none" stroke-dasharray="4 3"/>${meter('voltmeter', 280, 290, 'V', 5, [0, 1, 2, 3, 4, 5])}<text x="280" y="352" font-size="12" text-anchor="middle" class="muted">전압계</text></g>
+<g id="voltmeter-group"><path id="voltmeter-leads" d="M180 380 C180 340 230 320 240 300 M380 380 C380 340 330 320 320 300" stroke="#8f9bc4" stroke-width="2" fill="none" stroke-dasharray="4 3"/>${meter('voltmeter', 280, 290, 'V', 5, [0, 1, 2, 3, 4, 5])}<text x="280" y="352" font-size="12" text-anchor="middle" class="muted">전압계</text></g>
 <g id="nichrome"><path id="coil" fill="none" stroke-width="5" stroke-linecap="round"/><path id="coil-glow" fill="none" stroke="#ff7a3c" stroke-width="10" opacity="0" filter="url(#glow-strong)"/></g>
 <text id="coil-label" x="280" y="418" font-size="13" text-anchor="middle" class="object-name"></text>
 <g id="material-slot" hidden><rect id="sample" x="200" y="370" width="160" height="20" rx="6"/><circle cx="200" cy="380" r="6" fill="#444"/><circle cx="360" cy="380" r="6" fill="#444"/></g>
@@ -96,6 +96,8 @@ function voltageShown() { return mode === 'measure' ? voltage : MATERIAL_VOLTAGE
 
 /* ---------- 그리기 ---------- */
 function paint(dt) {
+  const [left, right] = wire === 'long' ? [170, 390] : [240, 320];
+  $('#voltmeter-leads').setAttribute('d', `M${left} 380 C${left} 340 230 320 240 300 M${right} 380 C${right} 340 330 320 320 300`);
   const target = current();
   const g = reducedMotion.matches ? 1 : 1 - Math.exp(-dt * 6);
   shownA += (target - shownA) * g;

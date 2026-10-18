@@ -154,10 +154,11 @@ function renderControls() {
   renderText();
 }
 function renderText() {
+  const conducting = on && (mode === 'motor' || simpleMotorContact(phase, stripping));
   if (mode === 'motor') {
     setText('#guide', '자석 사이에 놓인 코일에 전류를 흘려 코일이 어떻게 움직이는지 관찰해 보세요.');
     setText('#subguide', '전류의 방향이나 자석의 극을 바꾸면 회전 방향이 어떻게 될까요?');
-    setText('#stage-state', `전류 ${on ? '흐름' : '끊김'} · ${VOLTS[vIndex]} V · 전류 ${current > 0 ? '처음 방향' : '반대 방향'} · 자석 ${magnet > 0 ? '처음' : '극 바꿈'}`);
+    setText('#stage-state', `전류 ${conducting ? '흐름' : '끊김'} · ${VOLTS[vIndex]} V · 전류 ${current > 0 ? '처음 방향' : '반대 방향'} · 자석 ${magnet > 0 ? '처음' : '극 바꿈'}`);
     setText('#note-title', on ? '코일의 왼쪽과 오른쪽이 받는 힘을 비교해 보세요' : '전류를 흘려 보세요');
     setText('#note-text', '‘자기장·전류·힘 보기’를 켜면 코일의 두 변에 흐르는 전류(⊙, ⊗)와 힘의 방향을 볼 수 있어요.');
     setText('#model-note', '그림 Ⅶ-16의 전동기를 앞에서 본 모습이에요. 금색 고리는 코일이 반 바퀴 돌 때마다 전류의 방향을 바꾸어 주어 코일이 같은 방향으로 계속 돌게 해요. 빠르기와 힘의 크기는 보기 쉽게 나타냈어요.');
@@ -165,13 +166,13 @@ function renderText() {
   } else {
     setText('#guide', '간이 전동기를 만들어 코일이 계속 회전하게 해 보세요.');
     setText('#subguide', '에나멜을 벗기는 방법을 바꾸어 비교해요. 코일이 멈춰 있으면 살짝 밀어 주세요.');
-    setText('#stage-state', `전류 ${on ? '흐름' : '끊김'} · ${stripping === 'half' ? '한쪽은 반만 벗김' : '양쪽 모두 완전히 벗김'} · 자석 ${magnet > 0 ? 'N극 위' : 'S극 위'}`);
+    setText('#stage-state', `전류 ${conducting ? '흐름' : '끊김'} · ${stripping === 'half' ? '한쪽은 반만 벗김' : '양쪽 모두 완전히 벗김'} · 자석 ${magnet > 0 ? 'N극 위' : 'S극 위'}`);
     setText('#note-title', on ? '코일이 계속 회전하나요?' : '전류를 흘려 보세요');
     setText('#note-text', '전류가 흐르는 동안과 흐르지 않는 동안 코일의 움직임을 살펴보세요.');
     setText('#model-note', '코일 한쪽 끝의 에나멜을 반만 벗기면 코일이 반 바퀴 도는 동안만 구리판과 전기가 통해요. 빠르기와 흔들림은 보기 쉽게 나타냈어요.');
     setText('#discovery', '전동기의 주요 부품에는 코일과 자석이 있어요.');
   }
-  setHTML('#readout', `<div class="readout-grid"><div class="readout-card"><strong>전류</strong><b>${on ? '흐름' : '끊김'}</b><small>${VOLTS[vIndex]} V</small></div><div class="readout-card"><strong>${mode === 'motor' ? '자석' : '에나멜'}</strong><b>${mode === 'motor' ? (magnet > 0 ? 'S | N' : 'N | S') : stripping === 'half' ? '반만' : '완전히'}</b><small>${mode === 'motor' ? '왼쪽 | 오른쪽' : '한쪽 끝을 벗긴 방법'}</small></div></div>`);
+  setHTML('#readout', `<div class="readout-grid"><div class="readout-card"><strong>전류</strong><b>${conducting ? '흐름' : '끊김'}</b><small>${VOLTS[vIndex]} V</small></div><div class="readout-card"><strong>${mode === 'motor' ? '자석' : '에나멜'}</strong><b>${mode === 'motor' ? (magnet > 0 ? 'S | N' : 'N | S') : stripping === 'half' ? '반만' : '완전히'}</b><small>${mode === 'motor' ? '왼쪽 | 오른쪽' : '한쪽 끝을 벗긴 방법'}</small></div></div>`);
 }
 function setMode(next) {
   mode = next; lab.selectTab(next); on = false; turns = 0; lastSign = 0;
@@ -189,7 +190,7 @@ function frame(now) {
   if (!flow || flow.stage === 'observe') {
     const steps = reducedMotion.matches ? 1 : 4;
     for (let i = 0; i < steps; i++) { if (mode === 'motor') stepMotor(dt / steps); else stepSimple(dt / steps); }
-    if (mode === 'motor') paintMotor(); else paintSimple();
+    if (mode === 'motor') paintMotor(); else { paintSimple(); renderText(); }
     paintSpeed();
     flow?.update(checklist([
       ['전동기에 전류를 흘려 회전 관찰하기', seen.spin, '‘전동기의 원리’ 탭 → ‘전류 흘리기’'],
