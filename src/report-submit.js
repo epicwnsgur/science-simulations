@@ -7,7 +7,8 @@ const STORE = 'report-class-code';
 const remembered = () => { try { return sessionStorage.getItem(STORE) ?? ''; } catch { return ''; } };
 const remember = value => { try { sessionStorage.setItem(STORE, value); } catch { /* 저장하지 못해도 제출에는 지장이 없어요. */ } };
 const plain = value => value.replace(/\s/g, '');
-const ID = /^\d{3,10}$/;
+// 학번 5자리: 학년 1자리 + 반 2자리 + 번호 2자리. 시트는 반(2~3번째 자리)으로 줄을 모아요.
+const validId = id => /^\d{5}$/.test(id) && Number(id.slice(1, 3)) >= 1;
 
 export function mountReportSubmit(container, { report, check }, url = SUBMIT_URL) {
   if (!url) return () => {};
@@ -17,8 +18,8 @@ export function mountReportSubmit(container, { report, check }, url = SUBMIT_URL
       <p class="poe-hint">예상·관찰·설명이 선생님 구글 시트로 전송돼요. 고친 뒤 다시 제출하면 새 제출로 함께 남아요.</p>
       <div class="submit-fields">
         <label class="submit-code">수업 코드<input id="submit-code" inputmode="numeric" autocomplete="off" maxlength="12" placeholder="칠판의 숫자"></label>
-        <label>학번<input id="submit-id" inputmode="numeric" autocomplete="off" maxlength="10" placeholder="예: 20315"></label>
-        <label>학번 확인<input id="submit-id-confirm" inputmode="numeric" autocomplete="off" maxlength="10" placeholder="학번을 한 번 더"><small class="submit-match" data-for="id" aria-live="polite"></small></label>
+        <label>학번<input id="submit-id" inputmode="numeric" autocomplete="off" maxlength="5" placeholder="예: 2학년 3반 15번 → 20315"></label>
+        <label>학번 확인<input id="submit-id-confirm" inputmode="numeric" autocomplete="off" maxlength="5" placeholder="학번 5자리를 한 번 더"><small class="submit-match" data-for="id" aria-live="polite"></small></label>
         <label>이름<input id="submit-name" autocomplete="off" maxlength="20" placeholder="예: 홍길동"></label>
         <label>이름 확인<input id="submit-name-confirm" autocomplete="off" maxlength="20" placeholder="이름을 한 번 더"><small class="submit-match" data-for="name" aria-live="polite"></small></label>
       </div>
@@ -56,7 +57,7 @@ export function mountReportSubmit(container, { report, check }, url = SUBMIT_URL
     e.preventDefault();
     const who = { code: input('code').value.trim(), studentId: plain(pairs.id[0].value), name: plain(pairs.name[0].value) };
     const problem = !who.code ? '수업 코드를 적어 주세요.'
-      : !ID.test(who.studentId) ? '학번은 숫자로만 적어 주세요. (예: 20315)'
+      : !validId(who.studentId) ? '학번은 숫자 5자리로 적어 주세요. (예: 2학년 3반 15번 → 20315)'
       : who.studentId !== plain(pairs.id[1].value) ? '학번 두 칸이 서로 달라요. 다시 확인해 주세요.'
       : !who.name ? '이름을 적어 주세요.'
       : who.name !== plain(pairs.name[1].value) ? '이름 두 칸이 서로 달라요. 다시 확인해 주세요.'
