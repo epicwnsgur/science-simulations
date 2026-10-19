@@ -1,5 +1,5 @@
 import { CONCEPT_QUIZZES } from './concept-quizzes.js';
-import { mountConceptQuiz, readQuizResult } from './concept-quiz-ui.js';
+import { mountConceptQuiz } from './concept-quiz-ui.js';
 import { mountReportSubmit } from './report-submit.js';
 const $ = selector => document.querySelector(selector);
 export const MIN_CHARS = 20;
@@ -87,7 +87,7 @@ export function setupPOEFlow(config) {
   $('#simulation-mount').append(workspace);
   $('#concept-activities').append(vocabulary, mission);
   const resetSubmit = mountReportSubmit($('#report-submit'), {
-    report: () => ({ lab: slug, title: document.title.split(' 실험실')[0], prediction: prediction?.choice ?? '', reason: prediction?.reason ?? '', observation: $('#saved-observation').textContent, explanation: $('#explanation-record').value.trim(), quiz: readQuizResult(mission) }),
+    report: () => ({ lab: slug, title: document.title.split(' 실험실')[0], prediction: prediction?.choice ?? '', reason: prediction?.reason ?? '', observation: $('#saved-observation').textContent, explanation: $('#explanation-record').value.trim() }),
     check: () => countChars($('#explanation-record')) >= MIN_CHARS ? '' : `설명을 공백을 빼고 ${MIN_CHARS}자 이상 써 주세요.`,
   });
   $('#reset').setAttribute('aria-label', '실험만 초기화');

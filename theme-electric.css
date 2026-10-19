@@ -63,6 +63,8 @@ header::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:1px
 .submit-status{color:var(--muted)}
 .submit-status[data-state=done]{color:var(--ok)}
 .submit-status[data-state=error]{color:#ff8a8a}
+.submit-match[data-state=done]{color:var(--ok)}
+.submit-match[data-state=error]{color:#ff8a8a}
 .concept-sequence li{color:var(--ink)}
 .concept-sequence li::marker{color:var(--volt);font-weight:700}
 .concept-sequence p{color:var(--muted)}
