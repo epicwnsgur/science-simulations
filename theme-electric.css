@@ -55,6 +55,14 @@ header::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:1px
 .poe-comparison h3{color:var(--current)}
 .poe-comparison p{color:var(--ink)}
 #concept-review{border-top-color:var(--line)}
+.submit-report{background:#0a1029;border-color:var(--line-2)}
+.submit-report h3,.submit-fields label{color:var(--ink)}
+.submit-fields input{background:#070c22;border-color:var(--line-2);color:var(--ink)}
+.submit-fields input:focus{outline-color:var(--current);box-shadow:var(--glow-c)}
+.submit-fields input::placeholder{color:var(--faint)}
+.submit-status{color:var(--muted)}
+.submit-status[data-state=done]{color:var(--ok)}
+.submit-status[data-state=error]{color:#ff8a8a}
 .concept-sequence li{color:var(--ink)}
 .concept-sequence li::marker{color:var(--volt);font-weight:700}
 .concept-sequence p{color:var(--muted)}

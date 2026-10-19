@@ -1,5 +1,6 @@
 import { CONCEPT_QUIZZES } from './concept-quizzes.js';
-import { mountConceptQuiz } from './concept-quiz-ui.js';
+import { mountConceptQuiz, readQuizResult } from './concept-quiz-ui.js';
+import { mountReportSubmit } from './report-submit.js';
 const $ = selector => document.querySelector(selector);
 export const MIN_CHARS = 20;
 
@@ -78,12 +79,17 @@ export function setupPOEFlow(config) {
         ${explain.note ? `<p class="concept-note">${explain.note}</p>` : ''}
         <p class="poe-hint">내 설명과 비교해 보세요. 새롭게 알게 된 내용을 위의 설명에 덧붙여도 좋아요.</p>
         <div id="concept-activities"></div>
+        <div id="report-submit"></div>
         <div class="poe-actions"><button class="secondary" id="revisit-lab">실험으로 돌아가 다시 확인하기</button><button class="secondary" id="restart-poe">기록 지우고 처음부터</button></div>
       </section>
     </section>
   `);
   $('#simulation-mount').append(workspace);
   $('#concept-activities').append(vocabulary, mission);
+  const resetSubmit = mountReportSubmit($('#report-submit'), {
+    report: () => ({ lab: slug, title: document.title.split(' 실험실')[0], prediction: prediction?.choice ?? '', reason: prediction?.reason ?? '', observation: $('#saved-observation').textContent, explanation: $('#explanation-record').value.trim(), quiz: readQuizResult(mission) }),
+    check: () => countChars($('#explanation-record')) >= MIN_CHARS ? '' : `설명을 공백을 빼고 ${MIN_CHARS}자 이상 써 주세요.`,
+  });
   $('#reset').setAttribute('aria-label', '실험만 초기화');
   $('#reset').innerHTML = '↻ <span>실험 초기화</span>';
 
@@ -173,7 +179,7 @@ export function setupPOEFlow(config) {
   };
   $('#revisit-lab').onclick = () => changeStage('observe');
   $('#restart-poe').onclick = () => {
-    resetConceptQuiz();
+    resetConceptQuiz(); resetSubmit();
     prediction = null;
     for (const id of ['prediction-form', 'observation-form', 'explanation-form']) $(`#${id}`).reset();
     $('#prediction-form fieldset').disabled = false; $('#prediction-reason').readOnly = false;
