@@ -18,6 +18,7 @@
 - `src/lab-shell.js`, `lab.css`: 실험 페이지 틀(활동 탭, 어두운 실험 무대, 관찰 기록, 스스로 평가, 핵심 개념)과 시각 효과(빛 번짐, 불꽃, 알림, 경로를 따라 흐르는 전자·물 알갱이).
 - `theme-electric.css`: 전기와 자기 단원 공통 디자인(어두운 회로 기판 배경, 전류는 하늘색·전압은 노란색·자석은 빨강/파랑, 빛나는 버튼과 무대). 모든 실험이 마지막에 불러옵니다. 단원 페이지는 `unit-electric.css`를 씁니다.
 - `src/poe-flow.js`: 예상하기 → 관찰하기 → 설명하기 흐름. 실험마다 관찰 체크리스트를 모두 마쳐야 설명 단계로 넘어갑니다.
+- `src/report-submit.js`, `apps-script/Code.gs`: 개념 확인 아래의 ‘선생님께 보고서 제출하기’. `src/submission-config.js`에 Apps Script 웹 앱 주소를 넣으면 나타나고, 학생 보고서가 선생님 구글 시트에 쌓입니다. 설정 순서는 [`docs/google-sheet-submission.md`](docs/google-sheet-submission.md)를 보세요.
 - `src/*-model.js`: 실험별 모형과 `node --test`로 확인하는 단위 테스트.
 - `vite.config.js`는 `simulations/` 아래 폴더를 자동으로 빌드에 넣습니다. 새 실험은 폴더를 만들고 `netlify.toml` 리다이렉트와 단원 카드만 추가하면 됩니다.
 
@@ -55,7 +56,7 @@ CHROMIUM_PATH=/usr/bin/chromium npm run test:e2e
 - 새 실험을 추가할 때는 `simulations/실험이름/index.html`을 만들고 `vite.config.js`의 빌드 입력, `netlify.toml`의 끝 슬래시 리다이렉트, 해당 단원 폴더의 카드 링크를 함께 추가합니다.
 - `.github/workflows/pages.yml`의 GitHub Pages 배포도 남아 있습니다. 상대 자산 경로를 사용하므로 저장소 하위 경로(`https://epicwnsgur.github.io/science-simulations/`)에서도 동작합니다.
 
-외부 API·계정·비밀키·서버 데이터 저장은 없습니다. 외부 글꼴 요청 없이 시스템 글꼴로 표시합니다. 학생이 쓴 예상·관찰·설명은 현재 페이지 메모리에만 있고 서버로 보내지 않습니다. PDF는 웹 배포물에 포함하지 않습니다.
+계정·비밀키·서버 데이터 저장은 없습니다. 외부 글꼴 요청 없이 시스템 글꼴로 표시합니다. 학생이 쓴 예상·관찰·설명은 현재 페이지 메모리에만 있다가, 선생님이 제출 주소(`src/submission-config.js`)를 넣은 경우에만 학생이 [제출하기]를 누를 때 선생님의 구글 시트(Apps Script 웹 앱)로 보냅니다. PDF는 웹 배포물에 포함하지 않습니다.
 
 ## 정전기 유도 (VII-1 02차시)
 
