@@ -10,11 +10,6 @@ function ready() {
     code, studentId: '20315', name: '홍길동', lab: 'ohms-law', title: '옴의 법칙',
     prediction: '전류가 2배가 된다', reason: '전압이 커지면 전류도 커질 것 같아요.',
     observation: '전압을 높일수록 전류계 값이 커졌어요.', explanation: '저항이 일정하면 전류는 전압에 비례해요.',
-    quiz: [
-      { first: 'O', firstCorrect: true, last: 'O', lastCorrect: true },
-      { first: 'O', firstCorrect: false, last: 'X', lastCorrect: true },
-      { first: '', firstCorrect: false, last: '', lastCorrect: false },
-    ],
     ...extra,
   });
   return { ...script, code, report };
@@ -37,7 +32,7 @@ test('보고서를 실험 탭에 한 줄로 저장하고 제출 횟수를 센다
   assert.equal(sheet.rows[0][0], '제출 시각');
   const row = sheet.rows[2];
   assert.equal(Object.prototype.toString.call(row[0]), '[object Date]');
-  assert.deepEqual(row.slice(1), ['옴의 법칙', "'20315", '홍길동', 2, '전류가 2배가 된다', '전압이 커지면 전류도 커질 것 같아요.', '전압을 높일수록 전류계 값이 커졌어요.', '고쳐 쓴 설명이에요. 전류는 전압에 비례해요.', '1 / 3', 'O (정답)', 'O (오답) → X (정답)', '미응답']);
+  assert.deepEqual(row.slice(1), ['옴의 법칙', "'20315", '홍길동', 2, '전류가 2배가 된다', '전압이 커지면 전류도 커질 것 같아요.', '전압을 높일수록 전류계 값이 커졌어요.', '고쳐 쓴 설명이에요. 전류는 전압에 비례해요.']);
 });
 
 test('수업 코드·제출 받기·학번 형식을 확인한다', () => {

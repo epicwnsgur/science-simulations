@@ -22,8 +22,8 @@ const LABS = {
 const OTHER_SHEET = '기타 실험';
 const SETTINGS_SHEET = '설정';
 const ROSTER_SHEET = '명단';
-const HEADERS = ['제출 시각', '실험', '학번', '이름', '제출 횟수', '예상', '예상한 까닭', '관찰', '설명', '퀴즈 첫 시도', '퀴즈 1', '퀴즈 2', '퀴즈 3'];
-const WIDTHS = [130, 120, 70, 70, 70, 200, 260, 300, 340, 90, 130, 130, 130];
+const HEADERS = ['제출 시각', '실험', '학번', '이름', '제출 횟수', '예상', '예상한 까닭', '관찰', '설명'];
+const WIDTHS = [130, 120, 70, 70, 70, 200, 260, 300, 340];
 const MAX_TEXT = 2000;
 const MAX_BODY = 40000;
 
@@ -79,7 +79,6 @@ function doPost(e) {
     const known = Object.prototype.hasOwnProperty.call(LABS, data.lab);
     const lab = known ? LABS[data.lab] : clean_(data.title, 40) || '이름 없는 실험';
     const sheetName = known ? lab : OTHER_SHEET;
-    const quiz = (Array.isArray(data.quiz) ? data.quiz : []).slice(0, 3);
     const lock = LockService.getScriptLock();
     lock.waitLock(20000);
     try {
@@ -88,8 +87,6 @@ function doPost(e) {
       sheet.appendRow([
         new Date(), lab, "'" + id, name, count,
         clean_(data.prediction, 200), clean_(data.reason, MAX_TEXT), clean_(data.observation, MAX_TEXT), clean_(data.explanation, MAX_TEXT),
-        quiz.filter(q => q && q.firstCorrect === true).length + ' / 3',
-        formatQuiz_(quiz[0]), formatQuiz_(quiz[1]), formatQuiz_(quiz[2]),
       ].map(safe_));
       return json_({ ok: true, count: count, message: name + ' 학생의 ‘' + lab + '’ 보고서를 제출했어요.' + (count > 1 ? ' (' + count + '번째 제출)' : '') });
     } finally {
@@ -143,15 +140,6 @@ function labSheet_(ss, name) {
 function countSubmissions_(sheet, lab, id) {
   if (sheet.getLastRow() < 2) return 0;
   return sheet.getRange(2, 2, sheet.getLastRow() - 1, 2).getDisplayValues().filter(row => row[0] === lab && row[1] === id).length;
-}
-
-// 예: 'O (정답)', '② (오답) → ③ (정답)', '미응답'
-function formatQuiz_(q) {
-  if (!q || !q.first) return '미응답';
-  const mark = (choice, correct) => clean_(choice, 4) + (correct === true ? ' (정답)' : ' (오답)');
-  let text = mark(q.first, q.firstCorrect);
-  if (q.last && (q.last !== q.first || q.lastCorrect !== q.firstCorrect)) text += ' → ' + mark(q.last, q.lastCorrect);
-  return text;
 }
 
 function clean_(value, max) {
