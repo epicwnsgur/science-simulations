@@ -1,6 +1,7 @@
 import { CONCEPT_QUIZZES } from './concept-quizzes.js';
 import { mountConceptQuiz } from './concept-quiz-ui.js';
 import { mountReportSubmit } from './report-submit.js';
+import { REVIEWS } from './reviews.js';
 const $ = selector => document.querySelector(selector);
 export const MIN_CHARS = 20;
 const STAGES = ['predict', 'observe', 'explain'];
@@ -9,6 +10,7 @@ const STAGES = ['predict', 'observe', 'explain'];
 // 관찰 조건(progress)은 실험 쪽에서 알려 주며, 이 모듈은 기록과 화면 전환만 맡습니다.
 // config.experiments를 주면 실험마다 예상·관찰·설명을 따로 기록합니다(예: 풍선 실험, 숟가락 실험).
 // 쓴 내용은 이 탭이 열려 있는 동안 sessionStorage에 저장되어 새로 고침해도 남아요.
+// 모든 실험은 ‘실험 전 1분 복습’(src/reviews.js)부터 시작해요. 모든 질문에 답해야 실험을 시작할 수 있어요.
 export function setupPOEFlow(config) {
   const experiments = config.experiments ?? [{ id: 'main', name: '', predict: config.predict, observe: config.observe, explain: config.explain }];
   const multi = experiments.length > 1;
@@ -19,7 +21,8 @@ export function setupPOEFlow(config) {
   const storeKey = `poe:${slug}`;
   // 실험 이름은 처음 한 번만 읽어요(PDF로 저장하는 동안 문서 제목이 잠깐 바뀌어도 영향이 없도록).
   const labTitle = document.title.split(' 실험실')[0];
-  const fresh = () => ({ current: 0, reviewed: !config.review, quiz: null, locked: false, exps: experiments.map(() => ({ stage: 'predict', reached: 0, prediction: null, choice: null, reason: '', observation: '', saved: '', observed: false, explanation: '', explained: false })) });
+  const review = config.review ?? REVIEWS[slug];
+  const fresh = () => ({ current: 0, reviewed: !review, reviewAnswers: [], quiz: null, locked: false, exps: experiments.map(() => ({ stage: 'predict', reached: 0, prediction: null, choice: null, reason: '', observation: '', saved: '', observed: false, explanation: '', explained: false })) });
   let state = load() ?? fresh();
   let lastProgress = null;
   const exp = () => state.exps[state.current];
@@ -30,10 +33,10 @@ export function setupPOEFlow(config) {
   intro.querySelector('p').textContent = multi ? `실험 ${experiments.length}가지를 차례로 해요. 실험마다 먼저 예상하고, 직접 실험한 뒤, 본 것을 설명해 보세요.` : '먼저 예상하고, 직접 실험한 뒤, 관찰한 까닭을 설명해 보세요.';
   const glossary = config.glossary ? `<details class="glossary"><summary>📖 어려운 낱말 뜻 보기</summary><dl>${config.glossary.map(([t, d]) => `<div><dt>${t}</dt><dd>${d}</dd></div>`).join('')}</dl></details>` : '';
   intro.insertAdjacentHTML('afterend', `
-    ${config.review ? `<section id="review-panel" class="poe-panel review-panel" aria-labelledby="review-title" hidden>
-      <p class="poe-kicker">실험 전 1분 복습</p><h2 id="review-title" tabindex="-1">${config.review.title}</h2>
-      ${config.review.items.map((item, n) => `<div class="review-item"><p class="review-question">${item.question}</p><div class="review-choices" role="group" aria-label="${n + 1}번 복습 질문">${item.choices.map((c, i) => `<button type="button" class="review-choice" data-review="${n}" data-choice="${i}">${c}</button>`).join('')}</div><p class="review-feedback" id="review-feedback-${n}" aria-live="polite"></p></div>`).join('')}
-      <div class="poe-actions"><button class="secondary" id="skip-review" type="button">복습 건너뛰기</button><button class="primary" id="finish-review" type="button">복습 마치고 실험 시작하기 →</button></div>
+    ${review ? `<section id="review-panel" class="poe-panel review-panel" aria-labelledby="review-title" hidden>
+      <p class="poe-kicker">실험 전 1분 복습</p><h2 id="review-title" tabindex="-1">${review.title}</h2>
+      ${review.items.map((item, n) => `<div class="review-item"><p class="review-question">${item.question}</p><div class="review-choices" role="group" aria-label="${n + 1}번 복습 질문">${item.choices.map((c, i) => `<button type="button" class="review-choice" data-review="${n}" data-choice="${i}">${c}</button>`).join('')}</div><p class="review-feedback" id="review-feedback-${n}" aria-live="polite"></p></div>`).join('')}
+      <div class="poe-actions"><p class="poe-hint" id="review-progress" role="status" aria-live="polite"></p><button class="primary" id="finish-review" type="button" disabled>복습 마치고 실험 시작하기 →</button></div>
     </section>` : ''}
     ${multi ? `<nav class="experiment-switch" aria-label="실험 고르기">${experiments.map((e, i) => `<button type="button" data-experiment="${i}"><span class="experiment-num">실험 ${i + 1}</span><b>${e.name}</b><small data-experiment-state="${i}"></small></button>`).join('')}</nav>
     <p class="experiment-now" role="status" aria-live="polite"></p>` : ''}
@@ -204,8 +207,8 @@ export function setupPOEFlow(config) {
   function changeStage(next, initial = false) {
     const e = exp();
     e.stage = next; e.reached = Math.max(e.reached, STAGES.indexOf(next)); save();
-    const reviewing = config.review && !state.reviewed;
-    if (config.review) $('#review-panel').hidden = !reviewing;
+    const reviewing = review && !state.reviewed;
+    if (review) $('#review-panel').hidden = !reviewing;
     for (const value of STAGES) {
       $(`#${value}-panel`).hidden = reviewing || value !== next;
       const item = $(`[data-step="${value}"]`), button = item.querySelector('button');
@@ -322,17 +325,29 @@ export function setupPOEFlow(config) {
     fill(); config.onRestart?.(); config.onExperimentChange?.(experiments[0].id, 0); changeStage('predict');
   };
 
-  if (config.review) {
-    document.querySelectorAll('[data-review]').forEach(b => b.onclick = () => {
-      // answer가 없는 문항은 생활 경험을 떠올리는 질문이라 맞고 틀림을 말하지 않아요.
-      const n = +b.dataset.review, item = config.review.items[n], right = item.answer === undefined || +b.dataset.choice === item.answer;
-      document.querySelectorAll(`[data-review="${n}"]`).forEach(v => { v.classList.toggle('chosen', v === b); v.setAttribute('aria-pressed', String(v === b)); });
-      const out = $(`#review-feedback-${n}`);
-      out.textContent = `${item.answer === undefined ? '' : right ? '맞아요! ' : '다시 떠올려 볼까요? '}${item.explanation}`;
-      out.dataset.state = right ? 'right' : 'wrong';
-    });
-    const finish = () => { state.reviewed = true; save(); changeStage(exp().stage); };
-    $('#skip-review').onclick = finish; $('#finish-review').onclick = finish;
+  if (review) {
+    // 질문마다 보기를 하나씩 골라야 ‘복습 마치고 실험 시작하기’ 버튼이 켜져요. 건너뛸 수 없어요.
+    const answers = state.reviewAnswers ??= [];
+    const showReview = () => {
+      document.querySelectorAll('[data-review]').forEach(v => { const on = answers[+v.dataset.review] === +v.dataset.choice; v.classList.toggle('chosen', on); v.setAttribute('aria-pressed', String(on)); });
+      review.items.forEach((item, n) => {
+        const out = $(`#review-feedback-${n}`), picked = answers[n];
+        if (picked === undefined || picked === null) { out.textContent = ''; out.dataset.state = ''; return; }
+        // answer가 없는 문항은 생활 경험을 떠올리는 질문이라 맞고 틀림을 말하지 않아요.
+        const right = item.answer === undefined || picked === item.answer;
+        out.textContent = `${item.answer === undefined ? '' : right ? '맞아요! ' : '다시 떠올려 볼까요? '}${item.explanation}`;
+        out.dataset.state = right ? 'right' : 'wrong';
+      });
+      const done = review.items.filter((_, n) => answers[n] !== undefined && answers[n] !== null).length;
+      $('#finish-review').disabled = done < review.items.length;
+      $('#review-progress').textContent = done < review.items.length ? `${done} / ${review.items.length} 질문에 답했어요 · 모든 질문에 답하면 실험을 시작할 수 있어요.` : '모든 질문에 답했어요. 실험을 시작해 볼까요?';
+    };
+    document.querySelectorAll('[data-review]').forEach(b => b.onclick = () => { answers[+b.dataset.review] = +b.dataset.choice; save(); showReview(); });
+    $('#finish-review').onclick = () => {
+      if (review.items.some((_, n) => answers[n] === undefined || answers[n] === null)) return;
+      state.reviewed = true; save(); changeStage(exp().stage);
+    };
+    showReview();
   }
 
   fill();

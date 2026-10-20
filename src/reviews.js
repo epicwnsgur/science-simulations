@@ -1,0 +1,79 @@
+// 실험 전 1분 복습: 모든 실험은 시작하기 전에 관련된 앞선 학습(초등학교 내용, 지난 차시)을 짧게 떠올려요.
+// 새 실험을 추가할 때 여기에 복습을 함께 넣어야 해요(src/reviews.test.js가 빠진 실험을 찾아 알려 줘요).
+// answer: 맞는 보기 번호(0부터). 생활 경험을 떠올리는 질문처럼 정답이 없으면 answer를 비워 둬요.
+export const REVIEWS = {
+  'friction-electricity': {
+    title: '실험 전에 떠올려 봐요',
+    items: [
+      { question: '초등학교에서 자석으로 실험한 것을 떠올려 봐요. 두 물체가 서로 닿지 않아도 밀거나 끌어당기는 힘이 생길 수 있을까요?', choices: ['생길 수 있어요', '꼭 닿아야만 생겨요'], answer: 0, explanation: '자석처럼 떨어져 있어도 힘이 생길 수 있어요. 오늘은 ‘전기를 띤 물체’ 사이의 힘을 알아봐요. 단, 전기의 (+)·(−)는 자석의 N극·S극과 다른 것이에요.' },
+      { question: '겨울에 털옷을 벗을 때 머리카락이 옷에 달라붙거나 ‘따끔’했던 적이 있나요?', choices: ['있어요', '없거나 잘 모르겠어요'], explanation: '이런 일도 오늘 배울 ‘마찰 전기’ 때문에 생겨요. 실험하면서 까닭을 찾아봐요.' },
+      { question: '물질을 이루는 원자 속에는 무엇이 있을까요?', choices: ['(+)전하를 띤 원자핵과 (−)전하를 띤 전자', '(+)전하를 띤 전자만', '전하가 전혀 없어요'], answer: 0, explanation: '원자는 (+)전하를 띤 원자핵과 (−)전하를 띤 전자로 되어 있어요. 보통은 (+)와 (−)의 양이 같아 전기를 띠지 않아요.' },
+    ],
+  },
+  'electrostatic-induction': {
+    title: '실험 전에 떠올려 봐요',
+    items: [
+      { question: '초등학교에서 전기 회로를 만들 때, 전기가 잘 통하는 물질은 무엇이었나요?', choices: ['나무', '쇠·구리 같은 금속', '플라스틱'], answer: 1, explanation: '금속은 전기가 잘 통해요. 금속 안에는 자유롭게 움직일 수 있는 전자가 있기 때문이에요. 오늘은 금속 안의 전자가 어떻게 움직이는지 살펴봐요.' },
+      { question: '지난 시간에 털과 문지른 풍선은 어떤 전하를 띠었나요?', choices: ['(+)전하', '전기를 띠지 않아요', '(−)전하'], answer: 2, explanation: '털의 전자 일부가 풍선으로 옮겨 가서, 전자를 얻은 풍선은 (−)전하를 띠었어요.' },
+      { question: '같은 종류의 전하를 띤 두 물체 사이에는 어떤 힘이 작용했나요?', choices: ['서로 밀어내는 힘(척력)', '서로 끌어당기는 힘(인력)', '아무 힘도 작용하지 않아요'], answer: 0, explanation: '같은 종류의 전하끼리는 밀어내고(척력), 다른 종류의 전하끼리는 끌어당겨요(인력).' },
+    ],
+  },
+  'electric-current': {
+    title: '실험 전에 떠올려 봐요',
+    items: [
+      { question: '초등학교에서 전구에 불을 켤 때, 전지·전선·전구를 어떻게 연결해야 했나요?', choices: ['전지의 한쪽 극에만 연결해요', '끊어진 곳 없이 한 바퀴 이어지게 연결해요', '전구만 전선에 연결하면 돼요'], answer: 1, explanation: '전기가 흐르는 길이 끊어지지 않고 이어져야 전구에 불이 켜져요. 이런 길을 전기 회로라고 해요.' },
+      { question: '지난 시간에 두 물체를 문질러서 생긴 전기를 무엇이라고 했나요?', choices: ['마찰 전기', '자기력', '빛'], answer: 0, explanation: '두 물체를 문지르면 전자가 옮겨 가서 마찰 전기가 생겨요.' },
+      { question: '전자는 어떤 전하를 띠나요?', choices: ['(+)전하', '(−)전하', '전하를 띠지 않아요'], answer: 1, explanation: '전자는 (−)전하를 띠어요. 오늘은 전선 속에서 전자가 어떻게 움직이는지 살펴봐요.' },
+    ],
+  },
+  'ohms-law': {
+    title: '실험 전에 떠올려 봐요',
+    items: [
+      { question: '초등학교에서 전지 2개를 직렬로 연결했을 때, 전구는 전지 1개일 때보다 어떻게 되었나요?', choices: ['더 어두워졌어요', '꺼졌어요', '더 밝아졌어요'], answer: 2, explanation: '전지를 직렬로 더 연결하면 전압이 커져서 전구가 더 밝아져요. 오늘은 전압과 전류의 관계를 숫자로 알아봐요.' },
+      { question: '지난 시간에 배운 전류의 단위는 무엇인가요?', choices: ['A(암페어)', 'V(볼트)', 'm(미터)'], answer: 0, explanation: '전류의 세기는 A(암페어)로 나타내요. 1 A = 1000 mA예요.' },
+      { question: '수로 모형에서 펌프처럼, 회로에 전류가 계속 흐르게 하는 것은 무엇이었나요?', choices: ['전선', '전지(전압)', '스위치'], answer: 1, explanation: '전지가 전압을 만들어 전류가 흐르게 해요. 전압의 단위는 V(볼트)예요.' },
+    ],
+  },
+  'series-parallel': {
+    title: '실험 전에 떠올려 봐요',
+    items: [
+      { question: '초등학교에서 전구 2개를 한 줄로 이어 연결하는 방법을 무엇이라고 했나요?', choices: ['병렬연결', '직렬연결', '자석 연결'], answer: 1, explanation: '전구를 한 줄로 잇는 것을 직렬연결, 여러 갈래로 나누어 잇는 것을 병렬연결이라고 해요.' },
+      { question: '전기 회로에 전류가 흐르려면 회로가 어떠해야 하나요?', choices: ['끊어진 곳 없이 이어져 있어야 해요', '한 곳이 끊어져 있어야 해요', '전지가 없어도 돼요'], answer: 0, explanation: '회로의 한 곳이라도 끊어지면 그 길로는 전류가 흐르지 않아요.' },
+      { question: '지난 시간에 배운 것: 전압이 같을 때 저항이 크면 전류의 세기는 어떻게 될까요?', choices: ['커져요', '변하지 않아요', '작아져요'], answer: 2, explanation: '저항이 클수록 전류가 흐르기 어려워 전류의 세기가 작아져요.' },
+    ],
+  },
+  'coil-magnetic-field': {
+    title: '실험 전에 떠올려 봐요',
+    items: [
+      { question: '초등학교에서 쓴 나침반 바늘은 무엇일까요?', choices: ['작은 자석', '작은 전구', '작은 전지'], answer: 0, explanation: '나침반 바늘은 작은 자석이라 N극이 북쪽을 가리켜요. 자석을 가까이 하면 바늘의 방향이 바뀌어요.' },
+      { question: '초등학교에서 만든 전자석은 언제 자석의 성질을 띠었나요?', choices: ['언제나', '전류가 흐를 때만', '전류가 흐르지 않을 때만'], answer: 1, explanation: '전자석은 전류가 흐를 때만 자석이 돼요. 오늘은 전류가 만드는 자기장을 나침반으로 살펴봐요.' },
+      { question: '자석의 같은 극끼리 가까이 하면 어떻게 되나요?', choices: ['서로 끌어당겨요', '아무 일도 없어요', '서로 밀어내요'], answer: 2, explanation: '같은 극끼리는 밀어내고, 다른 극끼리는 끌어당겨요.' },
+    ],
+  },
+  'electric-swing': {
+    title: '실험 전에 떠올려 봐요',
+    items: [
+      { question: '지난 시간에 코일에 전류가 흐르면 코일 주위에 무엇이 생겼나요?', choices: ['빛', '자기장', '소리'], answer: 1, explanation: '전류가 흐르면 주위에 자기장이 생겨 나침반 바늘이 움직였어요.' },
+      { question: '자석의 N극과 S극을 가까이 하면 어떤 힘이 작용하나요?', choices: ['서로 끌어당겨요', '서로 밀어내요', '아무 힘도 없어요'], answer: 0, explanation: '다른 극끼리는 끌어당기고 같은 극끼리는 밀어내요. 자석 사이의 이런 힘을 자기력이라고 해요.' },
+      { question: '코일에 흐르는 전류의 방향을 바꾸면 코일이 만드는 자기장의 방향은 어떻게 되나요?', choices: ['그대로예요', '없어져요', '반대가 돼요'], answer: 2, explanation: '전류의 방향을 바꾸면 자기장의 방향도 반대가 돼요. 오늘은 자기장 속의 전류가 받는 힘을 알아봐요.' },
+    ],
+  },
+  'electric-motor': {
+    title: '실험 전에 떠올려 봐요',
+    items: [
+      { question: '지난 시간에 전기 그네는 왜 움직였나요?', choices: ['그네가 전기를 띠어서', '자기장 속에서 전류가 흐르는 도선이 힘을 받아서', '바람 때문에'], answer: 1, explanation: '자석의 자기장 속에서 도선에 전류가 흐르면 도선이 힘을 받아요.' },
+      { question: '전기 그네에서 전류의 방향만 바꾸면 그네가 받는 힘의 방향은 어떻게 되나요?', choices: ['반대가 돼요', '그대로예요', '힘이 없어져요'], answer: 0, explanation: '전류나 자기장 중 하나의 방향만 바꾸면 힘의 방향이 반대가 돼요.' },
+      { question: '우리 주변에서 전기로 무언가를 빙글빙글 돌리는 기구는 무엇일까요?', choices: ['전기 다리미', '전등', '선풍기'], answer: 2, explanation: '선풍기는 전동기로 날개를 돌려요. 오늘은 전동기가 어떻게 계속 돌아가는지 알아봐요.' },
+    ],
+  },
+};
+
+export function validateReview(review) {
+  if (!review?.title?.trim() || !Array.isArray(review.items) || review.items.length < 2 || review.items.length > 4) throw new Error('실험 전 복습은 제목과 질문 2~4개가 필요합니다.');
+  review.items.forEach((item, i) => {
+    const ok = item.question?.trim() && item.explanation?.trim() && Array.isArray(item.choices) && item.choices.length >= 2 && item.choices.every(c => c?.trim())
+      && (item.answer === undefined || (Number.isInteger(item.answer) && item.answer >= 0 && item.answer < item.choices.length));
+    if (!ok) throw new Error(`복습 ${i + 1}번의 질문·보기·정답·해설을 확인하세요.`);
+  });
+  return review;
+}

@@ -1,6 +1,8 @@
 import { test, expect } from '@playwright/test';
+import { finishReview } from './poe-helpers.js';
 const url = '/simulations/electrostatic-induction/';
 async function begin(page) {
+  if (await page.locator('#review-panel').isVisible()) await finishReview(page);
   await page.locator('input[name="prediction"][value="0"]').check();
   await page.locator('#prediction-reason').fill('대전체가 숟가락 속 전자를 한쪽으로 움직일 것 같아요.');
   await page.locator('#start-observation').click();
@@ -10,6 +12,7 @@ const leafAngleOf = async page => Number((await page.locator('#leaf-left').getAt
 
 test('예상 화면에서는 실험을 숨기고 예상과 이유를 먼저 받음', async ({ page }) => {
   await page.goto(url);
+  await finishReview(page);
   await expect(page.locator('#predict-panel')).toBeVisible();
   await expect(page.locator('#scene')).not.toBeVisible();
   await expect(page.locator('#concept-review')).not.toBeVisible();

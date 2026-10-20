@@ -55,7 +55,6 @@ const scene = `
   <path d="M${FUR.x0} ${FUR.y + 4} Q${FUR.x0 - 6} ${FUR.y + 46} ${FUR.x0 + 30} ${FUR.y + 48} H${FUR.x1 - 30} Q${FUR.x1 + 6} ${FUR.y + 46} ${FUR.x1} ${FUR.y + 4} Z" fill="#6b4627"/>
   <g id="strands"></g>
   <text id="fur-name" x="400" y="426" text-anchor="middle" class="object-name">털</text>
-  <text id="balloon-state" x="784" y="30" text-anchor="end" class="force-tag"></text>
   <g id="fur-charges"></g>
   <g id="trail"></g>
   <g id="balloon" class="draggable" role="button" tabindex="0" aria-label="풍선, 끌거나 방향키로 움직여요"><ellipse id="balloon-aura" cx="0" cy="-28" rx="80" ry="92" fill="#4aa8ff" opacity="0" filter="url(#glow-strong)"/>${balloonSVG}<g id="balloon-charges"></g><text id="balloon-name" x="0" y="96" text-anchor="middle" class="object-name">풍선</text></g>
@@ -153,9 +152,6 @@ function paintRub(dt, t) {
   const now = clock();
   flights = flights.filter(f => now - f.start < f.duration);
   $('#trail').innerHTML = show ? flightHTML(flights, now, f => ({ x: pos.x + f.to.x, y: pos.y + f.to.y })) : '';
-  // 전하 보기를 켜면 물체 이름 옆에 지금 대전 상태를 함께 적어요(문지르기 전 · 뒤 비교).
-  setText('#fur-name', show ? `털 · ${transfers ? '전자를 잃어 (+)전하를 띰' : '전기를 띠지 않음'}` : '털');
-  setText('#balloon-state', show ? `풍선 · ${transfers ? '전자를 얻어 (−)전하를 띰' : '전기를 띠지 않음'}` : '');
   if (!show) { setHTML('#fur-charges', ''); setHTML('#balloon-charges', ''); return; }
   const fc = furCharge(), bc = balloonCharge();
   const furHTML = furSites.map((p, i) => { const w = wobble(i, t); return mark(p.x - 9 + w.x * .3, p.y + w.y * .3, 1) + (i < fc.minus ? mark(p.x + 9 + w.x, p.y + w.y, -1) : ''); }).join('');
@@ -230,9 +226,7 @@ function paintSpoon(t) {
   setHTML('#tool-shape', toolShape());
   const label = tool === 'spoon' ? { x: 150, y: -60 } : { x: 150, y: -40 };
   $('#tool-name').setAttribute('x', label.x); $('#tool-name').setAttribute('y', label.y);
-  const charged = rubbedSpoons ? (SPOON_TOOLS[tool].sign > 0 ? ' · (+)' : ' · (−)') : ' · 전기 없음';
-  setText('#tool-name', SPOON_TOOLS[tool].label + (show ? charged : ''));
-  setText('#spoon-a-name', '숟가락 ㉮' + (show ? (rubbedSpoons ? ' · (−)' : ' · 전기 없음') : ''));
+  setText('#tool-name', SPOON_TOOLS[tool].label);
   // 문지르는 장갑: 문지를 때 잠깐 나타나 전자가 장갑에서 숟가락으로 옮겨 가는 모습을 보여 줘요.
   spoonFlights = spoonFlights.filter(f => now - f.start < f.duration);
   $('#rub-glove').setAttribute('opacity', spoonFlights.length ? '1' : '0');
@@ -250,7 +244,6 @@ function paintSpoon(t) {
     if (d < 260) {
       const s = interaction(SPOON_A_SIGN, sign) === 'attract' ? 1 : -1, ux = dx / d * s, uy = dy / d * s;
       arrows = `<path d="M${b.x} ${b.y} l${(ux * 46).toFixed(1)} ${(uy * 46).toFixed(1)}" stroke="#ffd166" stroke-width="4" marker-end="url(#arrow-head)"/><path d="M${toolPos.x} ${toolPos.y} l${(-ux * 46).toFixed(1)} ${(-uy * 46).toFixed(1)}" stroke="#ffd166" stroke-width="4" marker-end="url(#arrow-head)"/>`;
-      arrows += `<text x="${((b.x + toolPos.x) / 2).toFixed(0)}" y="${((b.y + toolPos.y) / 2 - 18).toFixed(0)}" text-anchor="middle" class="force-tag">${s > 0 ? '인력 (끌어당김)' : '척력 (밀어냄)'}</text>`;
     }
   }
   $('#spoon-arrows').innerHTML = arrows;
@@ -273,7 +266,7 @@ function rubSpoons() {
   if (rubbedSpoons) return;
   rubbedSpoons = true;
   const now = clock(), duration = reducedMotion.matches ? 1 : 1100 * pace;
-  $('#rub-glove').innerHTML = `<g transform="translate(${RUB_GLOVE.x} ${RUB_GLOVE.y}) scale(.8)"><path d="${GLOVE_PATH}" fill="#cfeef0" stroke="#8fbcc0" stroke-width="1.5"/></g><text x="${RUB_GLOVE.x + 40}" y="${RUB_GLOVE.y - 40}" text-anchor="middle" class="force-tag">장갑: 전자를 잃어요</text>`;
+  $('#rub-glove').innerHTML = `<g transform="translate(${RUB_GLOVE.x} ${RUB_GLOVE.y}) scale(.8)"><path d="${GLOVE_PATH}" fill="#cfeef0" stroke="#8fbcc0" stroke-width="1.5"/></g>`;
   spoonFlights = [0, 1, 2, 3].map(k => ({ k: `a${k}`, from: { x: RUB_GLOVE.x + 30, y: RUB_GLOVE.y + 10 }, to: () => handleSite(k), start: now + k * 160 * pace, duration }));
   if (tool === 'spoon') spoonFlights.push(...[0, 1, 2, 3].map(k => ({ k: `b${k}`, from: { x: RUB_GLOVE.x + 60, y: RUB_GLOVE.y + 10 }, to: () => toolSite(k), start: now + (k + 2) * 160 * pace, duration })));
   burst($('#spoon-fx'), PIVOT.x + TIP - 40, PIVOT.y, '#8fd3ff', 14); burst($('#spoon-fx'), TOOL_START.x, TOOL_START.y, '#8fd3ff', 14);
@@ -373,7 +366,7 @@ function renderText() {
     setText('#stage-state', `${rubbedSpoons ? '문지른 뒤' : '문지르기 전'} · 가까이 할 물체: ${SPOON_TOOLS[tool].label}`);
     setText('#note-title', '숟가락 ㉮는 어느 쪽으로 움직이나요?');
     setText('#note-text', show ? '노란 화살표는 각 물체가 받는 힘의 방향이에요. 두 물체가 띤 전하의 종류를 비교해 보세요.' : '‘전하 보기’를 켜면 두 물체의 전하와 힘의 방향을 볼 수 있어요.');
-    setHTML('#readout', `<div class="readout-grid"><div class="readout-card"><strong>숟가락 ㉮</strong><b>${rubbedSpoons ? '(−)' : '전기 없음'}</b><small>${rubbedSpoons ? '전자를 얻음' : '문지르기 전'}</small></div><div class="readout-card"><strong>${SPOON_TOOLS[tool].label}</strong><b>${rubbedSpoons ? (SPOON_TOOLS[tool].sign > 0 ? '(+)' : '(−)') : '전기 없음'}</b><small>${rubbedSpoons ? (tool === 'glove' ? '전자를 잃음' : '전자를 얻음') : '문지르기 전'}</small></div></div>`);
+    setHTML('#readout', `<div class="readout-grid"><div class="readout-card"><strong>숟가락 ㉮</strong><b>${rubbedSpoons ? '(−)' : '중성'}</b><small>${rubbedSpoons ? '장갑과 문지름' : '문지르기 전'}</small></div><div class="readout-card"><strong>${SPOON_TOOLS[tool].label}</strong><b>${rubbedSpoons ? (SPOON_TOOLS[tool].sign > 0 ? '(+)' : '(−)') : '중성'}</b><small>${rubbedSpoons ? (tool === 'glove' ? '숟가락과 문지름' : '장갑과 문지름') : '문지르기 전'}</small></div></div>`);
     setText('#model-note', '문질러서 남게 된 전하만 나타냈어요. 숟가락 ㉮는 닿기 전에 멈추도록 했어요. 움직임의 크기는 보기 쉽게 나타낸 모형이에요.');
     setText('#discovery', '대전되어도 (+)전하와 (−)전하는 모두 남아 있어요. 어느 한쪽이 더 많아진 것이에요.');
   }
@@ -507,14 +500,6 @@ const spoonIllustration = `<svg viewBox="0 0 420 245" role="img" aria-label="지
   <path d="M290 150 Q270 165 250 168" stroke="#ffd166" stroke-width="3" fill="none" stroke-dasharray="6 6"/><text x="290" y="200" text-anchor="middle" font-size="14" fill="#ffd166">가까이 가져가요</text></svg>`;
 
 flow = setupPOEFlow({
-  review: {
-    title: '실험 전에 떠올려 봐요',
-    items: [
-      { question: '초등학교에서 자석으로 실험한 것을 떠올려 봐요. 두 물체가 서로 닿지 않아도 밀거나 끌어당기는 힘이 생길 수 있을까요?', choices: ['생길 수 있어요', '꼭 닿아야만 생겨요'], answer: 0, explanation: '자석처럼 떨어져 있어도 힘이 생길 수 있어요. 오늘은 ‘전기를 띤 물체’ 사이의 힘을 알아봐요. 단, 전기의 (+)·(−)는 자석의 N극·S극과 다른 것이에요.' },
-      { question: '겨울에 털옷을 벗을 때 머리카락이 옷에 달라붙거나 ‘따끔’했던 적이 있나요?', choices: ['있어요', '없거나 잘 모르겠어요'], explanation: '이런 일도 오늘 배울 ‘마찰 전기’ 때문에 생겨요. 실험하면서 까닭을 찾아봐요.' },
-      { question: '물질을 이루는 원자 속에는 무엇이 있을까요?', choices: ['(+)전하를 띤 원자핵과 (−)전하를 띤 전자', '(+)전하를 띤 전자만', '전하가 전혀 없어요'], answer: 0, explanation: '원자는 (+)전하를 띤 원자핵과 (−)전하를 띤 전자로 되어 있어요. 보통은 (+)와 (−)의 양이 같아 전기를 띠지 않아요.' },
-    ],
-  },
   glossary,
   experiments: [
     {
