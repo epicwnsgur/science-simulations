@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 import { loadAppsScript } from '../apps-script/fake-google.js';
 import { SUBMIT_URL } from '../src/submission-config.js';
 import { CONCEPT_QUIZZES } from '../src/concept-quizzes.js';
+import { finishReview } from './poe-helpers.js';
 
 const URL_ = '/simulations/friction-electricity/';
 const REASON = '겨울에 털옷을 벗을 때 머리카락이 달라붙었던 적이 있어요.';
@@ -10,7 +11,7 @@ async function start(page) {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto(URL_);
   await expect(page.locator('#review-panel')).toBeVisible();
-  await page.locator('#skip-review').click();
+  await finishReview(page);
 }
 async function predict(page, choice, reason) {
   await page.locator(`input[name="prediction"][value="${choice}"]`).check();
@@ -134,7 +135,7 @@ test('마찰 전기: 두 실험을 모두 마치면 개념 정리·퀴즈가 나
 
 test('마찰 전기: 자동 재생은 단계를 보여 주고, 일시정지하면 그 자리에서 멈춤', async ({ page }) => {
   await page.goto(URL_);
-  await page.locator('#skip-review').click();
+  await finishReview(page);
   await predict(page, 0, REASON);
   await page.locator('#auto-play').click();
   await expect(page.locator('.autoplay-steps li')).toHaveCount(5);
@@ -329,7 +330,7 @@ test('글씨 크기 소·중·대: 누르면 바로 바뀌고 다른 실험에�
   await expect(page.locator('[data-text-size="l"]')).toHaveAttribute('aria-pressed', 'true');
   for (const url of ['/simulations/friction-electricity/', '/simulations/electrostatic-induction/', '/simulations/electric-current/', '/simulations/ohms-law/', '/simulations/series-parallel/', '/simulations/coil-magnetic-field/', '/simulations/electric-swing/', '/simulations/electric-motor/']) {
     await page.goto(url);
-    if (await page.locator('#skip-review').isVisible()) await page.locator('#skip-review').click();
+    await finishReview(page);
     await expect(page.locator('[data-text-size="l"]'), url).toHaveAttribute('aria-pressed', 'true');
     expect(await size(), url).toBeGreaterThan(medium);
     await page.locator('input[name="prediction"][value="0"]').check();
@@ -338,4 +339,48 @@ test('글씨 크기 소·중·대: 누르면 바로 바뀌고 다른 실험에�
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), url).toBe(true);
     await page.screenshot({ path: `/tmp/text-large-${url.split('/')[2]}.png`, fullPage: true });
   }
+});
+
+test('실험 전 1분 복습: 건너뛰기가 없고, 모든 질문에 답해야 실험을 시작할 수 있음(새로 고침해도 답 유지)', async ({ page }) => {
+  await page.goto(URL_);
+  await expect(page.locator('#review-panel')).toBeVisible();
+  await expect(page.locator('#skip-review')).toHaveCount(0);
+  const finish = page.locator('#finish-review'), items = page.locator('.review-item');
+  const n = await items.count();
+  expect(n).toBe(3);
+  await expect(finish).toBeDisabled();
+  await expect(page.locator('[data-step="predict"] button')).toBeDisabled();
+  await items.nth(0).locator('.review-choice').nth(1).click();
+  await expect(page.locator('#review-feedback-0')).toContainText('다시 떠올려 볼까요?');
+  await items.nth(1).locator('.review-choice').first().click();
+  await expect(finish).toBeDisabled();
+  await expect(page.locator('#review-progress')).toContainText('2 / 3');
+  await page.reload();
+  await expect(page.locator('.review-choice.chosen')).toHaveCount(2);
+  await expect(finish).toBeDisabled();
+  await items.nth(2).locator('.review-choice').first().click();
+  await expect(finish).toBeEnabled();
+  await finish.click();
+  await expect(page.locator('#predict-panel')).toBeVisible();
+  await page.reload();
+  await expect(page.locator('#predict-panel')).toBeVisible();
+});
+
+test('마찰 전기 전하 보기: 실험 화면에는 원자핵(+)과 전자(−) 표시만 있고 대전 상태 글씨는 없음', async ({ page }) => {
+  await start(page);
+  await predict(page, 0, REASON);
+  await page.locator('#show-detail').check();
+  await page.locator('#rub-btn').click(); await page.locator('#rub-btn').click();
+  await expect(page.locator('#balloon-charges g').first()).toBeAttached();
+  await expect(page.locator('#fur-name')).toHaveText('털');
+  await expect(page.locator('#balloon-name')).toHaveText('풍선');
+  await page.locator('[data-experiment="1"]').click();
+  await predict(page, 1, '같은 장갑으로 문질렀으니 서로 밀어낼 것 같아요.');
+  await page.locator('#rub-spoons').click();
+  await page.locator('#approach').click();
+  await expect(page.locator('#spoon-a-charges g').first()).toBeAttached({ timeout: 8000 });
+  await expect(page.locator('#spoon-arrows path').first()).toBeAttached();
+  const sceneText = await page.locator('#scene').evaluate(svg => [...svg.querySelectorAll('text')].map(t => t.textContent).join(' '));
+  for (const phrase of ['전자를 얻어', '전자를 잃어', '전하를 띰', '전기 없음', '인력', '척력', '전자를 잃어요']) expect(sceneText).not.toContain(phrase);
+  await expect(page.locator('#spoon-a-name')).toHaveText('숟가락 ㉮');
 });

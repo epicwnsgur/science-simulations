@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { beginObservation } from './poe-helpers.js';
+import { beginObservation, finishReview } from './poe-helpers.js';
 import { CONCEPT_QUIZZES } from '../src/concept-quizzes.js';
 
 async function hold(page, ms = 900) {
@@ -85,7 +85,11 @@ for (const [url, concept, run] of LABS) {
     test.setTimeout(45000);
     const errors = []; page.on('pageerror', e => errors.push(e.message));
     await page.goto(url);
-    await expect(page.locator('#predict-panel')).toBeVisible();
+    // 모든 실험은 실험 전 1분 복습부터 시작하고, 건너뛸 수 없어요.
+    await expect(page.locator('#review-panel')).toBeVisible();
+    await expect(page.locator('#skip-review')).toHaveCount(0);
+    await expect(page.locator('#finish-review')).toBeDisabled();
+    await expect(page.locator('#predict-panel')).not.toBeVisible();
     await expect(page.locator('#scene')).not.toBeVisible();
     await expect(page.locator('.mission')).not.toBeVisible();
     await beginObservation(page);
@@ -139,6 +143,7 @@ test('저항의 연결: 직렬에서 스위치 하나를 열면 두 전구 모�
 
 test('서술은 공백을 빼고 20자 이상이어야 다음 단계로 넘어감', async ({ page }) => {
   await page.goto('/simulations/series-parallel/');
+  await finishReview(page);
   await page.locator('input[name="prediction"][value="0"]').check();
   await page.locator('#prediction-reason').fill('직렬은 어두울 것 같아요');
   await expect(page.locator('.char-count[data-for="prediction-reason"]')).toContainText('10 / 20자');

@@ -77,7 +77,6 @@
 .lab-readable .stage-label{font-size:calc(14px * var(--fs))}
 .lab-readable .stage-hint{font-size:calc(14px * var(--fs))}
 .lab-friction #scene .object-name{font-size:calc(22px * var(--fs))}
-.lab-friction #scene .force-tag{font-size:calc(17px * var(--fs));font-weight:700;fill:#ffd166;paint-order:stroke;stroke:#0b1022;stroke-width:4px}
 .lab-readable .legend{font-size:calc(14px * var(--fs))}
 .lab-readable .model-note{font-size:calc(15px * var(--fs));line-height:1.75}
 .lab-readable .toast{font-size:calc(16px * var(--fs))}
