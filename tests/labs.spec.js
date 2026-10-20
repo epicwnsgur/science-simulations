@@ -31,7 +31,7 @@ async function answerQuiz(page) {
     await expect(page.locator(`[data-quiz="${n}"].right, [data-quiz="${n}"].wrong`)).toHaveCount(0);
   }
   await page.locator('#quiz-check').click();
-  await expect(page.locator('.quiz-score')).toHaveText('총 3문항 중 2문항 정답');
+  await expect(page.locator('.quiz-score')).toHaveText('총 5문항 중 4문항 정답');
   await expect(page.locator('.quiz-review li.wrong')).toContainText(quiz[0].explanation);
   await expect(page.locator('#quiz-feedback-0')).toContainText('오답');
   await expect(page.locator('[data-quiz="0"]').first()).toBeDisabled();
@@ -101,7 +101,7 @@ for (const [url, concept, run] of LABS) {
     await page.locator('#restart-poe').click();
     await expect(page.locator('#predict-panel')).toBeVisible();
     await expect(page.locator('#prediction-reason')).toHaveValue('');
-    await expect(page.locator('.quiz-progress')).toHaveText('0 / 3문제 골랐어요');
+    await expect(page.locator('.quiz-progress')).toHaveText('0 / 5문제 골랐어요');
     await expect(page.locator('.mission .chosen')).toHaveCount(0);
     expect(errors).toEqual([]);
   });

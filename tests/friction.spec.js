@@ -117,13 +117,18 @@ test('마찰 전기: 두 실험을 모두 마치면 개념 정리·퀴즈가 나
   await expect(page.locator('#quiz-check')).toBeDisabled();
   await page.locator('[data-quiz="2"][data-choice="1"]').click();
   await expect(page.locator('#quiz-feedback-2')).not.toContainText('오답');
+  await page.locator('[data-quiz="3"][data-choice="1"]').click();
+  await expect(page.locator('#quiz-check')).toBeDisabled();
+  await page.locator('[data-quiz="4"][data-choice="4"]').click();
+  await expect(page.locator('[data-quiz]')).toHaveCount(2 + 2 + 5 * 3);
   await page.locator('#quiz-check').click();
-  await expect(page.locator('.quiz-score')).toHaveText('총 3문항 중 1문항 정답');
+  await expect(page.locator('.quiz-score')).toHaveText('총 5문항 중 2문항 정답');
+  await expect(page.locator('.quiz-review li').nth(3)).toContainText(quiz[3].why['1']);
   await expect(page.locator('.quiz-review li').nth(2)).toContainText('내 답: ① (+)전하를 띤다.');
   await expect(page.locator('.quiz-review li').nth(2)).toContainText('정답: ③ (−)전하를 띤다.');
   await expect(page.locator('.quiz-review li').nth(2)).toContainText(quiz[2].why['1']);
   await page.locator('#quiz-retry').click();
-  await expect(page.locator('.quiz-progress')).toHaveText('0 / 3문제 골랐어요');
+  await expect(page.locator('.quiz-progress')).toHaveText('0 / 5문제 골랐어요');
   expect(errors).toEqual([]);
 });
 
@@ -272,3 +277,65 @@ for (const [name, width, height] of [['PC', 1440, 1000], ['태블릿', 820, 1180
     await page.screenshot({ path: `/tmp/friction-observe-${width}.png`, fullPage: true });
   });
 }
+
+test('PDF로 저장: 제출 버튼 옆 버튼을 누르면 인쇄 창을 열고, 보고서만 흰 바탕 A4로 인쇄됨(서버로는 안 보냄)', async ({ page }) => {
+  const { code, calls } = await fakeServer(page);
+  await page.addInitScript(() => { window.__printed = []; window.print = () => window.__printed.push(document.title); });
+  await finishBoth(page);
+  await page.locator('#report-feedback').fill('자동 재생이 좋았어요.');
+  // 학번·이름을 아직 안 적었으면 빈칸으로 둬요.
+  await page.locator('#save-pdf').click();
+  expect(await page.evaluate(() => window.__printed)).toEqual(['마찰 전기 탐구 보고서']);
+  await expect(page.locator('#print-report .print-info .blank')).toHaveCount(4);
+  await fillIdentity(page, code);
+  await page.locator('#save-pdf').click();
+  expect(await page.evaluate(() => window.__printed.at(-1))).toBe('마찰 전기 탐구 보고서_20315_홍길동');
+  await expect(page).toHaveTitle(/마찰 전기 실험실/);
+  const report = page.locator('#print-report');
+  await expect(report).toBeHidden();
+  await expect(report).toContainText('실험 1. 풍선과 털');
+  await expect(report).toContainText('실험 2. 숟가락과 장갑');
+  await expect(report).toContainText('숟가락 ㉮와 ㉯는 같은 (−)전하라 척력이');
+  await expect(report).toContainText('자동 재생이 좋았어요.');
+  await expect(report).toContainText('15번');
+  expect(calls).toHaveLength(0);
+  await page.emulateMedia({ media: 'print' });
+  await expect(report).toBeVisible();
+  await expect(page.locator('#app')).toBeHidden();
+  expect(await page.evaluate(() => getComputedStyle(document.body).backgroundColor)).toBe('rgb(255, 255, 255)');
+  await page.pdf({ path: '/tmp/friction-report.pdf', format: 'A4' });
+  await page.emulateMedia({ media: 'screen' });
+  // 제출한 뒤에도 PDF로 저장할 수 있어요.
+  await page.locator('#submit-report').click();
+  await page.locator('#preview-submit').click();
+  await expect(page.locator('.submit-done')).toBeVisible();
+  await expect(page.locator('#save-pdf')).toBeEnabled();
+  await page.locator('#save-pdf').click();
+  await expect(report).toContainText('선생님께 제출함');
+});
+
+test('글씨 크기 소·중·대: 누르면 바로 바뀌고 다른 실험에서도 기억하며, 크게 해도 화면이 넘치지 않음', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/simulations/ohms-law/');
+  const size = () => page.locator('#prediction-reason').evaluate(el => parseFloat(getComputedStyle(el).fontSize));
+  await expect(page.locator('[data-text-size="m"]')).toHaveAttribute('aria-pressed', 'true');
+  const medium = await size();
+  expect(medium).toBeGreaterThanOrEqual(16);
+  await page.locator('[data-text-size="s"]').click();
+  expect(await size()).toBeLessThan(medium);
+  await page.locator('[data-text-size="l"]').click();
+  expect(await size()).toBeGreaterThan(medium);
+  await page.goto(URL_);
+  await expect(page.locator('[data-text-size="l"]')).toHaveAttribute('aria-pressed', 'true');
+  for (const url of ['/simulations/friction-electricity/', '/simulations/electrostatic-induction/', '/simulations/electric-current/', '/simulations/ohms-law/', '/simulations/series-parallel/', '/simulations/coil-magnetic-field/', '/simulations/electric-swing/', '/simulations/electric-motor/']) {
+    await page.goto(url);
+    if (await page.locator('#skip-review').isVisible()) await page.locator('#skip-review').click();
+    await expect(page.locator('[data-text-size="l"]'), url).toHaveAttribute('aria-pressed', 'true');
+    expect(await size(), url).toBeGreaterThan(medium);
+    await page.locator('input[name="prediction"][value="0"]').check();
+    await page.locator('#prediction-reason').fill('이런 일이 일어날 것 같다고 생각한 까닭을 적어요.');
+    await page.locator('#start-observation').click();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), url).toBe(true);
+    await page.screenshot({ path: `/tmp/text-large-${url.split('/')[2]}.png`, fullPage: true });
+  }
+});

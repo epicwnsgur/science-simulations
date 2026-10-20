@@ -5,6 +5,7 @@ import { SUBMIT_URL } from './submission-config.js';
 // 보고서마다 제출 ID를 하나 정해 두고 재시도할 때도 같은 ID를 보내므로, 응답을 못 받아 다시 눌러도 시트에는 한 번만 저장돼요.
 // report(): 보낼 내용, check(): 아직 보낼 수 없으면 안내 글, onSubmitted(): 제출을 마쳤을 때(글 잠그기).
 // 학번과 이름은 비밀번호 확인처럼 두 번 적고, 두 칸이 같아야 제출할 수 있어요.
+// [PDF로 저장]은 같은 보고서 내용을 인쇄용 화면으로 만들어 브라우저 인쇄 창을 열어요(대상: ‘PDF로 저장’). 서버로는 보내지 않아요.
 const plain = value => value.replace(/\s/g, '');
 // 학번 5자리: 학년 1자리 + 반 2자리 + 번호 2자리. 시트는 반(2~3번째 자리)으로 줄을 모아요.
 const validId = id => /^\d{5}$/.test(id) && Number(id.slice(1, 3)) >= 1;
@@ -42,7 +43,7 @@ export function mountReportSubmit(container, { slug, report, check, onSubmitted 
         <label>이름<input id="submit-name" autocomplete="off" maxlength="20" placeholder="예: 홍길동"></label>
         <label>이름 확인<input id="submit-name-confirm" autocomplete="off" maxlength="20" placeholder="이름을 한 번 더"><small class="submit-match" data-for="name" aria-live="polite"></small></label>
       </div>
-      <div class="poe-actions"><p class="poe-hint">학번과 이름을 두 번씩 똑같이 적어야 제출할 수 있어요.</p><button class="primary big" id="submit-report" type="submit" disabled>보고서 제출하기</button></div>
+      <div class="poe-actions"><p class="poe-hint">학번과 이름을 두 번씩 똑같이 적어야 제출할 수 있어요.</p><div class="submit-buttons"><button class="secondary big" id="save-pdf" type="button">PDF로 저장</button><button class="primary big" id="submit-report" type="submit" disabled>보고서 제출하기</button></div></div>
       <p class="submit-status" role="status" aria-live="polite"></p>
     </form>
     <section class="submit-done" hidden aria-labelledby="done-title" tabindex="-1">
@@ -72,6 +73,7 @@ export function mountReportSubmit(container, { slug, report, check, onSubmitted 
   const show = (text, state = '') => { status.textContent = text; status.dataset.state = state; };
   const showInDialog = (text, state = '') => { previewStatus.textContent = text; previewStatus.dataset.state = state; };
   let sending = false, snapshot = null;
+  const pageTitle = document.title;
 
   // 두 칸이 같은지 보여 주고, 학번·이름이 모두 같을 때만 제출 버튼을 켭니다. 확인 칸을 다 쓰기 전에는 ‘다르다’고 하지 않아요.
   function refresh() {
@@ -150,10 +152,27 @@ export function mountReportSubmit(container, { slug, report, check, onSubmitted 
     }
   };
 
+  // PDF로 저장: 학번·이름 두 칸이 맞게 적혀 있으면 넣고, 아니면 손으로 쓸 수 있게 빈칸으로 둬요.
+  function savePDF() {
+    const id = plain(pairs.id[0].value), name = plain(pairs.name[0].value);
+    const who = validId(id) && id === plain(pairs.id[1].value) && name && name === plain(pairs.name[1].value) ? { studentId: id, name } : { studentId: '', name: '' };
+    const r = { ...report(), feedback: feedback.value.trim(), ...who };
+    let sheet = document.getElementById('print-report');
+    if (!sheet) { sheet = document.createElement('article'); sheet.id = 'print-report'; document.body.append(sheet); }
+    sheet.innerHTML = printHTML(r, store.submitted);
+    // 크롬은 문서 제목을 PDF 파일 이름으로 써요.
+    document.title = [`${r.title} 탐구 보고서`, r.studentId, r.name].filter(Boolean).join('_');
+    const restore = () => { document.title = pageTitle; window.removeEventListener('afterprint', restore); };
+    window.addEventListener('afterprint', restore);
+    window.print();
+    setTimeout(restore, 1000);
+  }
+  form.querySelector('#save-pdf').onclick = savePDF;
+
   function showDone() {
     const s = store.submitted;
     done.hidden = !s;
-    form.querySelectorAll('input, button').forEach(el => { el.disabled = !!s || (el === button && button.disabled); });
+    form.querySelectorAll('input, button:not(#save-pdf)').forEach(el => { el.disabled = !!s || (el === button && button.disabled); });
     feedback.readOnly = !!s;
     if (!s) return refresh();
     done.querySelector('.done-message').textContent = `${s.message} (${s.who})`;
@@ -169,11 +188,25 @@ export function mountReportSubmit(container, { slug, report, check, onSubmitted 
       persist();
       feedback.value = ''; feedback.readOnly = false;
       for (const [first, again] of Object.values(pairs)) { first.value = ''; again.value = ''; }
-      form.querySelectorAll('input, button').forEach(el => { el.disabled = false; });
+      form.querySelectorAll('input, button:not(#submit-report)').forEach(el => { el.disabled = false; });
       button.textContent = '보고서 제출하기';
       done.hidden = true; show(''); refresh();
     },
   };
+}
+
+// 인쇄용 보고서: 흰 바탕에 검은 글씨, A4에 맞춘 깔끔한 모양(스타일은 theme-electric.css의 @media print).
+function printHTML(r, submitted) {
+  const id = r.studentId, multi = r.sections.length > 1, today = stamp(new Date().toISOString()).slice(0, 10);
+  const blank = '<span class="blank"></span>';
+  const info = (label, value) => `<div><dt>${label}</dt><dd>${value || blank}</dd></div>`;
+  const item = (label, value) => `<div class="print-item"><dt>${label}</dt><dd>${value ? escape(value) : '<span class="empty">(쓰지 않음)</span>'}</dd></div>`;
+  return `
+    <div class="print-head"><p class="print-kicker">과학 탐구 보고서</p><h1>${escape(r.title)}</h1><p class="print-date">작성일 ${today}${submitted ? ` · 선생님께 제출함 ${stamp(submitted.at)}` : ''}</p></div>
+    <dl class="print-info">${info('학년', id && `${Number(id[0])}학년`)}${info('반', id && `${Number(id.slice(1, 3))}반`)}${info('번호', id && `${Number(id.slice(3))}번`)}${info('이름', escape(r.name))}</dl>
+    ${r.sections.map((s, i) => `<section class="print-section"><h2>${multi ? `실험 ${i + 1}. ${escape(s.name)}` : '탐구 기록'}</h2><dl>${item('예상', s.prediction)}${item('예상한 까닭', s.reason)}${item('관찰', s.observation)}${item('설명', s.explanation)}</dl></section>`).join('')}
+    ${r.feedback ? `<section class="print-section"><h2>시뮬레이션 사용 후기</h2><dl>${item('후기', r.feedback)}</dl></section>` : ''}
+    <p class="print-foot">준혁T의 과학 실험실 · 예상 → 관찰 → 설명</p>`;
 }
 
 function previewHTML(r) {

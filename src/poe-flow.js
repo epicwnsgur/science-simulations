@@ -17,6 +17,8 @@ export function setupPOEFlow(config) {
   const mission = $('.mission');
   const slug = location.pathname.replace(/\/index\.html$/, '/').split('/').filter(Boolean).at(-1);
   const storeKey = `poe:${slug}`;
+  // 실험 이름은 처음 한 번만 읽어요(PDF로 저장하는 동안 문서 제목이 잠깐 바뀌어도 영향이 없도록).
+  const labTitle = document.title.split(' 실험실')[0];
   const fresh = () => ({ current: 0, reviewed: !config.review, quiz: null, locked: false, exps: experiments.map(() => ({ stage: 'predict', reached: 0, prediction: null, choice: null, reason: '', observation: '', saved: '', observed: false, explanation: '', explained: false })) });
   let state = load() ?? fresh();
   let lastProgress = null;
@@ -111,7 +113,7 @@ export function setupPOEFlow(config) {
       const sections = experiments.map((e, i) => ({ name: e.name, prediction: state.exps[i].prediction?.choice ?? '', reason: state.exps[i].prediction?.reason ?? '', observation: state.exps[i].saved, explanation: state.exps[i].explanation.trim() }));
       // 예전 Apps Script도 읽을 수 있도록 실험별 답을 한 묶음으로도 함께 보내요.
       const joined = key => multi ? sections.map(s => `[${s.name}] ${s[key]}`).join('\n') : sections[0][key];
-      return { lab: slug, title: document.title.split(' 실험실')[0], sections, prediction: joined('prediction'), reason: joined('reason'), observation: joined('observation'), explanation: joined('explanation') };
+      return { lab: slug, title: labTitle, sections, prediction: joined('prediction'), reason: joined('reason'), observation: joined('observation'), explanation: joined('explanation') };
     },
     check: () => {
       const short = experiments.findIndex((e, i) => plain(state.exps[i].explanation).length < MIN_CHARS);

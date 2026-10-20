@@ -13,7 +13,7 @@ import { closeness, segmentDistance, clamp } from './src/induction-model.js';
 // 원자핵은 이동하지 않고 전자만 이동합니다. 중성 물체에 대한 분극과 정전기 유도는 다루지 않습니다.
 // 어느 물체가 전자를 잃는지는 문지르는 두 물체에 따라 달라요: 털–풍선에서는 털이, 장갑–숟가락에서는 장갑이 전자를 잃어요.
 
-document.body.classList.add('lab-readable', 'lab-friction');
+document.body.classList.add('lab-friction');
 const spriteUrl = new URL('../../images/balloon-fur.png', document.baseURI).href;
 const terms = [
   ['마찰 전기', '두 물체를 서로 문질러서 생기는 전기예요.'],

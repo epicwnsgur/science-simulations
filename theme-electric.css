@@ -287,3 +287,34 @@ body:has(.report-preview[open]){overflow:hidden}
   .experiment-switch b{font-size:16px}
 }
 @media(prefers-reduced-motion:reduce){.spinner{animation:none}}
+.submit-buttons{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end}
+@media(max-width:600px){.submit-buttons{width:100%}.submit-buttons button{flex:1 1 calc(50% - 10px)}}
+
+/* ---------- PDF로 저장(인쇄) ----------
+   [PDF로 저장]을 누르면 #print-report만 흰 바탕의 A4 보고서로 인쇄해요. 화면에서는 보이지 않아요. */
+#print-report{display:none}
+@media print{
+  @page{size:A4;margin:16mm 15mm}
+  :root{color-scheme:light}
+  html,body{background:#fff!important;color:#111!important;min-height:0}
+  body>*:not(#print-report){display:none!important}
+  #print-report{display:block;color:#111;font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',Arial,sans-serif;font-size:11pt;line-height:1.65;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .print-head{padding-bottom:10pt;border-bottom:2pt solid #1f3b6f;margin-bottom:12pt}
+  .print-kicker{margin:0;font-size:10pt;color:#1f3b6f;font-weight:700;letter-spacing:.5pt}
+  .print-head h1{margin:2pt 0 4pt;font-size:19pt;line-height:1.35;color:#111;background:none;-webkit-text-fill-color:#111}
+  .print-date{margin:0;font-size:9.5pt;color:#555}
+  .print-info{display:grid;grid-template-columns:1fr 1fr 1fr 2fr;margin:0 0 14pt;border:1pt solid #c9d1e3;border-radius:4pt;overflow:hidden}
+  .print-info>div{padding:6pt 9pt;border-right:1pt solid #c9d1e3}
+  .print-info>div:last-child{border-right:0}
+  .print-info dt{font-size:8.5pt;color:#555}
+  .print-info dd{margin:2pt 0 0;font-size:11.5pt;font-weight:700;min-height:14pt}
+  .print-info .blank{display:inline-block;width:70%;border-bottom:1pt solid #999}
+  .print-section{margin:0 0 12pt}
+  .print-section h2{margin:0 0 6pt;padding:4pt 8pt;font-size:13pt;color:#fff;background:#1f3b6f;border-radius:3pt;break-after:avoid}
+  .print-section dl{margin:0}
+  .print-item{padding:5pt 2pt 7pt;border-bottom:.75pt solid #dde2ec;break-inside:avoid}
+  .print-item dt{font-size:9.5pt;font-weight:700;color:#1f3b6f}
+  .print-item dd{margin:2pt 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
+  .print-item .empty{color:#888}
+  .print-foot{margin-top:16pt;font-size:8.5pt;color:#888;text-align:right}
+}

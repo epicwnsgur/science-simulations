@@ -3,7 +3,8 @@ import './poe.css';
 import './lab.css';
 import './induction.css';
 import './theme-electric.css';
-import { FX_DEFS, toast, burst, checklist } from './src/lab-shell.js';
+import './readable.css';
+import { FX_DEFS, toast, burst, checklist, headerHTML, setupTextSize } from './src/lab-shell.js';
 import { setupPOEFlow } from './src/poe-flow.js';
 import {
   SPOON_OBJECTS, SCOPE_OBJECTS, RUB_LEVELS, scopeCharge, closeness, segmentDistance, clamp,
@@ -49,7 +50,7 @@ const seen = { spoonMinus: false, spoonPlus: false, levels: new Set() };
 let flow = null;
 
 $('#app').innerHTML = `
-<header><a class="brand" href="../../grades/middle-school-2/unit-7/">← 실험 목록</a><span class="grade">중학교 2학년 <i></i> 과학</span></header>
+${headerHTML()}
 <main><div class="breadcrumb">VII. 전기와 자기 <span>/</span> 02 정전기 유도</div>
 <section class="intro"><div><h1>전기를 띤 물체 근처에 가면?</h1><p>대전체를 금속 물체에 가까이 가져가 보세요.</p></div></section>
 <div class="workspace"><section class="lab"><div class="lab-toolbar"><div class="tabs" role="tablist" aria-label="활동 선택"><button id="spoon-tab" role="tab" aria-selected="true">01 <span>쇠숟가락 움직이기</span></button><button id="scope-tab" role="tab" aria-selected="false">02 <span>검전기 관찰하기</span></button></div><button id="reset" class="reset">↻ <span>처음으로</span></button></div>
@@ -100,6 +101,7 @@ ${FX_DEFS}
 <section class="mission"></section></aside></div>
 <section class="vocabulary"><div class="vocab-heading"><h2>실험 속 핵심 개념</h2><span>단어를 누르면 뜻을 확인할 수 있어요.</span></div><div class="term-buttons">${terms.map(([t], i) => `<button data-term="${i}" class="${i === 0 ? 'active' : ''}">${t}</button>`).join('')}</div><p id="term-definition"><strong>${terms[0][0]}</strong> ${terms[0][1]}</p></section>
 </main>`;
+setupTextSize();
 
 /* ---------- 모양 그리기 ---------- */
 function charge(p, id) {

@@ -103,6 +103,8 @@ test('네 가지 관찰 후 기록→설명→개념 확인과 스스로 평가'
   await page.locator('[data-quiz="0"][data-choice="O"]').click();
   await page.locator('[data-quiz="1"][data-choice="X"]').click();
   await page.locator('[data-quiz="2"][data-choice="1"]').click();
+  await page.locator('[data-quiz="3"][data-choice="2"]').click();
+  await page.locator('[data-quiz="4"][data-choice="3"]').click();
   await page.locator('#quiz-check').click();
   await expect(page.locator('#quiz-feedback-0')).toContainText('정답');
   await expect(page.locator('#quiz-feedback-1')).toContainText('정답');
