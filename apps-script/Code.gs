@@ -68,11 +68,15 @@ function sortActiveById() { sortActive_(SORT_BY_ID); }
 function sortActiveByTime() { sortActive_(SORT_BY_TIME); }
 function sortActive_(mode) {
   const sheet = SpreadsheetApp.getActive().getActiveSheet();
-  if (!isLabSheet_(sheet)) return SpreadsheetApp.getUi().alert('실험 탭(예: 옴의 법칙)을 연 다음 눌러 주세요.');
-  withLock_(() => { setMode_(sheet, mode); arrange_(sheet); });
+  const ok = withLock_(() => {
+    if (!isLabSheet_(sheet) && !upgradeLegacy_(sheet)) return false;
+    setMode_(sheet, mode); arrange_(sheet);
+    return true;
+  });
+  if (!ok) SpreadsheetApp.getUi().alert('‘' + sheet.getName() + '’ 탭은 보고서 탭 모양이 아니에요.\n학생 보고서가 쌓인 실험 탭(예: 옴의 법칙)을 연 다음 다시 눌러 주세요.\n(보고서 탭은 머리글에 ‘제출 시각 | 반 | 학번 | 이름’이 있어요.)');
 }
 function rearrangeAll() {
-  withLock_(() => SpreadsheetApp.getActive().getSheets().filter(isLabSheet_).forEach(arrange_));
+  withLock_(() => SpreadsheetApp.getActive().getSheets().filter(sheet => isLabSheet_(sheet) || upgradeLegacy_(sheet)).forEach(arrange_));
 }
 
 /** 실험 탭 1행의 정렬 체크박스를 누르면 그 순서로 다시 정리합니다(하나만 체크되도록 유지). */
@@ -187,8 +191,34 @@ function isLabSheet_(sheet) {
   return sheet.getRange(HEADER_ROW, 1).getDisplayValue() === BASE_HEADERS[0] && sheet.getRange(HEADER_ROW, 2).getDisplayValue() === BASE_HEADERS[1];
 }
 
+// 지난 버전이 만든 탭(1행이 바로 ‘제출 시각 | 반 | 학번 …’ 머리글)을 그 자리에서 새 모양으로 바꿉니다.
+// 맨 위에 정렬 버튼 줄을 끼워 넣고, 없던 ‘사용 후기’·‘제출 ID’ 칸을 머리글 끝에 더해요. 학생 데이터는 그대로 둬요.
+function upgradeLegacy_(sheet) {
+  if (sheet.getRange(1, 1).getDisplayValue() !== BASE_HEADERS[0] || sheet.getRange(1, 2).getDisplayValue() !== BASE_HEADERS[1]) return false;
+  const old = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), BASE_HEADERS.length)).getDisplayValues()[0];
+  let headers = old.slice(0, old.length - [...old].reverse().findIndex(v => v !== ''));
+  if (headers.indexOf(FEEDBACK_HEADER) === -1) headers.push(FEEDBACK_HEADER);
+  if (headers.indexOf(ID_HEADER) === -1) headers.push(ID_HEADER);
+  sheet.insertRowBefore(1);
+  addControlRow_(sheet, headers);
+  sheet.getRange(HEADER_ROW, 1, 1, headers.length).setValues([headers]).setFontWeight('bold').setBackground('#e8efe3').setWrap(true);
+  sheet.setFrozenRows(HEADER_ROW);
+  sheet.hideColumns(headers.length);
+  return true;
+}
+
+// 1행: 정렬 버튼(학번 순 / 제출 시각 순 체크박스). 처음에는 제출 시각 순이에요.
+function addControlRow_(sheet, headers) {
+  sheet.getRange(1, 1, 1, 7).setValues([['보기 순서 →', true, SORT_BY_ID.label, false, SORT_BY_TIME.label, '', '← 하나를 체크하면 반별로 그 순서로 다시 정리돼요. (위쪽 메뉴 ‘보고서 정리’에도 있어요)']]);
+  sheet.getRange(1, SORT_BY_ID.col).insertCheckboxes();
+  sheet.getRange(1, SORT_BY_TIME.col).insertCheckboxes();
+  setMode_(sheet, SORT_BY_TIME);
+  sheet.getRange(1, 1, 1, headers.length).setFontWeight('bold').setBackground('#fff7d6');
+}
+
 function labSheet_(ss, name, headers) {
   const found = ss.getSheetByName(name);
+  if (found && !isLabSheet_(found)) upgradeLegacy_(found);
   if (found && isLabSheet_(found) && found.getRange(HEADER_ROW, 1, 1, headers.length).getDisplayValues()[0].join('|') === headers.join('|')) return found;
   // 칸 구성이 다른 예전 탭은 지우지 않고 이름만 바꿔 남겨 둡니다.
   if (found) {
@@ -197,11 +227,7 @@ function labSheet_(ss, name, headers) {
     found.setName(name + ' (이전' + (n > 1 ? ' ' + n : '') + ')');
   }
   const sheet = ss.insertSheet(name);
-  sheet.getRange(1, 1, 1, 7).setValues([['보기 순서 →', true, SORT_BY_ID.label, false, SORT_BY_TIME.label, '', '← 하나를 체크하면 반별로 그 순서로 다시 정리돼요. (위쪽 메뉴 ‘보고서 정리’에도 있어요)']]);
-  sheet.getRange(1, SORT_BY_ID.col).insertCheckboxes();
-  sheet.getRange(1, SORT_BY_TIME.col).insertCheckboxes();
-  setMode_(sheet, SORT_BY_TIME);
-  sheet.getRange(1, 1, 1, headers.length).setFontWeight('bold').setBackground('#fff7d6');
+  addControlRow_(sheet, headers);
   sheet.getRange(HEADER_ROW, 1, 1, headers.length).setValues([headers]).setFontWeight('bold').setBackground('#e8efe3').setWrap(true);
   sheet.setFrozenRows(HEADER_ROW);
   const widths = BASE_HEADERS.map((h, i) => [130, 50, 70, 70, 70][i]);
