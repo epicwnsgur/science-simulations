@@ -20,6 +20,7 @@ class FakeSheet {
     return this;
   }
   insertRowAfter(row) { return this.insertRowsBefore(row + 1, 1); }
+  insertRowBefore(row) { return this.insertRowsBefore(row, 1); }
   getLastColumn() { return Math.max(0, ...this.rows.map(r => { let n = r.length; while (n && (r[n - 1] === '' || r[n - 1] == null)) n--; return n; })); }
   insertRowsAfter(row, n) { return this; }
   getLastRow() { let n = this.rows.length; while (n && !this.rows[n - 1].some(v => v !== '' && v != null)) n--; return n; }

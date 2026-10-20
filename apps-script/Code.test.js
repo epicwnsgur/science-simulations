@@ -144,16 +144,55 @@ test('실험이 둘인 보고서는 실험마다 예상·관찰·설명 칸을 �
   assert.deepEqual(sheet.rows[2].slice(5, 13), ['끌려온다', '까닭1', '관찰1', '설명1', '밀려난다', '까닭2', '관찰2', '설명2']);
 });
 
-test('칸 구성이 다른 예전 탭은 이름을 바꿔 남기고 새 탭을 만든다', () => {
-  const { ss, post, report } = ready();
-  const old = ss.insertSheet('옴의 법칙');
+// 지난 버전이 만든 탭: 1행이 바로 머리글이고, 반 사이에 빈 줄이 있어요.
+function legacyTab(ss, name = '옴의 법칙') {
+  const old = ss.insertSheet(name);
   old.appendRow(['제출 시각', '반', '학번', '이름', '제출 횟수', '예상', '예상한 까닭', '관찰', '설명']);
-  old.appendRow(['2026-10-19', '3반', '20315']);
+  old.appendRow([new Date('2026-10-19T01:00:00Z'), '3반', "'20330", '삼반늦게', 1, '예상', '까닭', '관찰', '설명']);
+  old.appendRow([new Date('2026-10-19T00:00:00Z'), '3반', "'20310", '삼반먼저', 1, '예상', '까닭', '관찰', '설명']);
+  old.appendRow([]);
+  old.appendRow([new Date('2026-10-19T02:00:00Z'), '1반', "'20105", '일반', 1, '예상', '까닭', '관찰', '설명']);
+  return old;
+}
+
+test('지난 버전이 만든 탭에서 메뉴로 정렬하면 그 자리에서 새 모양으로 바꾸고 정리한다', () => {
+  const { ss, context, view } = ready();
+  const old = legacyTab(ss);
+  ss.active = old;
+  context.sortActiveById();
+  assert.deepEqual(ss.alerts, []);
+  assert.deepEqual(old.rows[0].slice(0, 5), ['보기 순서 →', true, '학번 순', false, '제출 시각 순']);
+  assert.deepEqual(old.rows[1].slice(0, 11), ['제출 시각', '반', '학번', '이름', '제출 횟수', '예상', '예상한 까닭', '관찰', '설명', '사용 후기', '제출 ID']);
+  assert.deepEqual(view(old, [3]), ['일반', '', '삼반먼저', '삼반늦게']);
+  context.sortActiveByTime();
+  assert.deepEqual(view(old, [3]), ['일반', '', '삼반먼저', '삼반늦게']);
+  assert.deepEqual([old.rows[0][1], old.rows[0][3]], [false, true]);
+  assert.equal(ss.getSheets().filter(sh => sh.getName().includes('이전')).length, 0);
+});
+
+test('지난 버전이 만든 탭에 새 보고서가 오면 같은 탭을 새 모양으로 바꿔 이어서 쓴다', () => {
+  const { ss, post, report, view } = ready();
+  const old = legacyTab(ss);
+  assert.equal(post(report({ studentId: '20201', name: '이반' })).ok, true);
+  assert.equal(ss.getSheetByName('옴의 법칙'), old);
+  assert.deepEqual(view(old, [3]), ['일반', '', '이반', '', '삼반먼저', '삼반늦게']);
+});
+
+test('칸 구성이 다른 탭(실험 수가 다르거나 아주 예전 모양)은 이름을 바꿔 남기고 새 탭을 만든다', () => {
+  const { ss, post, report, context, view } = ready();
+  legacyTab(ss);
   assert.equal(post(report()).ok, true);
-  assert.equal(ss.getSheetByName('옴의 법칙 (이전)').rows.length, 2);
-  assert.equal(ss.getSheetByName('옴의 법칙').rows[1][1], '반');
   assert.equal(post(report({ sections: [{ name: 'A' }, { name: 'B' }] })).ok, true);
-  assert.ok(ss.getSheetByName('옴의 법칙 (이전 2)'));
+  // 예전 학생 데이터는 (이전) 탭에 그대로 남아요.
+  assert.deepEqual(view(ss.getSheetByName('옴의 법칙 (이전)'), [3]), ['일반', '', '삼반먼저', '삼반늦게', '홍길동']);
+  assert.equal(ss.getSheetByName('옴의 법칙').rows[1][5], '[A] 예상');
+  const oldest = ss.insertSheet('전동기');
+  oldest.appendRow(['제출 시각', '실험', '학번']);
+  assert.equal(post(report({ title: '전동기' })).ok, true);
+  assert.ok(ss.getSheetByName('전동기 (이전)'));
+  ss.active = ss.getSheetByName('전동기 (이전)');
+  context.sortActiveById();
+  assert.match(ss.alerts[0], /‘전동기 \(이전\)’ 탭은 보고서 탭 모양이 아니에요/);
 });
 
 test('선생님이 오른쪽에 적은 메모는 다시 정리해도 그 줄과 함께 움직인다', () => {
