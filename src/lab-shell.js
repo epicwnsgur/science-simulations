@@ -10,10 +10,29 @@ export function setHTML(selector, html) { const el = $(selector); if (el && el.d
 // 받침 유무에 따라 조사를 고릅니다. 예: josa('빨대', '을', '를') → '빨대를'
 export const josa = (word, withFinal, without) => { const code = word.charCodeAt(word.length - 1) - 0xac00; return word + (code >= 0 && code % 28 ? withFinal : without); };
 
+// 글씨 크기 소·중·대. 고른 크기는 이 브라우저에 기억해서 다른 실험에서도 그대로 써요(이름 같은 개인정보는 아니에요).
+const TEXT_SIZES = [['s', '소', '작게'], ['m', '중', '보통'], ['l', '대', '크게']];
+function setTextSize(size) {
+  document.body.classList.toggle('text-s', size === 's');
+  document.body.classList.toggle('text-l', size === 'l');
+  $$('[data-text-size]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.textSize === size)));
+  try { localStorage.setItem('text-size', size); } catch { /* 기억하지 못해도 지금 화면에는 적용돼요. */ }
+}
+
+// 실험 페이지 머리글(실험 목록으로 · 글씨 크기 · 학년). 머리글을 넣은 뒤 setupTextSize()를 불러요.
+export const headerHTML = () => `<header><a class="brand" href="../../grades/middle-school-2/unit-7/">← 실험 목록</a><div class="header-right"><div class="text-size" role="group" aria-label="글씨 크기"><span aria-hidden="true">글씨 크기</span>${TEXT_SIZES.map(([id, label, name]) => `<button type="button" data-text-size="${id}" aria-pressed="false" aria-label="글씨 ${name}" title="글씨 ${name}">${label}</button>`).join('')}</div><span class="grade">중학교 2학년 <i></i> 과학</span></div></header>`;
+export function setupTextSize() {
+  document.body.classList.add('lab-readable');
+  let saved = 'm';
+  try { saved = localStorage.getItem('text-size') || 'm'; } catch { /* 처음 크기(중)로 시작해요. */ }
+  setTextSize(TEXT_SIZES.some(([id]) => id === saved) ? saved : 'm');
+  $$('[data-text-size]').forEach(b => b.onclick = () => setTextSize(b.dataset.textSize));
+}
+
 export function buildLab(cfg) {
   const tabs = cfg.tabs.map((t, i) => `<button id="tab-${t.id}" role="tab" aria-selected="${i === 0}">${String(i + 1).padStart(2, '0')} <span>${t.label}</span></button>`).join('');
   $('#app').innerHTML = `
-<header><a class="brand" href="../../grades/middle-school-2/unit-7/">← 실험 목록</a><span class="grade">중학교 2학년 <i></i> 과학</span></header>
+${headerHTML()}
 <main class="lab-page"><div class="breadcrumb">VII. 전기와 자기 <span>/</span> ${cfg.crumb}</div>
 <section class="intro"><div><h1>${cfg.title}</h1><p>${cfg.intro}</p></div></section>
 <div class="workspace"><section class="lab"><div class="lab-toolbar"><div class="tabs" role="tablist" aria-label="활동 선택">${tabs}</div><button id="reset" class="reset">↻ <span>처음으로</span></button></div>
@@ -27,6 +46,7 @@ export function buildLab(cfg) {
 <section class="mission"></section></aside></div>
 <section class="vocabulary"><div class="vocab-heading"><h2>실험 속 핵심 개념</h2><span>단어를 누르면 뜻을 확인할 수 있어요.</span></div><div class="term-buttons">${cfg.terms.map(([t], i) => `<button data-term="${i}" class="${i === 0 ? 'active' : ''}">${t}</button>`).join('')}</div><p id="term-definition"><strong>${cfg.terms[0][0]}</strong> ${cfg.terms[0][1]}</p></section>
 </main>`;
+  setupTextSize();
   $$('[data-term]').forEach(b => b.onclick = () => {
     $$('[data-term]').forEach(v => v.classList.toggle('active', v === b));
     const [t, d] = cfg.terms[+b.dataset.term]; $('#term-definition').innerHTML = `<strong>${t}</strong> ${d}`;

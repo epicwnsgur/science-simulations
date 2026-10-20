@@ -24,7 +24,7 @@ test('학년 폴더와 실험 사이를 이동하고 새로고침 후 목록으�
   await page.getByRole('link',{name:'마찰 전기 실험 열기'}).click();
   await expect(page).toHaveURL(/\/simulations\/friction-electricity\/$/);
   await page.reload();
-  await expect(page.locator('#predict-panel')).toBeVisible();
+  await expect(page.locator('#review-panel')).toBeVisible();
   await beginObservation(page);
   await expect(page.locator('#scene')).toBeVisible();
   const sprite=await page.locator('#balloon image').getAttribute('href');

@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { loadAppsScript } from './fake-google.js';
 
+const HEAD = ['제출 시각', '반', '학번', '이름', '제출 횟수'];
 function ready() {
   const script = loadAppsScript();
   script.context.setup();
@@ -12,7 +13,9 @@ function ready() {
     observation: '전압을 높일수록 전류계 값이 커졌어요.', explanation: '저항이 일정하면 전류는 전압에 비례해요.',
     ...extra,
   });
-  return { ...script, code, report };
+  // 3행부터가 보고서 줄이에요. 빈 줄은 ''로 보여 줍니다.
+  const view = (sheet, cols = [1, 3]) => sheet.rows.slice(2).map(r => r.some(v => v !== '' && v != null) ? cols.map(c => String(r[c]).replace(/^'/, '')).join(' ') : '');
+  return { ...script, code, report, view };
 }
 
 test('setup은 설정·명단 탭과 6자리 수업 코드를 만들고 빈 시트1을 지운다', () => {
@@ -22,17 +25,19 @@ test('setup은 설정·명단 탭과 6자리 수업 코드를 만들고 빈 시�
   assert.equal(ss.getSheetByName('설정').rows[2][1], true);
 });
 
-test('보고서를 실험 탭에 한 줄로 저장하고 제출 횟수를 센다', () => {
+test('보고서를 실험 탭에 저장하고, 1행 정렬 버튼·2행 머리글·사용 후기·제출 ID 칸을 둔다', () => {
   const { ss, post, report } = ready();
-  assert.deepEqual(post(report()), { ok: true, count: 1, message: '홍길동 학생의 ‘옴의 법칙’ 보고서를 제출했어요.' });
+  const first = post(report({ feedback: '버튼이 커서 좋았어요.' }));
+  assert.deepEqual({ ...first, submittedAt: typeof first.submittedAt }, { ok: true, count: 1, submittedAt: 'string', message: '홍길동 학생의 ‘옴의 법칙’ 보고서를 제출했어요.' });
   const second = post(report({ explanation: '고쳐 쓴 설명이에요. 전류는 전압에 비례해요.' }));
   assert.equal(second.count, 2);
   assert.match(second.message, /2번째 제출/);
   const sheet = ss.getSheetByName('옴의 법칙');
-  assert.equal(sheet.rows[0][0], '제출 시각');
-  const row = sheet.rows[2];
-  assert.equal(Object.prototype.toString.call(row[0]), '[object Date]');
-  assert.deepEqual(row.slice(1), ['3반', "'20315", '홍길동', 2, '전류가 2배가 된다', '전압이 커지면 전류도 커질 것 같아요.', '전압을 높일수록 전류계 값이 커졌어요.', '고쳐 쓴 설명이에요. 전류는 전압에 비례해요.']);
+  assert.deepEqual(sheet.rows[0].slice(0, 5), ['보기 순서 →', false, '학번 순', true, '제출 시각 순']);
+  assert.deepEqual(sheet.rows[1], [...HEAD, '예상', '예상한 까닭', '관찰', '설명', '사용 후기', '제출 ID']);
+  assert.equal(Object.prototype.toString.call(sheet.rows[2][0]), '[object Date]');
+  assert.deepEqual(sheet.rows[2].slice(1, 11), ['3반', "'20315", '홍길동', 1, '전류가 2배가 된다', '전압이 커지면 전류도 커질 것 같아요.', '전압을 높일수록 전류계 값이 커졌어요.', '저항이 일정하면 전류는 전압에 비례해요.', '버튼이 커서 좋았어요.', '']);
+  assert.equal(sheet.rows[3][8], '고쳐 쓴 설명이에요. 전류는 전압에 비례해요.');
 });
 
 test('수업 코드·제출 받기·학번 형식을 확인한다', () => {
@@ -54,13 +59,16 @@ test('명단을 채우면 학번과 이름이 모두 맞아야 받는다', () =>
   assert.match(post(report({ name: '김철수' })).message, /명단에 없는/);
 });
 
-test('수식처럼 보이는 글은 글자로 저장하고, 새 실험은 실험 이름으로 탭을 만든다', () => {
+test('수식처럼 보이는 글은 다시 정리한 뒤에도 글자로 남고, 새 실험은 실험 이름으로 탭을 만든다', () => {
   const { ss, post, report } = ready();
-  assert.equal(post(report({ lab: 'new-lab', title: '자기장 [심화]: 1/2', explanation: '=HYPERLINK("http://example.com")' })).ok, true);
+  assert.equal(post(report({ title: '자기장 [심화]: 1/2', explanation: '=HYPERLINK("http://example.com")', studentId: '20501' })).ok, true);
+  assert.equal(post(report({ title: '자기장 [심화]: 1/2', studentId: '20101' })).ok, true);
   assert.equal(post(report({ title: '설정' })).ok, true);
   assert.equal(post(report({ title: '' })).ok, true);
   assert.deepEqual(ss.getSheets().map(s => s.getName()), ['설정', '명단', '자기장 심화 1 2', '설정 실험', '이름 없는 실험']);
-  assert.equal(ss.getSheetByName('자기장 심화 1 2').rows[1][8], '\'=HYPERLINK("http://example.com")');
+  const rows = ss.getSheetByName('자기장 심화 1 2').rows;
+  assert.equal(rows[4][8], '\'=HYPERLINK("http://example.com")');
+  assert.equal(rows[4][2], "'20501");
 });
 
 test('읽을 수 없는 요청에는 학생용 안내를 돌려준다', () => {
@@ -68,24 +76,101 @@ test('읽을 수 없는 요청에는 학생용 안내를 돌려준다', () => {
   assert.deepEqual(post('not json'), { ok: false, message: '보낸 내용을 읽을 수 없어요. 페이지를 새로 고친 뒤 다시 제출해 주세요.' });
 });
 
-test('반별로 모으고 반 사이를 한 칸 띄우며, 반마다 색을 칠한다', () => {
-  const { ss, post, report } = ready();
-  const send = (id, name) => assert.equal(post(report({ studentId: id, name })).ok, true, id);
-  send('20305', '삼반가'); send('20112', '일반가'); send('21101', '십일반'); send('20302', '삼반나');
-  send('20201', '이반가'); send('20120', '일반나'); send('20305', '삼반가');
+test('1반~11반을 숫자 순서로 모으고 반 사이를 한 칸 띄우며, 10반과 11반도 따로 색을 칠한다', () => {
+  const { ss, post, report, view } = ready();
+  for (const [id, name] of [['21105', '십일반가'], ['20305', '삼반가'], ['21001', '십반가'], ['20112', '일반가'], ['21101', '십일반나'], ['20302', '삼반나'], ['20120', '일반나']]) {
+    assert.equal(post(report({ studentId: id, name })).ok, true, id);
+  }
   const sheet = ss.getSheetByName('옴의 법칙');
-  const view = sheet.rows.slice(1).map(r => r.length ? `${r[1]} ${r[3]} ${r[4]}` : '');
-  assert.deepEqual(view, ['1반 일반가 1', '1반 일반나 1', '', '2반 이반가 1', '', '3반 삼반가 1', '3반 삼반나 1', '3반 삼반가 2', '', '11반 십일반 1']);
-  const colors = Array.from(sheet.colors.slice(1, 11), c => c ?? null);
-  assert.deepEqual(colors, ['#f7c9c9', '#f7c9c9', null, '#f7dfc9', null, '#f7f0c9', '#f7f0c9', '#f7f0c9', null, '#f7c9f7']);
+  assert.deepEqual(view(sheet), ['1반 일반가', '1반 일반나', '', '3반 삼반가', '3반 삼반나', '', '10반 십반가', '', '11반 십일반가', '11반 십일반나']);
+  const colors = Array.from(sheet.colors.slice(2, 12), c => c ?? null);
+  assert.deepEqual(colors, ['#f7c9c9', '#f7c9c9', null, '#f7f0c9', '#f7f0c9', null, '#dac9f7', null, '#f7c9f7', '#f7c9f7']);
 });
 
-test('예전 형식의 실험 탭은 이름을 바꿔 남기고 새 탭을 만든다', () => {
+test('시트에서 직접 정렬해 반이 섞여도 다음 제출 때 반별로 다시 정리된다', () => {
+  const { ss, post, report, view } = ready();
+  for (const id of ['20101', '21001', '21101']) post(report({ studentId: id, name: '학생' + id }));
+  const sheet = ss.getSheetByName('옴의 법칙');
+  // 선생님이 ‘반’ 칸을 글자 순서로 정렬하면 1반 뒤에 10반·11반이 붙고 빈 줄이 맨 아래로 가요.
+  const data = sheet.rows.slice(2).filter(r => r.some(v => v !== ''));
+  data.sort((a, b) => String(a[1]).localeCompare(String(b[1])));
+  sheet.rows.splice(2, sheet.rows.length, ...data);
+  post(report({ studentId: '20201', name: '학생20201' }));
+  assert.deepEqual(view(sheet), ['1반 학생20101', '', '2반 학생20201', '', '10반 학생21001', '', '11반 학생21101']);
+});
+
+test('정렬 체크박스로 반 안에서 학번 순·제출 시각 순을 바꾸고 하나만 체크된다', () => {
+  const { ss, post, report, view, context } = ready();
+  for (const id of ['20330', '20105', '20310', '20101']) post(report({ studentId: id, name: 'n' + id }));
+  const sheet = ss.getSheetByName('옴의 법칙');
+  assert.deepEqual(view(sheet, [2]), ['20105', '20101', '', '20330', '20310']);
+  const click = col => context.onEdit({ range: { getRow: () => 1, getColumn: () => col, getNumRows: () => 1, getNumColumns: () => 1, getSheet: () => sheet } });
+  click(2);
+  assert.deepEqual([sheet.rows[0][1], sheet.rows[0][3]], [true, false]);
+  assert.deepEqual(view(sheet, [2]), ['20101', '20105', '', '20310', '20330']);
+  post(report({ studentId: '20102', name: 'n20102' }));
+  assert.deepEqual(view(sheet, [2]), ['20101', '20102', '20105', '', '20310', '20330']);
+  click(4);
+  assert.deepEqual([sheet.rows[0][1], sheet.rows[0][3]], [false, true]);
+  assert.deepEqual(view(sheet, [2]), ['20105', '20101', '20102', '', '20330', '20310']);
+  click(9);
+  assert.deepEqual([sheet.rows[0][1], sheet.rows[0][3]], [false, true]);
+});
+
+test('같은 제출 ID는 한 번만 저장하고 처음 저장한 결과를 돌려주며, 다른 보고서는 막지 않는다', () => {
+  const { ss, post, report } = ready();
+  const first = post(report({ submissionId: 'abc12345-0001' }));
+  const again = post(report({ submissionId: 'abc12345-0001', explanation: '다시 보낸 설명' }));
+  assert.equal(first.ok, true);
+  assert.deepEqual(again, { ok: true, duplicate: true, submittedAt: first.submittedAt, message: '홍길동 학생의 ‘옴의 법칙’ 보고서는 이미 제출되어 있어요.' });
+  assert.equal(post(report({ submissionId: 'abc12345-0002' })).count, 2);
+  assert.equal(post(report({ submissionId: 'abc12345-0003', studentId: '20101', name: '다른학생' })).count, 1);
+  assert.equal(post(report({ submissionId: 'bad id!' })).count, 3);
+  assert.equal(post(report({ submissionId: 12345678 })).count, 4);
+  const rows = ss.getSheetByName('옴의 법칙').rows.filter(r => r.length && r.some(v => v !== ''));
+  assert.equal(rows.length - 2, 5);
+  assert.equal(rows.filter(r => r[10] === 'abc12345-0001').length, 1);
+});
+
+test('실험이 둘인 보고서는 실험마다 예상·관찰·설명 칸을 따로 만든다', () => {
+  const { ss, post, report } = ready();
+  const sections = [
+    { name: '풍선과 털', prediction: '끌려온다', reason: '까닭1', observation: '관찰1', explanation: '설명1' },
+    { name: '숟가락', prediction: '밀려난다', reason: '까닭2', observation: '관찰2', explanation: '설명2' },
+  ];
+  assert.equal(post(report({ title: '마찰 전기', sections, prediction: '합친 예상' })).ok, true);
+  const sheet = ss.getSheetByName('마찰 전기');
+  assert.deepEqual(sheet.rows[1].slice(5), ['[풍선과 털] 예상', '[풍선과 털] 예상한 까닭', '[풍선과 털] 관찰', '[풍선과 털] 설명', '[숟가락] 예상', '[숟가락] 예상한 까닭', '[숟가락] 관찰', '[숟가락] 설명', '사용 후기', '제출 ID']);
+  assert.deepEqual(sheet.rows[2].slice(5, 13), ['끌려온다', '까닭1', '관찰1', '설명1', '밀려난다', '까닭2', '관찰2', '설명2']);
+});
+
+test('칸 구성이 다른 예전 탭은 이름을 바꿔 남기고 새 탭을 만든다', () => {
   const { ss, post, report } = ready();
   const old = ss.insertSheet('옴의 법칙');
-  old.appendRow(['제출 시각', '실험', '학번']);
-  old.appendRow(['2026-10-19', '옴의 법칙', '20315']);
+  old.appendRow(['제출 시각', '반', '학번', '이름', '제출 횟수', '예상', '예상한 까닭', '관찰', '설명']);
+  old.appendRow(['2026-10-19', '3반', '20315']);
   assert.equal(post(report()).ok, true);
   assert.equal(ss.getSheetByName('옴의 법칙 (이전)').rows.length, 2);
-  assert.equal(ss.getSheetByName('옴의 법칙').rows[0][1], '반');
+  assert.equal(ss.getSheetByName('옴의 법칙').rows[1][1], '반');
+  assert.equal(post(report({ sections: [{ name: 'A' }, { name: 'B' }] })).ok, true);
+  assert.ok(ss.getSheetByName('옴의 법칙 (이전 2)'));
+});
+
+test('선생님이 오른쪽에 적은 메모는 다시 정리해도 그 줄과 함께 움직인다', () => {
+  const { ss, post, report } = ready();
+  post(report({ studentId: '20301', name: '삼반' }));
+  const sheet = ss.getSheetByName('옴의 법칙');
+  sheet.rows[2][12] = '잘했어요';
+  post(report({ studentId: '20101', name: '일반' }));
+  const memo = sheet.rows.find(r => r[12] === '잘했어요');
+  assert.equal(memo[3], '삼반');
+});
+
+test('메뉴에 정렬 항목을 만들고, 실험 탭이 아닌 곳에서 누르면 안내한다', () => {
+  const { ss, context } = ready();
+  context.onOpen();
+  assert.deepEqual(ss.menu.map(m => m[2]), ['sortActiveById', 'sortActiveByTime', 'rearrangeAll']);
+  ss.active = ss.getSheetByName('설정');
+  context.sortActiveById();
+  assert.match(ss.alerts[0], /실험 탭/);
 });
