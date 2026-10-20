@@ -16,27 +16,29 @@ async function finish(page, concept) {
   await page.locator('#explanation-record').fill('관찰한 결과의 까닭을 과학 개념으로 설명했어요.');
   await page.locator('#reveal-concepts').click();
   await expect(page.locator('#concept-review')).toContainText(concept);
+  await answerQuiz(page);
+}
+// 퀴즈: 고르는 동안에는 정답을 알려 주지 않고, 모두 고른 뒤 ‘결과 확인하기’로 점수와 해설을 봐요.
+async function answerQuiz(page) {
   const slug = new URL(page.url()).pathname.split('/').filter(Boolean).at(-1);
-  for (const [n, question] of CONCEPT_QUIZZES[slug].entries()) {
-    const buttons = page.locator(`[data-quiz="${n}"]`);
-    await expect(buttons).toHaveCount(n < 2 ? 2 : 5);
+  const quiz = CONCEPT_QUIZZES[slug];
+  await expect(page.locator('#quiz-check')).toBeDisabled();
+  for (const [n, question] of quiz.entries()) {
+    await expect(page.locator(`[data-quiz="${n}"]`)).toHaveCount(n < 2 ? 2 : 5);
     const wrong = question.options.find(([id]) => id !== question.answer)[0];
-    await page.locator(`[data-quiz="${n}"][data-choice="${wrong}"]`).click();
-    await expect(page.locator(`#quiz-feedback-${n}`)).toContainText('다시');
-    await page.locator(`[data-quiz="${n}"][data-choice="${question.answer}"]`).click();
-    await expect(page.locator(`#quiz-feedback-${n}`)).toContainText(question.explanation);
+    await page.locator(`[data-quiz="${n}"][data-choice="${n === 0 ? wrong : question.answer}"]`).click();
+    await expect(page.locator(`#quiz-feedback-${n}`)).not.toContainText('정답');
+    await expect(page.locator(`[data-quiz="${n}"].right, [data-quiz="${n}"].wrong`)).toHaveCount(0);
   }
-  await expect(page.locator('.quiz-progress')).toContainText('3 / 3문제 정답');
+  await page.locator('#quiz-check').click();
+  await expect(page.locator('.quiz-score')).toHaveText('총 3문항 중 2문항 정답');
+  await expect(page.locator('.quiz-review li.wrong')).toContainText(quiz[0].explanation);
+  await expect(page.locator('#quiz-feedback-0')).toContainText('오답');
+  await expect(page.locator('[data-quiz="0"]').first()).toBeDisabled();
 }
 
 const LABS = [
-  ['/simulations/friction-electricity/', '마찰 전기', async page => {
-    for (let i = 0; i < 2; i++) { await page.locator('#rub-btn').click(); await page.waitForTimeout(1300); }
-    await page.locator('#lift-btn').click(); await page.waitForTimeout(1800);
-    await page.locator('#tab-spoon').click(); await page.locator('#rub-spoons').click();
-    await page.locator('#approach').click(); await page.waitForTimeout(2500);
-    await page.locator('[data-tool="glove"]').click(); await page.locator('#approach').click(); await page.waitForTimeout(2500);
-  }],
+  // 마찰 전기는 실험이 둘이라 tests/friction.spec.js에서 따로 확인해요.
   ['/simulations/electric-current/', '전류', async page => {
     for (let i = 0; i < 3; i++) await page.locator('#rub-btn').click();
     await page.locator('#place-btn').click(); await page.locator('#touch-btn').click();
@@ -91,11 +93,15 @@ for (const [url, concept, run] of LABS) {
     await expect(page.locator('.mission')).not.toBeVisible();
     await run(page);
     await finish(page, concept);
-    await page.locator('[data-quiz="0"]').first().click();
-    await expect(page.locator('#quiz-feedback-0')).not.toHaveText('');
+    // ‘처음부터’는 확인 창에서 취소하면 그대로, 확인하면 모두 지워요.
+    page.once('dialog', d => d.dismiss());
+    await page.locator('#restart-poe').click();
+    await expect(page.locator('#concept-review')).toBeVisible();
+    page.once('dialog', d => d.accept());
     await page.locator('#restart-poe').click();
     await expect(page.locator('#predict-panel')).toBeVisible();
-    await expect(page.locator('.quiz-progress')).toHaveText('0 / 3문제 정답');
+    await expect(page.locator('#prediction-reason')).toHaveValue('');
+    await expect(page.locator('.quiz-progress')).toHaveText('0 / 3문제 골랐어요');
     await expect(page.locator('.mission .chosen')).toHaveCount(0);
     expect(errors).toEqual([]);
   });
@@ -147,20 +153,19 @@ test('서술은 공백을 빼고 20자 이상이어야 다음 단계로 넘어�
   await expect(page.locator('#observe-panel')).toBeVisible();
 });
 
-test('스스로 평가: 옳은 보기는 초록색, 틀린 보기는 붉은색', async ({ page }) => {
+test('스스로 평가: 결과 확인 뒤 옳게 고른 보기는 초록색, 틀리게 고른 보기는 붉은색', async ({ page }) => {
   for (const url of ['/simulations/ohms-law/', '/simulations/electrostatic-induction/']) {
     await page.goto(url);
-    const buttons = page.locator('.mission .answers').first().locator('button');
-    const n = await buttons.count();
-    const colors = [];
-    for (let i = 0; i < n; i++) {
-      await buttons.nth(i).evaluate(b => b.click());
-      colors.push(await buttons.nth(i).evaluate(b => [b.classList.contains('right'), getComputedStyle(b).backgroundColor]));
+    const slug = url.split('/').filter(Boolean).at(-1), quiz = CONCEPT_QUIZZES[slug];
+    for (const [n, q] of quiz.entries()) {
+      const pick = n === 1 ? q.options.find(([id]) => id !== q.answer)[0] : q.answer;
+      await page.locator(`[data-quiz="${n}"][data-choice="${pick}"]`).evaluate(b => b.click());
     }
-    const right = colors.filter(([r]) => r), wrong = colors.filter(([r]) => !r);
-    expect(right.length).toBe(1);
-    expect(right[0][1]).toBe('rgb(15, 59, 42)');
-    for (const [, c] of wrong) expect(c).toBe('rgb(58, 20, 32)');
+    await page.locator('#quiz-check').evaluate(b => b.click());
+    const color = sel => page.locator(sel).evaluate(b => getComputedStyle(b).backgroundColor);
+    expect(await color(`[data-quiz="0"].right`)).toBe('rgb(15, 59, 42)');
+    expect(await color(`[data-quiz="1"].wrong`)).toBe('rgb(58, 20, 32)');
+    await expect(page.locator('[data-quiz="1"].answer')).toHaveCount(1);
   }
 });
 

@@ -98,9 +98,16 @@ test('네 가지 관찰 후 기록→설명→개념 확인과 스스로 평가'
   await expect(page.locator('#concept-review')).toContainText('정전기 유도');
   await expect(page.locator('#concept-review')).toContainText('(+)전하만 있는 것은 아니에요');
   for (const term of ['정전기 유도', '검전기', '대전체', '전기력', '인력', '척력']) await expect(page.locator('.term-buttons')).toContainText(term);
-  await page.locator('[data-quiz="0"][data-choice="X"]').click(); await expect(page.locator('#quiz-feedback-0')).toContainText('다시');
-  await page.locator('[data-quiz="0"][data-choice="O"]').click(); await expect(page.locator('#quiz-feedback-0')).toContainText('맞아요');
-  await page.locator('[data-quiz="1"][data-choice="X"]').click(); await expect(page.locator('#quiz-feedback-1')).toContainText('맞아요');
+  // 퀴즈는 모두 고른 뒤 ‘결과 확인하기’를 눌러야 정답을 보여 줘요.
+  await page.locator('[data-quiz="0"][data-choice="X"]').click(); await expect(page.locator('#quiz-feedback-0')).not.toContainText('오답');
+  await page.locator('[data-quiz="0"][data-choice="O"]').click();
+  await page.locator('[data-quiz="1"][data-choice="X"]').click();
+  await page.locator('[data-quiz="2"][data-choice="1"]').click();
+  await page.locator('#quiz-check').click();
+  await expect(page.locator('#quiz-feedback-0')).toContainText('정답');
+  await expect(page.locator('#quiz-feedback-1')).toContainText('정답');
+  await expect(page.locator('#quiz-feedback-2')).toContainText('오답');
+  page.once('dialog', d => d.accept());
   await page.locator('#restart-poe').click();
   await expect(page.locator('#predict-panel')).toBeVisible();
   await expect(page.locator('#prediction-reason')).toHaveValue('');

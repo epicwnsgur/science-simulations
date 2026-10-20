@@ -1,11 +1,18 @@
 // 각 실험: OX 2문제 + 정답이 하나인 5지선다 1문제.
 const ox = (question, answer, explanation) => ({ type: 'ox', question, options: [['O', 'O'], ['X', 'X']], answer: answer ? 'O' : 'X', explanation });
-const mc = (question, labels, answer, explanation) => ({ type: 'choice', question, options: labels.map((label, i) => [String(i + 1), label]), answer: String(answer), explanation });
+// why: 보기마다 ‘그 답이 틀린 까닭’(정답 자리는 비워 둠). 결과 화면에서 학생이 고른 오답의 까닭을 보여 줘요.
+const mc = (question, labels, answer, explanation, why = []) => ({ type: 'choice', question, options: labels.map((label, i) => [String(i + 1), label]), answer: String(answer), explanation, why: Object.fromEntries(why.map((w, i) => [String(i + 1), w]).filter(([, w]) => w)) });
 export const CONCEPT_QUIZZES = {
   'friction-electricity': [
-    ox('털과 풍선을 문지를 때 일부 전자가 털에서 풍선으로 이동한다.', true, '전자를 얻은 풍선은 (−), 전자를 잃은 털은 (+)전하를 띠어요.'),
-    ox('같은 종류의 전하를 띤 두 물체 사이에는 인력이 작용한다.', false, '같은 종류의 전하 사이에는 척력, 다른 종류의 전하 사이에는 인력이 작용해요.'),
-    mc('털과 문질러 전자를 얻은 풍선에 대한 설명으로 옳은 것은?', ['(+)전하를 띤다.', '원자핵이 모두 사라진다.', '(−)전하를 띤다.', '전자의 수가 줄어든다.', '전기력이 작용하지 않는다.'], 3, '전자는 (−)전하를 띠므로 전자를 얻은 풍선은 (−)전하를 띠어요.'),
+    ox('털과 풍선을 문지르면 털에 있던 전자 일부가 풍선으로 옮겨 간다.', true, '전자를 얻은 풍선은 (−)전하를, 전자를 잃은 털은 (+)전하를 띠어요. 원자핵은 옮겨 가지 않아요.'),
+    ox('같은 종류의 전하를 띤 두 물체는 서로 끌어당긴다.', false, '같은 종류의 전하끼리는 서로 밀어내요(척력). 서로 끌어당기는 것(인력)은 다른 종류의 전하끼리예요.'),
+    mc('털과 문질러 전자를 얻은 풍선은 어떻게 될까요?', ['(+)전하를 띤다.', '원자핵이 모두 사라진다.', '(−)전하를 띤다.', '전자의 수가 줄어든다.', '전기를 띠지 않는다.'], 3, '전자는 (−)전하를 띠어요. 그래서 전자를 얻은 풍선은 (−)전하가 더 많아져 (−)전하를 띠어요.', [
+      '(+)전하를 띠는 것은 전자를 잃은 털이에요. 풍선은 전자를 얻었어요.',
+      '문질러도 원자핵은 그대로 있어요. 옮겨 가는 것은 전자 일부뿐이에요.',
+      '',
+      '풍선은 털에서 전자를 받았으니 전자의 수가 늘어나요.',
+      '전자를 얻어 (+)와 (−)의 양이 달라졌으니 전기를 띠어요.',
+    ]),
   ],
   'electrostatic-induction': [
     ox('금속에 대전체를 가까이 하면 금속 안의 전자가 이동할 수 있다.', true, '대전체의 전기력을 받아 금속 안의 전자가 재배치돼요.'),
