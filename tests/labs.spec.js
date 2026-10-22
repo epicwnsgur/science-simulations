@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { beginObservation, finishReview } from './poe-helpers.js';
+import { beginObservation, finishReview, openObserveUnlocked } from './poe-helpers.js';
 import { CONCEPT_QUIZZES } from '../src/concept-quizzes.js';
 
 async function hold(page, ms = 900) {
@@ -118,7 +118,7 @@ for (const [url, concept, run] of LABS) {
 }
 
 test('옴의 법칙: 스위치를 닫아야 측정값을 기록할 수 있고 표에 값이 남음', async ({ page }) => {
-  await page.goto('/simulations/ohms-law/'); await beginObservation(page);
+  await openObserveUnlocked(page, '/simulations/ohms-law/');
   await page.locator('#v-up').click(); await page.locator('#v-up').click();
   await expect(page.locator('#record-btn')).toBeDisabled();
   await page.locator('#switch-btn').click(); await page.locator('#record-btn').click();
@@ -129,7 +129,7 @@ test('옴의 법칙: 스위치를 닫아야 측정값을 기록할 수 있고 �
 
 test('저항의 연결: 직렬에서 스위치 하나를 열면 두 전구 모두 꺼지고 병렬에서는 하나만 꺼짐', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('/simulations/series-parallel/'); await beginObservation(page);
+  await openObserveUnlocked(page, '/simulations/series-parallel/');
   const glow = id => page.locator(`#circuit-${id} .glow`);
   await page.locator('#tab-series').click(); await page.locator('#close-all').click();
   await expect(glow('series').first()).not.toHaveAttribute('opacity', '0.00');
@@ -155,6 +155,7 @@ test('서술은 공백을 빼고 20자 이상이어야 다음 단계로 넘어�
   await page.locator('#prediction-reason').fill('직렬연결하면 전구 하나일 때보다 어두울 것 같아요.');
   await expect(page.locator('.char-count[data-for="prediction-reason"]')).toHaveClass(/enough/);
   await page.locator('#start-observation').click();
+  await page.locator('#confirm-prediction').click();
   await expect(page.locator('#observe-panel')).toBeVisible();
 });
 

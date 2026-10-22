@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { beginObservation } from './poe-helpers.js';
+import { beginObservation, openObserveUnlocked } from './poe-helpers.js';
 
 test('전기 그네: 스위치를 누르는 동안만 전류 화살표가 나타남', async ({ page }) => {
   await page.goto('/simulations/electric-swing/');
@@ -16,8 +16,7 @@ test('전기 그네: 스위치를 누르는 동안만 전류 화살표가 나타
 });
 
 test('간이 전동기: 접촉이 끊어지는 반주기에 요약과 그림 모두 전류 끊김 표시', async ({ page }) => {
-  await page.goto('/simulations/electric-motor/');
-  await beginObservation(page);
+  await openObserveUnlocked(page, '/simulations/electric-motor/');
   await page.locator('#tab-simple').click();
   await page.locator('#switch-btn').click();
   await page.locator('#nudge').click();
@@ -39,8 +38,7 @@ test('간이 전동기: 접촉이 끊어지는 반주기에 요약과 그림 모
 });
 
 test('전압계: 길이가 다른 니크롬선 각각의 양 끝에 연결', async ({ page }) => {
-  await page.goto('/simulations/ohms-law/');
-  await beginObservation(page);
+  await openObserveUnlocked(page, '/simulations/ohms-law/');
   for (const [wire, left, right] of [['long', 170, 390], ['short', 240, 320]]) {
     await page.locator(`[data-wire="${wire}"]`).click();
     await expect(page.locator('#voltmeter-leads')).toHaveAttribute('d', new RegExp(`^M${left} 380 .* M${right} 380 `));

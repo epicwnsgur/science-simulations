@@ -4,7 +4,8 @@ import './lab.css';
 import './theme-electric.css';
 import './readable.css';
 import { setupPOEFlow } from './src/poe-flow.js';
-import { $, $$, setText, setHTML, buildLab, checklist, toast, burst, reducedMotion, josa } from './src/lab-shell.js';
+import { createAutoplay } from './src/autoplay.js';
+import { $, $$, setText, setHTML, buildLab, checklist, toast, burst, reducedMotion, josa, smoothDrag } from './src/lab-shell.js';
 import { charges, MAX_TRANSFER, chargeLabel, interaction, SPOON_TOOLS, SPOON_A_SIGN } from './src/friction-model.js';
 import { closeness, segmentDistance, clamp } from './src/induction-model.js';
 
@@ -94,7 +95,7 @@ $('#autoplay').after($('#actions'));
 
 /* ---------- 상태 ---------- */
 let mode = 'rub', show = false, lastFrame = 0;
-let pos = { ...START }, drag = null, motion = null, rubDistance = 0, transfers = 0, flights = [];
+let pos = { ...START }, motion = null, rubDistance = 0, transfers = 0, flights = [];
 let tool = 'spoon', toolPos = { ...TOOL_START }, angle = 0, rubbedSpoons = false, spoonFlights = [];
 const seen = { rubbed: false, lifted: false, repel: false, attract: false };
 let flow = null;
@@ -111,11 +112,18 @@ const mark = (x, y, sign, glow = false) => `<g transform="translate(${x.toFixed(
 const wobble = (i, t, a = 1.4) => ({ x: Math.sin(t * 3.1 + i * 1.7) * a, y: Math.cos(t * 2.7 + i * 2.3) * a });
 const ease = k => k * k * (3 - 2 * k);
 
+// 털 가닥은 한 번만 만들고 매 프레임 모양(d)만 바꿔요. 매번 새로 그리는 것보다 훨씬 부드럽게 움직여요.
+const strandEls = STRANDS.map(st => {
+  const el = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  for (const [k, v] of [['stroke', st.color], ['stroke-width', 3], ['stroke-linecap', 'round'], ['fill', 'none']]) el.setAttribute(k, v);
+  $('#strands').append(el);
+  return el;
+});
 function paintStrands(dt, t) {
   const q = net(balloonCharge());
   const base = { x: pos.x, y: pos.y + 50 };
   const g = reducedMotion.matches ? 1 : 1 - Math.exp(-dt * 10);
-  $('#strands').innerHTML = STRANDS.map((s, i) => {
+  STRANDS.forEach((s, i) => {
     let tx = 0, ty = 0;
     const rest = { x: s.x + Math.sin(s.lean) * s.len, y: s.y - Math.cos(s.lean) * s.len };
     if (q && !contact()) {
@@ -126,13 +134,13 @@ function paintStrands(dt, t) {
     } else if (contact()) {
       // 문지르는 동안 풍선에 닿은 털이 눌려요.
       const dx = rest.x - pos.x;
-      if (Math.abs(dx) < 70) { tx = Math.sign(dx || 1) * (70 - Math.abs(dx)) * .25 + (drag?.vx ?? 0) * .02; ty = 10; }
+      if (Math.abs(dx) < 70) { tx = Math.sign(dx || 1) * (70 - Math.abs(dx)) * .25 + balloonDrag.delta.x * 2.5; ty = 10; }
     }
     s.bend.x += (tx - s.bend.x) * g; s.bend.y += (ty - s.bend.y) * g;
     const tip = { x: rest.x + s.bend.x + Math.sin(t * 2 + i) * .6, y: rest.y + s.bend.y };
     const ctrl = { x: s.x + (tip.x - s.x) * .2, y: s.y - s.len * .55 };
-    return `<path d="M${s.x.toFixed(1)} ${s.y.toFixed(1)} Q${ctrl.x.toFixed(1)} ${ctrl.y.toFixed(1)} ${tip.x.toFixed(1)} ${tip.y.toFixed(1)}" stroke="${s.color}" stroke-width="3" stroke-linecap="round" fill="none"/>`;
-  }).join('');
+    strandEls[i].setAttribute('d', `M${s.x.toFixed(1)} ${s.y.toFixed(1)} Q${ctrl.x.toFixed(1)} ${ctrl.y.toFixed(1)} ${tip.x.toFixed(1)} ${tip.y.toFixed(1)}`);
+  });
 }
 // 이동 중인 전자: 출발한 곳에서 도착할 곳으로 빛나며 날아가요. 지나온 길은 옅은 선으로 남겨 방향을 알 수 있게 해요.
 function flightHTML(list, now, toOf) {
@@ -164,7 +172,7 @@ function transfer() {
   if (transfers >= MAX_TRANSFER) return;
   const site = furSites[furCharge().minus - 1];
   transfers++;
-  flights.push({ from: { x: site.x + 9, y: site.y }, to: { x: -36 + ((transfers - 1) % 4) * 24, y: 26 + Math.floor((transfers - 1) / 4) * 13 }, start: clock(), duration: reducedMotion.matches ? 1 : 900 * pace });
+  flights.push({ from: { x: site.x + 9, y: site.y }, to: { x: -36 + ((transfers - 1) % 4) * 24, y: 26 + Math.floor((transfers - 1) / 4) * 13 }, start: clock(), duration: reducedMotion.matches ? 1 : 900 });
   burst($('#rub-fx'), pos.x, pos.y + 46, '#8fd3ff', 10);
   if (!seen.rubbed) { seen.rubbed = true; toast('⚡ 털의 전자 일부가 풍선으로 옮겨 갔어요!'); }
   if (transfers === MAX_TRANSFER) toast('🎈 충분히 문질렀어요. 이제 풍선을 들어 올려 보세요');
@@ -190,7 +198,7 @@ function stepSpoon(dt) {
   const qA = rubbedSpoons ? SPOON_A_SIGN : 0, qT = toolCharge();
   if (!qA || !qT) return;
   const kind = interaction(qA, qT), sign = kind === 'attract' ? 1 : -1;
-  const steps = reducedMotion.matches ? 60 : 1, h = reducedMotion.matches ? .02 : dt / pace;
+  const steps = reducedMotion.matches ? 60 : 1, h = reducedMotion.matches ? .02 : dt;
   for (let i = 0; i < steps; i++) {
     const { a, b } = spoonSeg();
     const dx = b.x - a.x, dy = b.y - a.y, len2 = dx * dx + dy * dy;
@@ -265,10 +273,10 @@ function placeTool(x, y) {
 function rubSpoons() {
   if (rubbedSpoons) return;
   rubbedSpoons = true;
-  const now = clock(), duration = reducedMotion.matches ? 1 : 1100 * pace;
+  const now = clock(), duration = reducedMotion.matches ? 1 : 1100;
   $('#rub-glove').innerHTML = `<g transform="translate(${RUB_GLOVE.x} ${RUB_GLOVE.y}) scale(.8)"><path d="${GLOVE_PATH}" fill="#cfeef0" stroke="#8fbcc0" stroke-width="1.5"/></g>`;
-  spoonFlights = [0, 1, 2, 3].map(k => ({ k: `a${k}`, from: { x: RUB_GLOVE.x + 30, y: RUB_GLOVE.y + 10 }, to: () => handleSite(k), start: now + k * 160 * pace, duration }));
-  if (tool === 'spoon') spoonFlights.push(...[0, 1, 2, 3].map(k => ({ k: `b${k}`, from: { x: RUB_GLOVE.x + 60, y: RUB_GLOVE.y + 10 }, to: () => toolSite(k), start: now + (k + 2) * 160 * pace, duration })));
+  spoonFlights = [0, 1, 2, 3].map(k => ({ k: `a${k}`, from: { x: RUB_GLOVE.x + 30, y: RUB_GLOVE.y + 10 }, to: () => handleSite(k), start: now + k * 160, duration }));
+  if (tool === 'spoon') spoonFlights.push(...[0, 1, 2, 3].map(k => ({ k: `b${k}`, from: { x: RUB_GLOVE.x + 60, y: RUB_GLOVE.y + 10 }, to: () => toolSite(k), start: now + (k + 2) * 160, duration })));
   burst($('#spoon-fx'), PIVOT.x + TIP - 40, PIVOT.y, '#8fd3ff', 14); burst($('#spoon-fx'), TOOL_START.x, TOOL_START.y, '#8fd3ff', 14);
   toast('✨ 장갑의 전자 일부가 두 숟가락으로 옮겨 갔어요');
   renderControls();
@@ -285,17 +293,13 @@ function chooseTool(next) {
 }
 
 /* ---------- 조작 ---------- */
-function point(e) { return new DOMPoint(e.clientX, e.clientY).matrixTransform($('#scene').getScreenCTM().inverse()); }
-function draggable(el, getPos, setPos) {
-  el.addEventListener('pointerdown', e => { if (autoplay) return; e.preventDefault(); motion = null; const p = point(e), q = getPos(); drag = { el, dx: p.x - q.x, dy: p.y - q.y, vx: 0 }; el.setPointerCapture(e.pointerId); });
-  el.addEventListener('pointermove', e => { if (drag?.el !== el) return; const p = point(e), q = getPos(); drag.vx = p.x - drag.dx - q.x; setPos(p.x - drag.dx, p.y - drag.dy); });
-  for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) el.addEventListener(ev, () => { if (drag?.el === el) { drag = null; renderControls(); } });
-  el.addEventListener('keydown', e => { const d = { ArrowLeft: [-18, 0], ArrowRight: [18, 0], ArrowUp: [0, -18], ArrowDown: [0, 18] }[e.key]; if (d && !autoplay) { e.preventDefault(); motion = null; const q = getPos(); setPos(q.x + d[0], q.y + d[1]); renderControls(); } });
-}
-draggable($('#balloon'), () => pos, moveBalloon);
-draggable($('#tool'), () => toolPos, placeTool);
+// 풍선과 숟가락 ㉯(장갑)는 손가락·마우스를 부드럽게 따라와요(공통 부품 smoothDrag).
+const dragOptions = { scene: $('#scene'), canStart: () => !player.running, onEnd: () => renderControls() };
+const balloonDrag = smoothDrag($('#balloon'), { ...dragOptions, get: () => pos, set: (x, y) => moveBalloon(x, y), onStart: () => { motion = null; } });
+const toolDrag = smoothDrag($('#tool'), { ...dragOptions, get: () => toolPos, set: placeTool, onStart: () => { toolAnim = null; } });
+function followDrag(dt) { balloonDrag.follow(dt); toolDrag.follow(dt); }
 
-function animate(path, duration, done) { motion = { path, start: clock(), duration: reducedMotion.matches ? 1 : duration * pace, done }; }
+function animate(path, duration, done) { motion = { path, start: clock(), duration: reducedMotion.matches ? 1 : duration, done }; }
 function rubOnce() {
   if (motion || transfers >= MAX_TRANSFER) return;
   const x0 = 360 + (transfers % 3) * 40;
@@ -321,7 +325,7 @@ function resetExperiment() {
 
 // 조작 버튼은 실험 화면 바로 위에 크게 두고, 지금 할 수 없는 조작은 꺼 둡니다.
 function renderControls() {
-  const busy = !!autoplay;
+  const busy = player.running;
   if (mode === 'rub') {
     $('#controls').innerHTML = `<p class="material-now">실험 재료: <b>🎈 풍선</b>과 <b>털</b> · 풍선을 직접 끌어서 털 위에서 좌우로 문질러도 돼요.</p>`;
     $('#actions').innerHTML = `<button id="rub-btn" class="primary big" ${busy || transfers >= MAX_TRANSFER ? 'disabled' : ''}>① 털에 문지르기</button><button id="lift-btn" class="primary big" ${busy || !transfers ? 'disabled' : ''}>② 털 가까이에서 들어 올리기 ↑</button><button id="away-btn" class="secondary big" ${busy || farAway() ? 'disabled' : ''}>③ 멀리 하기</button><button id="retry-btn" class="secondary big" ${busy ? 'disabled' : ''}>↻ 다시 실험하기</button>`;
@@ -335,11 +339,10 @@ function renderControls() {
     $('#away').onclick = () => toolMotion({ ...TOOL_START });
   }
   $('#retry-btn').onclick = resetExperiment;
-  renderAutoplay();
   renderText();
 }
 let toolAnim = null;
-function toolMotion(target) { toolAnim = { from: { ...toolPos }, to: target, start: clock(), duration: reducedMotion.matches ? 1 : 900 * pace }; }
+function toolMotion(target) { toolAnim = { from: { ...toolPos }, to: target, start: clock(), duration: reducedMotion.matches ? 1 : 900 }; }
 function followTool(now) {
   if (!toolAnim) return;
   const k = clamp((now - toolAnim.start) / toolAnim.duration, 0, 1), e = ease(k);
@@ -373,7 +376,7 @@ function renderText() {
   $('.legend').hidden = !show;
 }
 function setMode(next) {
-  mode = next; lab.selectTab(next); drag = null; motion = null; toolAnim = null; stopAutoplay();
+  mode = next; lab.selectTab(next); balloonDrag.cancel(); toolDrag.cancel(); motion = null; toolAnim = null; stopAutoplay();
   $('#rub-scene').toggleAttribute('hidden', next !== 'rub');
   $('#spoon-scene').toggleAttribute('hidden', next !== 'spoon');
   renderControls();
@@ -382,110 +385,54 @@ $('#reset').onclick = resetExperiment;
 $('#show-detail').onchange = e => { show = e.target.checked; renderText(); };
 
 /* ---------- 자동 재생 ----------
-   핵심 과정을 한 단계씩 천천히 보여 줘요. 일시정지하면 움직임과 전자의 이동이 그 자리에서 멈춰요. */
-let pace = 1, autoplay = null, pausedAt = 0, pausedTotal = 0;
-// 일시정지한 시간을 빼고 흐르는 시계. 애니메이션은 모두 이 시계를 따라요.
-const clock = () => (pausedAt || performance.now()) - pausedTotal;
+   핵심 과정을 한 단계씩 천천히 보여 줘요(공통 부품 src/autoplay.js). 애니메이션은 모두 player.clock()을 따르므로
+   빠르기(보통·천천히)를 바꾸거나 일시정지하면 움직임과 전자의 이동이 바로 느려지거나 그 자리에서 멈춰요. */
 const PLAYS = {
   rub: [
-    ['문지르기 전', '털과 풍선은 (+)전하와 (−)전하의 양이 같아서 전기를 띠지 않아요.', async () => { resetBalloon(); await wait(3200); }],
-    ['문지르기', '풍선을 털에 문질러요. 털의 전자 일부가 풍선으로 옮겨 가요. 원자핵은 옮겨 가지 않아요.', async () => { for (let i = 0; i < MAX_TRANSFER; i++) { rubOnce(); await idle(); await wait(500); } }],
-    ['문지른 뒤', '전자를 잃은 털은 (+)전하를, 전자를 얻은 풍선은 (−)전하를 띠어요.', async () => { await wait(3600); }],
-    ['들어 올리기', '풍선을 털 가까이에서 들어 올려요. (−)풍선과 (+)털이 서로 끌어당겨(인력) 털끝이 풍선 쪽으로 움직여요.', async () => { liftBalloon(); await idle(); await wait(3600); }],
-    ['멀리 하기', '풍선을 멀리 하면 끌어당기는 힘이 약해져 털끝이 제자리로 돌아가요.', async () => { balloonAway(); await idle(); await wait(2600); }],
+    ['문지르기 전', '털과 풍선은 (+)전하와 (−)전하의 양이 같아서 전기를 띠지 않아요.', async ({ wait }) => { resetBalloon(); await wait(3200); }],
+    ['문지르기', '풍선을 털에 문질러요. 털의 전자 일부가 풍선으로 옮겨 가요. 원자핵은 옮겨 가지 않아요.', async ({ wait, idle }) => { for (let i = 0; i < 4; i++) { rubOnce(); await idle(); await wait(600); } }],
+    ['문지른 뒤', '전자를 잃은 털은 (+)전하를, 전자를 얻은 풍선은 (−)전하를 띠어요.', async ({ wait }) => { await wait(3600); }],
+    ['들어 올리기', '풍선을 털 가까이에서 들어 올려요. (−)풍선과 (+)털이 서로 끌어당겨(인력) 털끝이 풍선 쪽으로 움직여요.', async ({ wait, idle }) => { liftBalloon(); await idle(); await wait(3600); }],
+    ['멀리 하기', '풍선을 멀리 하면 끌어당기는 힘이 약해져 털끝이 제자리로 돌아가요.', async ({ wait, idle }) => { balloonAway(); await idle(); await wait(2600); }],
   ],
   spoon: [
-    ['문지르기 전', '숟가락과 장갑은 아직 전기를 띠지 않아요. 가까이 해도 힘이 생기지 않아요.', async () => { resetSpoons(); chooseTool('spoon'); await wait(1200); approachTool(); await idle(); await wait(1800); toolMotion({ ...TOOL_START }); await idle(); }],
-    ['장갑으로 문지르기', '장갑의 전자 일부가 두 숟가락으로 옮겨 가요. 숟가락 ㉮와 ㉯는 (−)전하를, 장갑은 (+)전하를 띠어요.', async () => { rubSpoons(); await wait(2600); }],
-    ['숟가락 ㉯ 가까이', '(−)숟가락 ㉯를 (−)숟가락 ㉮에 가까이 해요. 같은 종류의 전하라서 서로 밀어내요(척력).', async () => { approachTool(); await idle(); await wait(3600); }],
-    ['멀리 하기', '숟가락 ㉯를 멀리 해요.', async () => { toolMotion({ ...TOOL_START }); await idle(); await wait(1000); }],
-    ['장갑 가까이', '(+)장갑을 (−)숟가락 ㉮에 가까이 해요. 다른 종류의 전하라서 서로 끌어당겨요(인력).', async () => { chooseTool('glove'); await wait(800); approachTool(); await idle(); await wait(3600); }],
+    ['문지르기 전', '숟가락과 장갑은 아직 전기를 띠지 않아요. 가까이 해도 힘이 생기지 않아요.', async ({ wait, idle }) => { resetSpoons(); chooseTool('spoon'); await wait(1200); approachTool(); await idle(); await wait(1800); toolMotion({ ...TOOL_START }); await idle(); }],
+    ['장갑으로 문지르기', '장갑의 전자 일부가 두 숟가락으로 옮겨 가요. 숟가락 ㉮와 ㉯는 (−)전하를, 장갑은 (+)전하를 띠어요.', async ({ wait }) => { rubSpoons(); await wait(2600); }],
+    ['숟가락 ㉯ 가까이', '(−)숟가락 ㉯를 (−)숟가락 ㉮에 가까이 해요. 같은 종류의 전하라서 서로 밀어내요(척력).', async ({ wait, idle }) => { approachTool(); await idle(); await wait(3600); }],
+    ['멀리 하기', '숟가락 ㉯를 멀리 해요.', async ({ wait, idle }) => { toolMotion({ ...TOOL_START }); await idle(); await wait(1000); }],
+    ['장갑 가까이', '(+)장갑을 (−)숟가락 ㉮에 가까이 해요. 다른 종류의 전하라서 서로 끌어당겨요(인력).', async ({ wait, idle }) => { chooseTool('glove'); await wait(800); approachTool(); await idle(); await wait(3600); }],
   ],
 };
-function resetBalloon() { pos = { ...START }; transfers = 0; flights = []; rubDistance = 0; motion = null; }
-function resetSpoons() { rubbedSpoons = false; angle = 0; toolPos = { ...TOOL_START }; toolAnim = null; spoonFlights = []; }
-// 일시정지 중에는 시간이 흐르지 않는 기다리기. 자동 재생을 멈추면 바로 끝나요.
-function wait(ms) {
-  const run = autoplay, end = clock() + (reducedMotion.matches ? Math.min(ms, 300) : ms * pace);
-  return new Promise((resolve, reject) => {
-    (function tick() {
-      if (autoplay !== run) return reject(new Error('stopped'));
-      if (clock() >= end && !pausedAt) return resolve();
-      requestAnimationFrame(tick);
-    })();
-  });
-}
-function idle() {
-  const run = autoplay;
-  return new Promise((resolve, reject) => {
-    (function tick() {
-      if (autoplay !== run) return reject(new Error('stopped'));
-      if (!motion && !toolAnim && !pausedAt) return resolve();
-      requestAnimationFrame(tick);
-    })();
-  });
-}
-async function startAutoplay() {
-  stopAutoplay();
-  const run = autoplay = { mode, step: 0 };
-  show = true; $('#show-detail').checked = true;
-  renderControls();
-  try {
-    for (const [i, step] of PLAYS[mode].entries()) {
-      run.step = i; renderAutoplay(); renderControls();
-      await step[2]();
-    }
-    autoplay = null; renderControls();
-    setText('#autoplay-caption', '자동 재생이 끝났어요. 이제 버튼이나 끌기로 직접 해 보세요!');
-  } catch { /* 멈추기를 눌렀어요. */ }
-}
-function stopAutoplay() {
-  if (pausedAt) { pausedTotal += performance.now() - pausedAt; pausedAt = 0; }
-  if (!autoplay) return;
-  autoplay = null;
-  renderControls();
-}
-function togglePause() {
-  if (!autoplay) return;
-  if (pausedAt) { pausedTotal += performance.now() - pausedAt; pausedAt = 0; } else pausedAt = performance.now();
-  renderAutoplay();
-}
-function renderAutoplay() {
-  const steps = PLAYS[mode], run = autoplay;
-  $('#autoplay').innerHTML = `
-    <div class="autoplay-buttons">
-      ${run ? `<button id="auto-pause" class="secondary big">${pausedAt ? '▶ 이어서 재생' : '⏸ 일시정지'}</button><button id="auto-restart" class="secondary big">⏮ 처음부터</button><button id="auto-stop" class="secondary big">■ 멈추고 직접 하기</button>`
-        : `<button id="auto-play" class="secondary big">▶ 자동 재생으로 보기</button>`}
-      <label class="pace">빠르기 <select id="auto-pace"><option value="1.6"${pace > 1 ? ' selected' : ''}>천천히</option><option value="1"${pace === 1 ? ' selected' : ''}>보통</option></select></label>
-    </div>
-    ${run ? `<ol class="autoplay-steps">${steps.map(([name], i) => `<li class="${i < run.step ? 'done' : i === run.step ? 'current' : ''}"${i === run.step ? ' aria-current="step"' : ''}>${i + 1}. ${name}</li>`).join('')}</ol>` : ''}
-    <p id="autoplay-caption" class="autoplay-caption" role="status" aria-live="polite">${run ? `${pausedAt ? '⏸ 일시정지 · ' : ''}${run.step + 1}/${steps.length} ${steps[run.step][1]}` : '자동 재생은 핵심 과정을 한 단계씩 보여 줘요. 언제든 멈추고 직접 해 볼 수 있어요.'}</p>`;
-  $('#auto-play')?.addEventListener('click', startAutoplay);
-  $('#auto-pause')?.addEventListener('click', togglePause);
-  $('#auto-restart')?.addEventListener('click', startAutoplay);
-  $('#auto-stop')?.addEventListener('click', stopAutoplay);
-  $('#auto-pace').onchange = e => { pace = +e.target.value; };
-}
+function resetBalloon() { pos = { ...START }; balloonDrag.cancel(); transfers = 0; flights = []; rubDistance = 0; motion = null; }
+function resetSpoons() { rubbedSpoons = false; angle = 0; toolPos = { ...TOOL_START }; toolDrag.cancel(); toolAnim = null; spoonFlights = []; }
+const player = createAutoplay({
+  mount: $('#autoplay'), plays: PLAYS, getMode: () => mode, reducedMotion,
+  isIdle: () => !motion && !toolAnim,
+  onChange: running => { if (running) { show = true; $('#show-detail').checked = true; } renderControls(); },
+});
+const clock = () => player.clock();
+const stopAutoplay = () => player.stop();
 
 let liftedTime = 0;
-function frame(now) {
-  const dt = pausedAt ? 0 : Math.min(.05, (now - (lastFrame || now)) / 1000); lastFrame = now; const t = clock() / 1000;
+function frame() {
+  // 프레임 사이 시간도 자동 재생 시계로 재요(일시정지하면 0, 천천히면 짧게).
+  const time = clock(), dt = Math.min(.05, Math.max(0, (time - (lastFrame || time)) / 1000)); lastFrame = time; const t = time / 1000;
   if (!flow || flow.stage === 'observe') {
-    const time = clock();
+    followDrag(dt);
     if (mode === 'rub') {
-      if (!pausedAt) followMotion(time);
+      followMotion(time);
       paintRub(dt, t);
       // 대전된 풍선이 털 가까이(닿지 않은 채) 있으면 털끝이 끌려요.
       if (transfers && !contact() && Math.hypot(pos.x - 400, pos.y + 50 - FUR.y) < 200) { liftedTime += dt; if (liftedTime > .6 && !seen.lifted) { seen.lifted = true; toast('🪶 털끝이 풍선 쪽으로 끌려와요'); } } else liftedTime = 0;
       renderText();
-    } else { if (!pausedAt) { followTool(time); stepSpoon(dt); } paintSpoon(t); }
+    } else { followTool(time); stepSpoon(dt); paintSpoon(t); }
     flow?.update(checklist(mode === 'rub' ? [
       ['풍선을 털에 문지르기', seen.rubbed, '‘① 털에 문지르기’를 누르거나 풍선을 끌어 털 위에서 좌우로'],
-      ['문지른 풍선을 털 가까이에서 들어 올리기', seen.lifted, '‘② 들어 올리기’ 뒤 털끝을 살펴요'],
+      ['문지른 풍선을 털 가까이에서 들어 올리기', seen.lifted, '‘② 들어 올리기’ 뒤 털끝을 살펴요', '#lift-btn, #away-btn'],
     ] : [
       ['장갑으로 숟가락 ㉮와 ㉯ 문지르기', rubbedSpoons, '‘① 장갑으로 ㉮와 ㉯ 문지르기’'],
-      ['숟가락 ㉯를 숟가락 ㉮에 가까이 하기', seen.repel, '‘숟가락 ㉯’를 고르고 ‘② 가까이 가져가기’'],
-      ['장갑을 숟가락 ㉮에 가까이 하기', seen.attract, '‘장갑’을 고르고 ‘② 가까이 가져가기’'],
+      ['숟가락 ㉯를 숟가락 ㉮에 가까이 하기', seen.repel, '‘숟가락 ㉯’를 고르고 ‘② 가까이 가져가기’', '#approach, #away, #tool'],
+      ['장갑을 숟가락 ㉮에 가까이 하기', seen.attract, '‘장갑’을 고르고 ‘② 가까이 가져가기’', '[data-tool="glove"]'],
     ]));
   }
   requestAnimationFrame(frame);

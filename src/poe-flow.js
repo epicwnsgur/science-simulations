@@ -5,12 +5,16 @@ import { REVIEWS } from './reviews.js';
 const $ = selector => document.querySelector(selector);
 export const MIN_CHARS = 20;
 const STAGES = ['predict', 'observe', 'explain'];
+const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 
 // 예상하기 → 관찰하기 → 설명하기 학습 흐름. 실험 내용은 config로 받습니다.
 // 관찰 조건(progress)은 실험 쪽에서 알려 주며, 이 모듈은 기록과 화면 전환만 맡습니다.
 // config.experiments를 주면 실험마다 예상·관찰·설명을 따로 기록합니다(예: 풍선 실험, 숟가락 실험).
 // 쓴 내용은 이 탭이 열려 있는 동안 sessionStorage에 저장되어 새로 고침해도 남아요.
 // 모든 실험은 ‘실험 전 1분 복습’(src/reviews.js)부터 시작해요. 모든 질문에 답해야 실험을 시작할 수 있어요.
+// 화면 순서: 복습 → 실험 1(예상 → 관찰 → 설명) → 실험 2(…) … ‘← 뒤로 가기’(화면 버튼, 브라우저·휴대폰의 뒤로 가기)는 이 순서에서 한 칸 앞으로 가요.
+// 순서 지키기: 앞 실험을 마쳐야 다음 실험이 열리고, 관찰하기에서는 실험 순서 안내의 앞 단계를 해야 다음 단계 조작이 열려요
+//   (checklist의 넷째 값 unlocks: 그 단계에서 처음 쓰는 조작의 CSS 선택자).
 export function setupPOEFlow(config) {
   const experiments = config.experiments ?? [{ id: 'main', name: '', predict: config.predict, observe: config.observe, explain: config.explain }];
   const multi = experiments.length > 1;
@@ -22,7 +26,7 @@ export function setupPOEFlow(config) {
   // 실험 이름은 처음 한 번만 읽어요(PDF로 저장하는 동안 문서 제목이 잠깐 바뀌어도 영향이 없도록).
   const labTitle = document.title.split(' 실험실')[0];
   const review = config.review ?? REVIEWS[slug];
-  const fresh = () => ({ current: 0, reviewed: !review, reviewAnswers: [], quiz: null, locked: false, exps: experiments.map(() => ({ stage: 'predict', reached: 0, prediction: null, choice: null, reason: '', observation: '', saved: '', observed: false, explanation: '', explained: false })) });
+  const fresh = () => ({ current: 0, reviewed: !review, onReview: false, reviewAnswers: [], quiz: null, locked: false, exps: experiments.map(() => ({ stage: 'predict', reached: 0, prediction: null, choice: null, reason: '', observation: '', saved: '', observed: false, explanation: '', explained: false })) });
   let state = load() ?? fresh();
   let lastProgress = null;
   const exp = () => state.exps[state.current];
@@ -36,13 +40,14 @@ export function setupPOEFlow(config) {
     ${review ? `<section id="review-panel" class="poe-panel review-panel" aria-labelledby="review-title" hidden>
       <p class="poe-kicker">실험 전 1분 복습</p><h2 id="review-title" tabindex="-1">${review.title}</h2>
       ${review.items.map((item, n) => `<div class="review-item"><p class="review-question">${item.question}</p><div class="review-choices" role="group" aria-label="${n + 1}번 복습 질문">${item.choices.map((c, i) => `<button type="button" class="review-choice" data-review="${n}" data-choice="${i}">${c}</button>`).join('')}</div><p class="review-feedback" id="review-feedback-${n}" aria-live="polite"></p></div>`).join('')}
-      <div class="poe-actions"><p class="poe-hint" id="review-progress" role="status" aria-live="polite"></p><button class="primary" id="finish-review" type="button" disabled>복습 마치고 실험 시작하기 →</button></div>
+      <div class="poe-actions"><p class="poe-hint" id="review-progress" role="status" aria-live="polite"></p><button class="primary big" id="finish-review" type="button" disabled>복습 마치고 실험 시작하기 →</button></div>
     </section>` : ''}
     ${multi ? `<nav class="experiment-switch" aria-label="실험 고르기">${experiments.map((e, i) => `<button type="button" data-experiment="${i}"><span class="experiment-num">실험 ${i + 1}</span><b>${e.name}</b><small data-experiment-state="${i}"></small></button>`).join('')}</nav>
     <p class="experiment-now" role="status" aria-live="polite"></p>` : ''}
+    <div class="flow-nav"><button type="button" class="secondary flow-back" id="flow-back">← 뒤로 가기</button>
     <ol class="poe-steps" aria-label="탐구 순서">
       ${STAGES.map((s, i) => `<li data-step="${s}"><button type="button" data-goto="${s}"><span>${i + 1}</span> ${['예상하기', '관찰하기', '설명하기'][i]}</button></li>`).join('')}
-    </ol>
+    </ol></div>
     <section id="predict-panel" class="poe-panel" aria-labelledby="predict-title">
       <div class="prediction-scene">
         <p class="poe-kicker">먼저 생각해 봐요</p>
@@ -57,11 +62,11 @@ export function setupPOEFlow(config) {
         <label class="writing-label" for="prediction-reason">2. 그렇게 생각한 까닭은 무엇인가요?</label>
         <textarea id="prediction-reason" rows="3" maxlength="1200" required></textarea><p class="char-count" data-for="prediction-reason" aria-live="polite"></p>
         <p class="poe-hint">예상은 맞고 틀림을 채점하지 않아요. 실험한 뒤 내 생각과 비교해 볼 거예요.</p>
-        <button class="primary" id="start-observation" type="submit">예상 저장하고 실험하기 →</button>
+        <div class="poe-actions"><button type="button" class="secondary flow-back">← 뒤로 가기</button><button class="primary big" id="start-observation" type="submit">예상 저장하고 실험하기 →</button></div>
       </form>
     </section>
     <section id="observe-panel" aria-labelledby="observe-title" hidden>
-      <div class="poe-section-heading"><div><p class="poe-kicker">직접 확인해 봐요</p><h2 id="observe-title" tabindex="-1"></h2></div><button class="secondary" id="back-predict">← 내 예상 보기</button></div>
+      <div class="poe-section-heading"><div><p class="poe-kicker">직접 확인해 봐요</p><h2 id="observe-title" tabindex="-1"></h2></div></div>
       <details class="prediction-reminder"><summary>내가 남긴 예상</summary><p data-prediction></p><p data-reason></p></details>
       <div class="observe-body">
       <aside id="step-guide" class="step-guide" aria-labelledby="step-guide-title">
@@ -76,7 +81,7 @@ export function setupPOEFlow(config) {
         <p id="observation-progress" role="status"></p>
         <label class="writing-label" for="observation-record"></label>
         <textarea id="observation-record" rows="3" maxlength="1500" required></textarea><p class="char-count" data-for="observation-record" aria-live="polite"></p>
-        <div class="poe-actions"><p class="poe-hint">전하 보기는 눈에 보이지 않는 전하를 나타낸 모형이에요.</p><button class="primary" id="to-explanation" disabled>관찰 저장하고 설명하기 →</button></div>
+        <div class="poe-actions"><button type="button" class="secondary flow-back">← 뒤로 가기</button><button class="primary big" id="to-explanation" disabled>관찰 저장하고 설명하기 →</button></div>
       </form>
       </div>
       </div>
@@ -88,7 +93,7 @@ export function setupPOEFlow(config) {
         <label class="writing-label" for="explanation-record"></label>
         <textarea id="explanation-record" rows="4" maxlength="1800" required placeholder="직접 본 움직임과 전하 표시의 변화를 근거로 내 말로 설명해 보세요."></textarea><p class="char-count" data-for="explanation-record" aria-live="polite"></p>
         ${glossary}
-        <div class="poe-actions"><button class="secondary" id="return-observation" type="button">← 다시 실험하며 확인하기</button><button class="primary" id="reveal-concepts"></button></div>
+        <div class="poe-actions"><button class="secondary flow-back" id="return-observation" type="button">← 뒤로 가기</button><button class="primary big" id="reveal-concepts"></button></div>
       </form>
       ${multi ? `<section id="next-experiment" class="next-experiment" hidden aria-live="polite"><p></p><button class="primary" type="button" id="go-next-experiment"></button></section>` : ''}
       <section id="concept-review" hidden aria-labelledby="concept-title">
@@ -103,6 +108,15 @@ export function setupPOEFlow(config) {
         <div class="poe-actions"><button class="secondary" id="revisit-lab">실험으로 돌아가 다시 확인하기</button><button class="secondary" id="restart-poe">기록 지우고 처음부터</button></div>
       </section>
     </section>
+    <dialog id="prediction-confirm" class="flow-dialog" aria-labelledby="confirm-title">
+      <div class="flow-dialog-body">
+        <h2 id="confirm-title">내 예상을 한 번 더 확인해 주세요</h2>
+        <p class="confirm-warning">⚠️ 예상은 저장하면 <b>다시 고칠 수 없어요.</b> 오타나 잘못 쓴 곳이 없는지 천천히 읽어 보세요.</p>
+        <dl><div><dt>내가 고른 예상</dt><dd id="confirm-choice"></dd></div><div><dt>그렇게 생각한 까닭</dt><dd id="confirm-reason"></dd></div></dl>
+      </div>
+      <div class="flow-dialog-actions"><button type="button" class="secondary big" id="confirm-edit">← 다시 고치기</button><button type="button" class="primary big" id="confirm-prediction">확인했어요, 저장하고 실험하기 →</button></div>
+    </dialog>
+    <div class="flow-toast" role="status" aria-live="assertive"></div>
   `);
   $('#simulation-mount').append(workspace);
   $('#concept-activities').append(vocabulary, mission);
@@ -177,13 +191,17 @@ export function setupPOEFlow(config) {
       next.querySelector('button').onclick = () => selectExperiment(todo);
     }
   }
+  // 앞 실험의 설명까지 마쳐야 다음 실험이 열려요(이미 연 실험은 언제든 다시 볼 수 있어요).
+  const experimentOpen = n => n === 0 || state.exps.slice(0, n).every(e => e.explained) || state.exps[n].reached > 0 || n === state.current;
   function renderSwitch() {
     if (!multi) return;
     document.querySelectorAll('[data-experiment]').forEach(b => {
-      const n = +b.dataset.experiment, e = state.exps[n];
+      const n = +b.dataset.experiment, e = state.exps[n], open = experimentOpen(n);
       if (n === state.current) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current');
       b.classList.toggle('done', e.explained);
-      b.querySelector('small').textContent = e.explained ? '✔ 설명까지 마침' : e.reached ? `${['예상', '관찰', '설명'][e.reached]} 단계까지 함` : '아직 시작 전';
+      b.classList.toggle('locked', !open);
+      if (open) b.removeAttribute('aria-disabled'); else b.setAttribute('aria-disabled', 'true');
+      b.querySelector('small').textContent = !open ? '🔒 앞 실험을 마치면 열려요' : e.explained ? '✔ 설명까지 마침' : e.reached ? `${['예상', '관찰', '설명'][e.reached]} 단계까지 함` : '아직 시작 전';
     });
     $('.experiment-now').textContent = `지금 하는 실험: 실험 ${state.current + 1}. ${info().name}`;
   }
@@ -195,20 +213,41 @@ export function setupPOEFlow(config) {
     $('#reveal-concepts').disabled = locked;
     document.body.classList.toggle('report-locked', locked);
   }
-  function selectExperiment(n) {
+  function selectExperiment(n, stage) {
+    if (!experimentOpen(n)) return toast(`🔒 실험 ${n}(${experiments[n - 1].name})을 설명까지 마치면 다음 실험이 열려요.`);
     keepDrafts();
-    state.current = n; save();
+    state.current = n;
+    if (stage) exp().stage = stage;
+    save();
     lastProgress = null;
     fill();
     config.onExperimentChange?.(experiments[n].id, n);
     changeStage(exp().stage);
   }
 
+  // ‘← 뒤로 가기’: 화면 순서에서 한 칸 앞으로. 쓴 글은 그대로 남아요. 더 갈 곳이 없으면 false.
+  const isReviewing = () => !!review && (!state.reviewed || state.onReview);
+  const canGoBack = () => !isReviewing() && (STAGES.indexOf(exp().stage) > 0 || state.current > 0 || !!review);
+  function goBack() {
+    if (!canGoBack()) return false;
+    keepDrafts();
+    const i = STAGES.indexOf(exp().stage);
+    if (i > 0) changeStage(STAGES[i - 1]);
+    else if (state.current > 0) selectExperiment(state.current - 1, STAGES[state.exps[state.current - 1].reached]);
+    else { state.onReview = true; save(); changeStage(exp().stage); }
+    return true;
+  }
+
   function changeStage(next, initial = false) {
     const e = exp();
     e.stage = next; e.reached = Math.max(e.reached, STAGES.indexOf(next)); save();
-    const reviewing = review && !state.reviewed;
-    if (review) $('#review-panel').hidden = !reviewing;
+    const reviewing = isReviewing();
+    if (review) {
+      $('#review-panel').hidden = !reviewing;
+      $('#finish-review').textContent = state.reviewed ? '실험으로 돌아가기 →' : '복습 마치고 실험 시작하기 →';
+    }
+    $('#flow-back').hidden = !canGoBack();
+    document.querySelectorAll('.poe-panel .flow-back, .poe-record .flow-back').forEach(b => { b.hidden = !canGoBack(); });
     for (const value of STAGES) {
       $(`#${value}-panel`).hidden = reviewing || value !== next;
       const item = $(`[data-step="${value}"]`), button = item.querySelector('button');
@@ -224,11 +263,12 @@ export function setupPOEFlow(config) {
     if (initial) return;
     const focus = reviewing ? $('#review-title') : $(`#${next}-title`);
     focus.focus({ preventScroll: true });
-    (multi ? $('.experiment-switch') : $('.poe-steps')).scrollIntoView({ behavior: 'instant', block: 'start' });
+    (multi ? $('.experiment-switch') : $('.flow-nav')).scrollIntoView({ behavior: reducedMotion.matches ? 'instant' : 'smooth', block: 'start' });
   }
   // progress: { ready, message } — 실험에서 필요한 관찰을 모두 했는지 알려 줍니다.
   // 한 번 관찰을 마친 실험은 새로 고침한 뒤에도 다음 단계로 넘어갈 수 있어요.
   function update(progress, force = false) {
+    gate(progress);
     if (!force && lastProgress && progress.ready === lastProgress.ready && progress.message === lastProgress.message) return;
     lastProgress = progress;
     const done = progress.ready || exp().observed;
@@ -236,7 +276,45 @@ export function setupPOEFlow(config) {
     $('#observation-progress').textContent = !progress.ready && exp().observed ? '이 실험은 이미 관찰을 마쳤어요. 더 실험해 보고 기록을 고쳐도 좋아요.' : progress.message;
     renderGuide(progress);
   }
-  // 왼쪽 실험 순서 안내: 끝낸 단계는 ✓, 지금 할 단계는 강조, 모두 끝나면 마지막 ‘기록하기’ 단계를 강조해요.
+  // 순서 지키기: 지금 할 단계보다 뒤에 있는 단계에서 처음 쓰는 조작(unlocks)은 잠가 두고, 누르면 지금 할 일을 알려 줘요.
+  // 실험이 화면을 새로 그려도 매 프레임 다시 잠가요. 한 번 관찰을 마친 실험은 모두 열어 자유롭게 다시 해 볼 수 있어요.
+  let gateMessage = '';
+  function gate(progress) {
+    const steps = progress.steps ?? [];
+    let current = steps.findIndex(v => !v.done);
+    if (current === -1 || exp().observed || state.locked) current = steps.length;
+    const later = steps.slice(current + 1).filter(v => v.unlocks);
+    gateMessage = current < steps.length ? `🔒 실험 순서대로 해요. 먼저 ‘${steps[current].label}’부터 해 보세요.` : '';
+    const selector = later.map(v => v.unlocks).join(', ');
+    document.querySelectorAll('[data-gated]').forEach(el => {
+      if (selector && el.matches(selector)) return;
+      el.removeAttribute('data-gated'); el.removeAttribute('aria-disabled');
+      if (el.dataset.gatedTitle !== undefined) { el.title = el.dataset.gatedTitle; delete el.dataset.gatedTitle; }
+    });
+    if (!selector) return;
+    document.querySelectorAll(selector).forEach(el => {
+      if (el.dataset.gated) return;
+      el.dataset.gated = 'true'; el.setAttribute('aria-disabled', 'true');
+      el.dataset.gatedTitle = el.title; el.title = '앞 단계를 먼저 하면 열려요';
+    });
+  }
+  function blockGated(ev) {
+    const el = ev.target?.closest?.('[data-gated]');
+    if (!el || (ev.type === 'keydown' && !['Enter', ' ', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(ev.key))) return;
+    ev.preventDefault(); ev.stopImmediatePropagation();
+    if (ev.type === 'click' || ev.type === 'keydown') toast(gateMessage || '🔒 앞 단계를 먼저 해 보세요.');
+  }
+  for (const type of ['pointerdown', 'mousedown', 'touchstart', 'click', 'keydown']) window.addEventListener(type, blockGated, { capture: true, passive: false });
+
+  // 화면 아래쪽에 잠깐 나타나는 안내(잠긴 조작을 눌렀을 때 등).
+  let toastTimer = null;
+  function toast(text) {
+    const el = $('.flow-toast');
+    el.textContent = text; el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), 3200);
+  }
+
+  // 왼쪽 실험 순서 안내: 끝낸 단계는 ✓, 지금 할 단계는 강조, 뒤 단계는 🔒, 모두 끝나면 마지막 ‘기록하기’ 단계를 강조해요.
   let guideDone = -1;
   function renderGuide(progress) {
     const steps = progress.steps ?? [];
@@ -246,7 +324,8 @@ export function setupPOEFlow(config) {
     const done = steps.filter(v => v.done).length, current = steps.findIndex(v => !v.done);
     const items = steps.map((v, i) => {
       const state = v.done ? 'done' : i === current ? 'current' : 'todo';
-      return `<li class="${state}"${state === 'current' ? ' aria-current="step"' : ''}><span class="guide-num">${v.done ? '✓' : i + 1}</span><div><b>${v.label}</b>${state === 'current' ? `<small class="guide-now">지금 할 일</small>` : ''}${v.hint && !v.done ? `<small>${v.hint}</small>` : ''}</div></li>`;
+      const lockedStep = state === 'todo' && !exp().observed;
+      return `<li class="${state}${lockedStep ? ' locked' : ''}"${state === 'current' ? ' aria-current="step"' : ''}><span class="guide-num">${v.done ? '✓' : lockedStep ? '🔒' : i + 1}</span><div><b>${v.label}</b>${state === 'current' ? `<small class="guide-now">지금 할 일</small>` : ''}${v.hint && state === 'current' ? `<small>${v.hint}</small>` : ''}${lockedStep ? '<small>앞 단계를 마치면 열려요</small>' : ''}</div></li>`;
     });
     const allDone = current === -1;
     items.push(`<li class="${allDone ? 'current final' : 'todo final'}"${allDone ? ' aria-current="step"' : ''}><span class="guide-num">✎</span><div><b>관찰 결과 기록하기</b>${allDone ? '<small class="guide-now">지금 할 일</small>' : ''}<small>아래에 본 것을 적고 ‘관찰 저장하고 설명하기’를 눌러요</small></div></li>`);
@@ -281,18 +360,30 @@ export function setupPOEFlow(config) {
     el.addEventListener('input', () => { el.setCustomValidity(''); showCount(el); keepDrafts(); });
   });
   $('#prediction-form').addEventListener('change', keepDrafts);
+  // 예상은 저장하면 고칠 수 없으므로, 저장하기 전에 확인 창으로 한 번 더 읽어 보게 해요.
+  const confirmBox = $('#prediction-confirm');
+  const openDialog = d => { if (d.showModal) d.showModal(); else d.setAttribute('open', ''); };
+  const closeDialog = d => { if (d.close) d.close(); else d.removeAttribute('open'); };
   $('#prediction-form').onsubmit = ev => {
     ev.preventDefault();
-    const e = exp();
-    if (!e.prediction) {
-      if (!requireWriting('#prediction-reason')) return;
-      const checked = document.querySelector('input[name="prediction"]:checked');
+    if (exp().prediction) return changeStage('observe');
+    if (!requireWriting('#prediction-reason')) return;
+    const checked = document.querySelector('input[name="prediction"]:checked');
+    $('#confirm-choice').textContent = checked.nextElementSibling.textContent;
+    $('#confirm-reason').textContent = $('#prediction-reason').value.trim();
+    openDialog(confirmBox);
+    $('#confirm-prediction').focus();
+  };
+  $('#confirm-edit').onclick = () => { closeDialog(confirmBox); $('#prediction-reason').focus(); };
+  $('#confirm-prediction').onclick = () => {
+    const e = exp(), checked = document.querySelector('input[name="prediction"]:checked');
+    closeDialog(confirmBox);
+    if (!e.prediction && checked) {
       e.prediction = { index: +checked.value, choice: checked.nextElementSibling.textContent, reason: $('#prediction-reason').value.trim() };
       fill();
     }
     changeStage('observe');
   };
-  $('#back-predict').onclick = () => changeStage('predict');
   $('#observation-form').onsubmit = ev => {
     ev.preventDefault(); if ($('#to-explanation').disabled) return;
     const e = exp();
@@ -303,7 +394,7 @@ export function setupPOEFlow(config) {
     $('#saved-observation').textContent = e.saved;
     changeStage('explain');
   };
-  $('#return-observation').onclick = () => changeStage('observe');
+  document.querySelectorAll('.flow-back').forEach(b => b.onclick = () => goBack());
   $('#explanation-form').onsubmit = ev => {
     ev.preventDefault(); if (state.locked || !requireWriting('#explanation-record')) return;
     const e = exp();
@@ -314,7 +405,7 @@ export function setupPOEFlow(config) {
     target.scrollIntoView({ behavior: 'instant', block: 'start' });
   };
   document.querySelectorAll('[data-goto]').forEach(b => b.onclick = () => changeStage(b.dataset.goto));
-  document.querySelectorAll('[data-experiment]').forEach(b => b.onclick = () => selectExperiment(+b.dataset.experiment));
+  document.querySelectorAll('[data-experiment]').forEach(b => b.onclick = () => { if (+b.dataset.experiment !== state.current || isReviewing()) { state.onReview = false; selectExperiment(+b.dataset.experiment); } });
   $('#revisit-lab').onclick = () => changeStage('observe');
   $('#restart-poe').onclick = () => {
     if (!confirm('지금까지 쓴 예상·관찰·설명과 퀴즈 답을 모두 지우고 처음부터 할까요?')) return;
@@ -345,17 +436,31 @@ export function setupPOEFlow(config) {
     document.querySelectorAll('[data-review]').forEach(b => b.onclick = () => { answers[+b.dataset.review] = +b.dataset.choice; save(); showReview(); });
     $('#finish-review').onclick = () => {
       if (review.items.some((_, n) => answers[n] === undefined || answers[n] === null)) return;
-      state.reviewed = true; save(); changeStage(exp().stage);
+      state.reviewed = true; state.onReview = false; save(); changeStage(exp().stage);
     };
     showReview();
   }
+
+  // 브라우저·휴대폰의 뒤로 가기도 한 화면씩 돌아가게 해요. 첫 화면(복습)에서 누르면 원래대로 실험 목록으로 나가요.
+  // 열려 있는 확인 창이 있으면 먼저 닫아요.
+  if (!history.state?.poeGuard) { history.replaceState({ ...history.state, poeBase: true }, ''); history.pushState({ poeGuard: true }, ''); }
+  window.addEventListener('popstate', ev => {
+    if (ev.state?.poeGuard) return;
+    const open = document.querySelector('dialog[open]');
+    if (open) {
+      const cancel = new Event('cancel', { cancelable: true });
+      if (open.dispatchEvent(cancel)) closeDialog(open);
+      history.pushState({ poeGuard: true }, '');
+    } else if (goBack()) history.pushState({ poeGuard: true }, '');
+    else history.back();
+  });
 
   fill();
   config.onExperimentChange?.(info().id, state.current);
   changeStage(exp().stage, true);
   return {
     update,
-    get stage() { return state.reviewed ? exp().stage : 'review'; },
+    get stage() { return isReviewing() ? 'review' : exp().stage; },
     get experiment() { return info().id; },
   };
 }

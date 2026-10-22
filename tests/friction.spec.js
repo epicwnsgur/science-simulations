@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { loadAppsScript } from '../apps-script/fake-google.js';
 import { SUBMIT_URL } from '../src/submission-config.js';
 import { CONCEPT_QUIZZES } from '../src/concept-quizzes.js';
-import { finishReview } from './poe-helpers.js';
+import { finishReview, savePrediction, openObserveUnlocked } from './poe-helpers.js';
 
 const URL_ = '/simulations/friction-electricity/';
 const REASON = '겨울에 털옷을 벗을 때 머리카락이 달라붙었던 적이 있어요.';
@@ -16,7 +16,7 @@ async function start(page) {
 async function predict(page, choice, reason) {
   await page.locator(`input[name="prediction"][value="${choice}"]`).check();
   await page.locator('#prediction-reason').fill(reason);
-  await page.locator('#start-observation').click();
+  await savePrediction(page);
   await expect(page.locator('#observe-panel')).toBeVisible();
 }
 async function balloonExperiment(page) {
@@ -76,33 +76,37 @@ async function fillIdentity(page, code, id = '20315', name = '홍길동') {
   for (const f of ['#submit-name', '#submit-name-confirm']) await page.locator(f).fill(name);
 }
 
-test('마찰 전기: 두 실험의 예상·관찰·설명을 따로 기록하고, 오가도 답이 섞이거나 사라지지 않음', async ({ page }) => {
+test('마찰 전기: 두 실험의 예상·관찰·설명을 따로 기록하고, 실험 1을 마쳐야 실험 2가 열리며, 오가도 답이 남음', async ({ page }) => {
   const errors = []; page.on('pageerror', e => errors.push(e.message));
   await start(page);
   await expect(page.locator('.experiment-now')).toHaveText('지금 하는 실험: 실험 1. 풍선과 털');
   await predict(page, 0, REASON);
   await expect(page.locator('#lab-now')).toHaveText('실험 1. 풍선과 털');
   await expect(page.locator('#tab-rub')).toBeHidden();
-  // 관찰 중에 실험 2로 옮겼다가 돌아와도 쓰던 관찰 기록이 남아요.
-  await page.locator('#observation-record').fill('털끝이 풍선 쪽으로 끌려왔어요. 쓰는 중이에요.');
-  await page.locator('[data-experiment="1"]').click();
-  await expect(page.locator('#predict-panel')).toBeVisible();
-  await expect(page.locator('#predict-title')).toContainText('숟가락');
-  await expect(page.locator('#prediction-reason')).toHaveValue('');
-  await page.locator('#prediction-reason').fill('같은 장갑으로 문질렀으니 서로 밀어낼 것 같아요.');
-  await page.locator('[data-experiment="0"]').click();
+  // 실험 1을 설명까지 마치기 전에는 실험 2가 잠겨 있어요.
+  await expect(page.locator('[data-experiment="1"]')).toHaveAttribute('aria-disabled', 'true');
+  await page.locator('[data-experiment="1"]').click({ force: true });
+  await expect(page.locator('.flow-toast')).toContainText('실험 1(풍선과 털)을 설명까지 마치면');
   await expect(page.locator('#observe-panel')).toBeVisible();
-  await expect(page.locator('#observation-record')).toHaveValue('털끝이 풍선 쪽으로 끌려왔어요. 쓰는 중이에요.');
-  // 단계 버튼으로 예상 단계에 돌아가도 처음 예상은 그대로예요(고칠 수는 없음).
+  // 단계 버튼으로 예상 단계에 돌아가도 처음 예상은 그대로예요(고칠 수는 없음). 쓰던 관찰 기록도 남아요.
+  await page.locator('#observation-record').fill('털끝이 풍선 쪽으로 끌려왔어요. 쓰는 중이에요.');
   await page.locator('[data-goto="predict"]').click();
   await expect(page.locator('#prediction-reason')).toHaveValue(REASON);
   await expect(page.locator('#prediction-reason')).toHaveJSProperty('readOnly', true);
   await expect(page.locator('[data-goto="explain"]')).toBeDisabled();
   await page.locator('[data-goto="observe"]').click();
-  // 새로 고침해도 단계와 글이 남아요.
   await page.reload();
   await expect(page.locator('#observe-panel')).toBeVisible();
   await expect(page.locator('#observation-record')).toHaveValue('털끝이 풍선 쪽으로 끌려왔어요. 쓰는 중이에요.');
+  await balloonExperiment(page);
+  await observeAndExplain(page, '풍선을 들어 올리니 털끝이 풍선 쪽으로 끌려왔어요.', '털의 전자가 풍선으로 옮겨 가 털은 (+), 풍선은 (−)가 되어 서로 끌어당겼어요.');
+  await page.locator('#go-next-experiment').click();
+  await expect(page.locator('#predict-title')).toContainText('숟가락');
+  await expect(page.locator('#prediction-reason')).toHaveValue('');
+  await page.locator('#prediction-reason').fill('같은 장갑으로 문질렀으니 서로 밀어낼 것 같아요.');
+  // 실험 1로 돌아가도 실험 2에서 쓰던 글이 섞이지 않고 남아요.
+  await page.locator('[data-experiment="0"]').click();
+  await expect(page.locator('#explanation-record')).toHaveValue('털의 전자가 풍선으로 옮겨 가 털은 (+), 풍선은 (−)가 되어 서로 끌어당겼어요.');
   await page.locator('[data-experiment="1"]').click();
   await expect(page.locator('#prediction-reason')).toHaveValue('같은 장갑으로 문질렀으니 서로 밀어낼 것 같아요.');
   expect(errors).toEqual([]);
@@ -137,27 +141,27 @@ test('마찰 전기: 자동 재생은 단계를 보여 주고, 일시정지하�
   await page.goto(URL_);
   await finishReview(page);
   await predict(page, 0, REASON);
-  await page.locator('#auto-play').click();
+  await page.locator('[data-auto="play"]').click();
   await expect(page.locator('.autoplay-steps li')).toHaveCount(5);
   await expect(page.locator('.autoplay-steps li.current')).toContainText('문지르기', { timeout: 8000 });
   await expect(page.locator('#rub-btn')).toBeDisabled();
-  await page.locator('#auto-pause').click();
-  await expect(page.locator('#autoplay-caption')).toContainText('일시정지');
+  await page.locator('[data-auto="pause"]').click();
+  await expect(page.locator('.autoplay-caption')).toContainText('일시정지');
   const at = await page.locator('#balloon').getAttribute('transform');
   await page.waitForTimeout(1200);
   expect(await page.locator('#balloon').getAttribute('transform')).toBe(at);
-  await page.locator('#auto-pause').click();
-  await page.locator('#auto-stop').click();
-  await expect(page.locator('#auto-play')).toBeVisible();
+  await page.locator('[data-auto="pause"]').click();
+  await page.locator('[data-auto="stop"]').click();
+  await expect(page.locator('[data-auto="play"]')).toBeVisible();
   await expect(page.locator('#retry-btn')).toBeEnabled();
 });
 
 test('마찰 전기: 자동 재생을 끝까지 보면 관찰 체크가 채워짐(숟가락 실험)', async ({ page }) => {
-  await start(page);
-  await page.locator('[data-experiment="1"]').click();
-  await predict(page, 1, '같은 장갑으로 문질렀으니 서로 밀어낼 것 같아요.');
-  await page.locator('#auto-play').click();
-  await expect(page.locator('#autoplay-caption')).toContainText('자동 재생이 끝났어요', { timeout: 20000 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await openObserveUnlocked(page, URL_, { count: 2, current: 1, observed: false });
+  await expect(page.locator('#to-explanation')).toBeDisabled();
+  await page.locator('[data-auto="play"]').click();
+  await expect(page.locator('.autoplay-caption')).toContainText('자동 재생이 끝났어요', { timeout: 20000 });
   await expect(page.locator('#to-explanation')).toBeEnabled();
   await expect(page.locator('[data-tool="glove"]')).toHaveAttribute('aria-pressed', 'true');
 });
@@ -335,7 +339,7 @@ test('글씨 크기 소·중·대: 누르면 바로 바뀌고 다른 실험에�
     expect(await size(), url).toBeGreaterThan(medium);
     await page.locator('input[name="prediction"][value="0"]').check();
     await page.locator('#prediction-reason').fill('이런 일이 일어날 것 같다고 생각한 까닭을 적어요.');
-    await page.locator('#start-observation').click();
+    await savePrediction(page);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), url).toBe(true);
     await page.screenshot({ path: `/tmp/text-large-${url.split('/')[2]}.png`, fullPage: true });
   }
@@ -374,8 +378,10 @@ test('마찰 전기 전하 보기: 실험 화면에는 원자핵(+)과 전자(�
   await expect(page.locator('#balloon-charges g').first()).toBeAttached();
   await expect(page.locator('#fur-name')).toHaveText('털');
   await expect(page.locator('#balloon-name')).toHaveText('풍선');
-  await page.locator('[data-experiment="1"]').click();
-  await predict(page, 1, '같은 장갑으로 문질렀으니 서로 밀어낼 것 같아요.');
+  // 숟가락 실험은 실험 1을 마친 상태로 새로 열어 확인해요.
+  await page.evaluate(() => sessionStorage.clear());
+  await openObserveUnlocked(page, URL_, { count: 2, current: 1, observed: false });
+  await page.locator('#show-detail').check();
   await page.locator('#rub-spoons').click();
   await page.locator('#approach').click();
   await expect(page.locator('#spoon-a-charges g').first()).toBeAttached({ timeout: 8000 });

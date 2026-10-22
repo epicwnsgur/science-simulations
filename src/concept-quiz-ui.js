@@ -1,6 +1,7 @@
 import { validateQuiz } from './concept-quizzes.js';
 
 // 스스로 평가: 고르는 동안에는 정답을 알려 주지 않고, 모두 고른 뒤 ‘결과 확인하기’를 누르면 점수와 문항별 해설을 보여 줘요.
+// 고른 보기에는 ‘내 선택’ 표시가 붙고, 결과를 본 뒤에는 ‘내 답 · 정답/오답’, 고르지 않은 정답에는 ‘정답’ 표시가 붙어요.
 // saved/onChange로 고른 답을 기억해 두면 새로 고침해도 남아요. 퀴즈 결과는 보고서로 보내지 않아요.
 const CIRCLED = ['①', '②', '③', '④', '⑤'];
 const escape = value => String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -13,7 +14,7 @@ const answerText = (q, id) => {
 export function mountConceptQuiz(container, questions, { saved = null, onChange = () => {} } = {}) {
   validateQuiz(questions);
   const state = { answers: questions.map((_, n) => saved?.answers?.[n] ?? null), checked: !!saved?.checked };
-  container.innerHTML = `<span class="small-tag">스스로 평가</span><h2>배운 내용을 확인해요</h2><p class="quiz-intro">OX ${questions.filter(q => q.type === 'ox').length}문제와 5지선다 ${questions.filter(q => q.type === 'choice').length}문제를 모두 고른 뒤 <b>결과 확인하기</b>를 눌러요. 고르는 동안에는 정답을 알려 주지 않아요.</p>${questions.map((q, n) => `<h3 id="quiz-question-${n}">${n + 1}. ${escape(q.question)}</h3><div role="group" aria-labelledby="quiz-question-${n}" class="answers${q.type === 'choice' ? ' stacked' : ''}">${q.options.map(([id, label], i) => `<button type="button" data-quiz="${n}" data-choice="${escape(id)}" aria-pressed="false">${q.type === 'choice' ? CIRCLED[i] + ' ' : ''}${escape(label)}</button>`).join('')}</div><p id="quiz-feedback-${n}" class="quiz-feedback" aria-live="polite"></p>`).join('')}
+  container.innerHTML = `<span class="small-tag">스스로 평가</span><h2>배운 내용을 확인해요</h2><p class="quiz-intro">OX ${questions.filter(q => q.type === 'ox').length}문제와 5지선다 ${questions.filter(q => q.type === 'choice').length}문제를 모두 고른 뒤 <b>결과 확인하기</b>를 눌러요. 고르는 동안에는 정답을 알려 주지 않아요.</p>${questions.map((q, n) => `<h3 id="quiz-question-${n}">${n + 1}. ${escape(q.question)}</h3><div role="group" aria-labelledby="quiz-question-${n}" class="answers${q.type === 'choice' ? ' stacked' : ''}">${q.options.map(([id, label], i) => `<button type="button" data-quiz="${n}" data-choice="${escape(id)}" aria-pressed="false"><span class="answer-label">${q.type === 'choice' ? CIRCLED[i] + ' ' : ''}${escape(label)}</span><span class="pick-tag" aria-hidden="true"></span></button>`).join('')}</div><p id="quiz-feedback-${n}" class="quiz-feedback" aria-live="polite"></p>`).join('')}
     <p class="quiz-progress" role="status" aria-live="polite"></p>
     <div class="quiz-actions"><button type="button" class="primary" id="quiz-check">결과 확인하기</button></div>
     <section class="quiz-result" hidden aria-labelledby="quiz-result-title" tabindex="-1">
@@ -33,6 +34,9 @@ export function mountConceptQuiz(container, questions, { saved = null, onChange 
       b.classList.toggle('wrong', state.checked && chosen && b.dataset.choice !== q.answer);
       b.classList.toggle('answer', state.checked && !chosen && b.dataset.choice === q.answer);
       b.disabled = state.checked;
+      // 고른 보기는 결과를 본 뒤에도 ‘내 답’으로 또렷하게 보여 줘요.
+      const right = b.dataset.choice === q.answer;
+      b.querySelector('.pick-tag').textContent = chosen ? (state.checked ? (right ? '✔ 내 답 · 정답' : '✘ 내 답 · 오답') : '● 내 선택') : state.checked && right ? '정답' : '';
     });
     questions.forEach((q, n) => {
       const out = container.querySelector(`#quiz-feedback-${n}`), right = state.answers[n] === q.answer;
