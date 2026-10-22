@@ -380,3 +380,19 @@ button[data-gated]::before{content:'🔒 '}
   .poe-panel,#observe-panel,#concept-review,.next-experiment,.quiz-result,.submit-done,.flow-dialog[open]{animation:none}
   .flow-toast{transition:none}
 }
+
+/* 전동기 3D 화면: 그림(svg) 자리에 3D 캔버스를 겹쳐요. 회전 빠르기 계기판과 글자는 그대로 위에 보여요. */
+.stage .motor3d{position:absolute;display:block;touch-action:none;cursor:grab;outline:none}
+.stage .motor3d.grabbing{cursor:grabbing}
+.stage:not(.three-on) .motor3d{display:none}
+.stage.three-on #scene{pointer-events:none}
+.stage.three-on #motor-scene,.stage.three-on #simple-scene>:not(#contact-label){display:none}
+.view-bar{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:10px 22px 0;font-size:12px}
+.view-bar .group-label{color:var(--muted);margin-right:2px}
+.view-bar button{border:1px solid var(--line-2);border-radius:6px;background:#0a1029;color:#cfe6ff;padding:6px 10px;font-size:12px;transition:background-color .2s,border-color .2s,box-shadow .2s,transform .12s,opacity .2s}
+.view-bar button:hover:enabled{border-color:var(--current)}
+.view-bar button[aria-pressed=true]{background:#0d2a4d;border-color:var(--current);color:#fff;box-shadow:var(--glow-c)}
+.view-bar button:active:enabled{transform:scale(.97)}
+.view-bar .view-gap{width:8px}
+.view-bar .view-tip{color:var(--faint);margin-left:auto;font-size:11px}
+@media(max-width:480px){.view-bar{padding:8px 13px 0}.view-bar .view-tip{margin-left:0;width:100%}}

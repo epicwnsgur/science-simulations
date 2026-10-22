@@ -45,6 +45,9 @@
 .lab-readable .tabs button{font-size:calc(14px * var(--fs))}
 .lab-readable .pair-controls button,.lab-readable .choice-row button{font-size:calc(15px * var(--fs));padding:9px 14px}
 .lab-readable .choice-row .group-label,.lab-readable .pair-controls p{font-size:calc(14px * var(--fs))}
+.lab-readable .view-bar button{font-size:calc(15px * var(--fs));padding:8px 13px}
+.lab-readable .view-bar .group-label{font-size:calc(14px * var(--fs))}
+.lab-readable .view-bar .view-tip{font-size:calc(13px * var(--fs))}
 .lab-readable .readout-card b{font-size:calc(22px * var(--fs))}
 
 /* 실험 화면 위쪽: 지금 실험 · 재료 고르기 · 조작 버튼 · 자동 재생 */
