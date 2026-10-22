@@ -5,14 +5,19 @@ import './theme-electric.css';
 import './readable.css';
 import { setupPOEFlow } from './src/poe-flow.js';
 import { $, $$, setText, setHTML, buildLab, checklist, toast, reducedMotion, smoothDrag } from './src/lab-shell.js';
-import { EARTH, coilField, magnetField, add, needleDeg, trace, toPath } from './src/magnet-model.js';
+import { EARTH, add, needleDeg, toPath } from './src/magnet-model.js';
+import { PX, boardField, coilField3, magnetField3, fieldLines } from './src/field3d.js';
+import { setupViewToggle } from './src/view-toggle.js';
 
 // 교과서 258–259쪽, 지도서 584–589쪽(11차시).
 // 지도상 유의점: 전류가 흐르는 순간에만 스위치를 닫고 바로 엽니다. 자기장의 세기와 방향은 정성적으로 확인합니다.
 // 중학교 2학년 수준에서는 ‘자기력선’이라는 용어를 쓰지 않고, 교과서 그림처럼 자기장의 모습만 보여 줍니다.
+// 자기장은 3차원 모형(src/field3d.js: 코일은 비오-사바르 법칙, 막대자석은 양 끝의 자극)으로 계산하고,
+// 2D 그림은 판을 위에서 본 모습, 3D 화면(src/coil-3d.js)은 같은 계산을 입체로 보여 줘요.
 
-const COIL = Object.freeze({ x: 400, y: 230, r: 58 });
-const MAGNET = Object.freeze({ x: 400, y: 230, half: 80 });
+const COIL = Object.freeze({ x: PX.x, y: PX.y, r: PX.unit });
+const MAGNET = Object.freeze({ x: PX.x, y: PX.y, half: 80 });
+const PROBE_START = Object.freeze({ x: 612, y: 372 });
 const LEVELS = [{ label: '약하게 (1 V)', s: .4 }, { label: '보통 (3 V)', s: .9 }, { label: '세게 (5 V)', s: 1.8 }];
 const RING = [[400, 108], [400, 352], [236, 150], [220, 230], [236, 310], [564, 150], [580, 230], [564, 310]];
 const HOT_SECONDS = 5;
@@ -27,12 +32,13 @@ const compassSVG = (id, x, y, probe = false) => `<g class="compass${probe ? ' pr
 const scene = `
 <rect x="140" y="62" width="520" height="340" rx="16" fill="#ffffff0c" stroke="#ffffff22"/>
 <text x="664" y="80" font-size="11" class="muted">북 ↑</text>
-<g id="field-lines" opacity="0"></g>
+<clipPath id="board-clip"><rect x="140" y="62" width="520" height="340" rx="16"/></clipPath>
+<g id="field-lines" opacity="0" clip-path="url(#board-clip)"></g>
 <g id="magnet-group" hidden><rect x="${MAGNET.x - MAGNET.half - 6}" y="${MAGNET.y - 18}" width="${MAGNET.half + 6}" height="36" rx="4" fill="#e04848"/><rect x="${MAGNET.x}" y="${MAGNET.y - 18}" width="${MAGNET.half + 6}" height="36" rx="4" fill="#3a6fd8"/><text x="${MAGNET.x - 46}" y="${MAGNET.y + 7}" font-size="20" font-weight="800" text-anchor="middle" style="fill:#fff">N</text><text x="${MAGNET.x + 46}" y="${MAGNET.y + 7}" font-size="20" font-weight="800" text-anchor="middle" style="fill:#fff">S</text></g>
 <g id="coil-group"><ellipse cx="${COIL.x}" cy="${COIL.y}" rx="12" ry="${COIL.r + 10}" fill="none" stroke="url(#copper)" stroke-width="9"/><ellipse id="coil-glow" cx="${COIL.x}" cy="${COIL.y}" rx="12" ry="${COIL.r + 10}" fill="none" stroke="#ffb36b" stroke-width="10" opacity="0" filter="url(#glow-strong)"/><g id="current-arrow" opacity="0"><path id="current-path" stroke="#ff6b6b" stroke-width="4" marker-end="url(#arrow-head)"/><text x="${COIL.x + 38}" y="${COIL.y + 5}" font-size="13" style="fill:#ff9a9a">전류</text></g><text x="${COIL.x}" y="${COIL.y + COIL.r + 34}" text-anchor="middle" font-size="12" class="muted">코일</text></g>
 <g id="compasses">${RING.map(([x, y], i) => compassSVG(`c${i}`, x, y)).join('')}</g>
-${compassSVG('probe', 700, 360, true)}
-<text x="700" y="404" text-anchor="middle" font-size="11" style="fill:#ffd166">끌어서 옮겨 보세요</text>
+${compassSVG('probe', PROBE_START.x, PROBE_START.y, true)}
+<text x="${PROBE_START.x - 36}" y="${PROBE_START.y + 5}" text-anchor="end" font-size="11" style="fill:#ffd166">끌어서 옮겨 보세요</text>
 <g id="supply" transform="translate(30 70)"><rect width="96" height="70" rx="8" fill="#1d2440" stroke="#8f9bc4"/><text id="supply-v" x="48" y="38" text-anchor="middle" font-family="monospace" font-size="24" style="fill:#ff4d4d" filter="url(#glow)">0.0</text><text x="48" y="58" text-anchor="middle" font-size="10" class="muted">전원 장치 (V)</text></g>`;
 
 const lab = buildLab({
@@ -48,17 +54,17 @@ const lab = buildLab({
 
 /* ---------- 상태 ---------- */
 let mode = 'magnet', show = false, on = false, direction = 1, level = 1, onTime = 0, warned = false, lastFrame = 0;
-let probe = { x: 700, y: 360 }, linesKey = '', magnetTime = 0;
+let probe = { ...PROBE_START }, linesKey = '', magnetTime = 0, use3d = false;
 const needles = new Map();
 const seen = { magnet: false, current: false, reversed: false, stronger: false, probe: false };
 const levelsTried = new Set();
 let flow = null;
 
+// 나침반이 있는 곳(판 위)의 자기장 = 자석이나 코일의 자기장 + 지구 자기장
 function field(p) {
-  if (mode === 'magnet') return add(magnetField(p, MAGNET), EARTH);
-  return add(coilField(p, COIL, on ? LEVELS[level].s : 0, direction), EARTH);
+  if (mode === 'magnet') return add(boardField(magnetField3, p), EARTH);
+  return add(boardField(q => coilField3(q, on ? LEVELS[level].s : 0, direction), p), EARTH);
 }
-function sourceOnly(p) { return mode === 'magnet' ? magnetField(p, MAGNET) : coilField(p, COIL, LEVELS[level].s, direction); }
 
 // 나침반 바늘은 용수철처럼 흔들리다 자기장 방향에 멈춰요.
 function stepNeedle(id, target, dt) {
@@ -70,44 +76,27 @@ function stepNeedle(id, target, dt) {
   }
   needles.set(id, n); return n.a;
 }
+// 바늘 각도(도)를 돌려줘요: 둘레 나침반 8개, 마지막이 움직이는 나침반. 3D 화면도 이 각도를 그대로 써요.
 function paintCompasses(dt) {
-  RING.forEach(([x, y], i) => {
-    const a = stepNeedle(`c${i}`, needleDeg(field({ x, y })), dt);
-    document.querySelector(`#c${i} .needle`).setAttribute('transform', `rotate(${a.toFixed(1)})`);
-  });
+  const angles = RING.map(([x, y], i) => stepNeedle(`c${i}`, needleDeg(field({ x, y })), dt));
+  angles.push(stepNeedle('probe', needleDeg(field(probe)), dt));
   $('#probe').setAttribute('transform', `translate(${probe.x.toFixed(1)} ${probe.y.toFixed(1)})`);
-  const a = stepNeedle('probe', needleDeg(field(probe)), dt);
-  $('#probe .needle').setAttribute('transform', `rotate(${a.toFixed(1)})`);
+  if (!use3d) {
+    angles.slice(0, -1).forEach((a, i) => document.querySelector(`#c${i} .needle`).setAttribute('transform', `rotate(${a.toFixed(1)})`));
+    $('#probe .needle').setAttribute('transform', `rotate(${angles.at(-1).toFixed(1)})`);
+  }
+  return angles;
 }
 function paintLines() {
   // 자기장의 모습: 교과서 그림처럼 선으로 나타내요. 흐르는 무늬는 자기장의 방향(N극이 가리키는 방향)이에요.
+  // 선은 판과 같은 면에서 3차원 모형으로 따라간 것이고, 3D 화면도 같은 선을 써요.
   const visible = show && (mode === 'magnet' || on);
   $('#field-lines').setAttribute('opacity', visible ? 1 : 0);
-  const key = `${mode}:${direction}:${level}`;
-  if (!visible || key === linesKey) return;
+  const key = `${mode}:${direction}`;
+  if (!visible || key === linesKey || use3d) return;
   linesKey = key;
-  const paths = [];
-  const opts = { bounds: { x0: 140, y0: 62, x1: 660, y1: 402 } };
-  if (mode === 'magnet') {
-    // N극 끝에서 부채꼴로 출발해 S극으로 들어가는 모습을 그려요.
-    const n = { x: MAGNET.x - MAGNET.half, y: MAGNET.y }, sPole = { x: MAGNET.x + MAGNET.half, y: MAGNET.y };
-    for (let deg = 95; deg <= 265; deg += 17) {
-      const a = deg * Math.PI / 180, start = { x: n.x + Math.cos(a) * 16, y: n.y + Math.sin(a) * 22 };
-      paths.push(trace(p => sourceOnly(p), start, { ...opts, max: 900, stop: p => Math.hypot((p.x - sPole.x) / 18, (p.y - sPole.y) / 24) < 1 }));
-      // 판 밖으로 나간 선도 S극 쪽에서 거꾸로 따라가 오른쪽 모습을 채워요.
-      const mirror = { x: 2 * MAGNET.x - start.x, y: start.y };
-      paths.push(trace(p => { const b = sourceOnly(p); return { x: -b.x, y: -b.y }; }, mirror, { ...opts, max: 900, stop: p => Math.hypot((p.x - n.x) / 18, (p.y - n.y) / 24) < 1 }).reverse());
-    }
-  } else {
-    for (const f of [.1, .25, .38, .45, .5, .55, .62, .75, .9]) {
-      const start = { x: COIL.x, y: COIL.y - COIL.r + 2 * COIL.r * f };
-      const fwd = trace(p => sourceOnly(p), start, { ...opts, closeTo: start, max: 700 });
-      const closed = Math.hypot(fwd.at(-1).x - start.x, fwd.at(-1).y - start.y) < 1;
-      // 닫히지 않은 선은 반대 방향으로도 따라가 이어 붙여요.
-      paths.push(closed ? fwd : [...trace(p => { const b = sourceOnly(p); return { x: -b.x, y: -b.y }; }, start, { ...opts, max: 700 }).reverse(), ...fwd.slice(1)]);
-    }
-  }
-  $('#field-lines').innerHTML = paths.map(pts => `<path d="${toPath(pts)}" class="field-line"/>`).join('');
+  const px = ([x, z]) => ({ x: PX.x + x * PX.unit, y: PX.y + z * PX.unit });
+  $('#field-lines').innerHTML = fieldLines(mode, direction).map(pts => `<path d="${toPath(pts.map(px))}" class="field-line"/>`).join('');
 }
 function paint(dt) {
   if (mode === 'coil') {
@@ -122,8 +111,9 @@ function paint(dt) {
     $('#current-path').setAttribute('d', direction > 0 ? `M${COIL.x + 26} ${COIL.y - 30} V${COIL.y + 30}` : `M${COIL.x + 26} ${COIL.y + 30} V${COIL.y - 30}`);
     setText('#supply-v', on ? ['1.0', '3.0', '5.0'][level] : '0.0');
   }
-  paintCompasses(dt);
+  const needles = paintCompasses(dt);
   paintLines();
+  if (use3d) view3d.view.update({ mode, on, show, direction, level, needles, probe, volts: on ? ['1.0', '3.0', '5.0'][level] : '0.0' }, dt);
 }
 
 /* ---------- 조작 ---------- */
@@ -157,6 +147,8 @@ function renderControls() {
   }
   renderText();
 }
+// 전류의 방향: 2D 그림에서는 코일 위에 그린 화살표 방향(아래쪽·위쪽), 3D 화면에서는 처음 방향·반대 방향으로 말해요.
+const dirText = () => (use3d ? (direction > 0 ? '처음 방향' : '반대 방향') : `${direction > 0 ? '아래쪽' : '위쪽'} 방향`);
 function renderText() {
   if (mode === 'magnet') {
     setText('#guide', '막대자석 주위에 놓인 나침반 바늘을 관찰해 보세요.');
@@ -168,23 +160,25 @@ function renderText() {
   } else {
     setText('#guide', '스위치를 누르는 동안 코일 주위 나침반 바늘이 어떻게 움직이는지 관찰해 보세요.');
     setText('#subguide', '전류의 방향과 세기를 바꾸어 가며 비교해요. 관찰한 뒤에는 바로 손을 떼요.');
-    setText('#stage-state', `전류 ${on ? '흐름' : '흐르지 않음'} · ${direction > 0 ? '아래쪽' : '위쪽'} 방향 · ${LEVELS[level].label}`);
+    setText('#stage-state', `전류 ${on ? '흐름' : '흐르지 않음'} · ${dirText()} · ${LEVELS[level].label}`);
     setText('#note-title', on ? '나침반 바늘이 가리키는 방향을 살펴보세요' : '스위치를 눌러 전류를 흘려 보세요');
     setText('#note-text', '258쪽 막대자석 주위의 나침반과 비교해 보세요. 코일의 어느 쪽이 N극처럼 보이나요?');
-    setText('#discovery', '전류가 흐르지 않을 때 나침반 바늘은 북쪽(화면 위)을 가리켜요.');
+    setText('#discovery', `전류가 흐르지 않을 때 나침반 바늘은 북쪽(${use3d ? '판 위 흰 화살표 ‘북’ 쪽' : '화면 위'})을 가리켜요.`);
   }
-  setHTML('#readout', `<div class="readout-grid"><div class="readout-card"><strong>${mode === 'magnet' ? '관찰 대상' : '전류'}</strong><b>${mode === 'magnet' ? '막대자석' : on ? '흐름' : '멈춤'}</b><small>${mode === 'magnet' ? 'N극 왼쪽 · S극 오른쪽' : `${direction > 0 ? '아래쪽' : '위쪽'} 방향`}</small></div><div class="readout-card"><strong>전류의 세기</strong><b>${mode === 'magnet' ? '–' : ['약', '중', '강'][level]}</b><small>${mode === 'magnet' ? '' : LEVELS[level].label}</small></div></div>`);
-  setText('#model-note', '나침반 바늘은 지구 자기장과 자석(코일)의 자기장이 합쳐진 방향을 가리켜요. 선은 자석이나 코일이 만드는 자기장만 나타내고, 선 위의 무늬는 그 방향을 보여 줘요. 지구 자기장이 더해지는 나침반의 방향과는 다를 수 있어요. 바늘이 흔들리는 정도와 선의 모양은 보기 쉽게 나타낸 모형이에요.');
+  setHTML('#readout', `<div class="readout-grid"><div class="readout-card"><strong>${mode === 'magnet' ? '관찰 대상' : '전류'}</strong><b>${mode === 'magnet' ? '막대자석' : on ? '흐름' : '멈춤'}</b><small>${mode === 'magnet' ? 'N극 왼쪽 · S극 오른쪽' : dirText()}</small></div><div class="readout-card"><strong>전류의 세기</strong><b>${mode === 'magnet' ? '–' : ['약', '중', '강'][level]}</b><small>${mode === 'magnet' ? '' : LEVELS[level].label}</small></div></div>`);
+  setText('#model-note', `나침반 바늘은 지구 자기장과 자석(코일)의 자기장이 합쳐진 방향을 가리켜요. 선은 자석이나 코일이 만드는 자기장만 나타내고, ${use3d ? '선 위의 작은 화살표' : '선 위의 무늬'}는 그 방향을 보여 줘요. 지구 자기장이 더해지는 나침반의 방향과는 다를 수 있어요.${use3d ? ' 3D 화면에서는 판 위뿐 아니라 코일(자석) 둘레의 공간에도 자기장이 생긴 모습을 볼 수 있어요. 판 위에 놓인 선이 진하고, 공간에 있는 선은 흐리게 나타냈어요.' : ''} 바늘이 흔들리는 정도와 선의 모양은 보기 쉽게 나타낸 모형이에요.`);
 }
 function setMode(next) {
   mode = next; lab.selectTab(next); press(false); linesKey = '';
+  view3d?.view?.setMode(next);
   $('#magnet-group').toggleAttribute('hidden', next !== 'magnet');
   $('#coil-group').toggleAttribute('hidden', next !== 'coil');
   $('#supply').toggleAttribute('hidden', next !== 'coil');
   renderControls();
 }
+// 움직이는 나침반은 판 위에서만 옮길 수 있어요.
 function moveProbe(x, y) {
-  probe = { x: Math.max(160, Math.min(780, x)), y: Math.max(80, Math.min(420, y)) };
+  probe = { x: Math.max(162, Math.min(638, x)), y: Math.max(84, Math.min(380, y)) };
   if (!seen.probe) seen.probe = true;
 }
 // 움직이는 나침반은 손가락·마우스·방향키를 부드럽게 따라와요(공통 부품 smoothDrag).
@@ -192,7 +186,21 @@ const probeDrag = smoothDrag($('#probe'), { scene: $('#scene'), get: () => probe
 
 $('#tab-magnet').onclick = () => setMode('magnet');
 $('#tab-coil').onclick = () => setMode('coil');
-$('#reset').onclick = () => { direction = 1; level = 1; probeDrag.cancel(); probe = { x: 700, y: 360 }; setMode(mode); };
+$('#reset').onclick = () => { direction = 1; level = 1; probeDrag.cancel(); view3d.view?.cancelDrag(); probe = { ...PROBE_START }; setMode(mode); };
+
+/* ---------- 3D로 보기 ----------
+   3D 화면에서는 판을 비스듬히 내려다보며 코일이 판을 뚫고 선 모습, 판 위 나침반, 판 위와 둘레 공간의 자기장 모습을 볼 수 있어요.
+   움직이는 나침반은 3D 화면에서도 끌어서 옮길 수 있어요(방향키도 그대로 돼요). */
+const view3d = setupViewToggle({
+  stage: $('.stage'), key: 'coil-view', cams: [['oblique', '비스듬히'], ['side', '옆에서'], ['top', '위에서']],
+  tip: '화면을 끌면 돌려 볼 수 있어요 · 노란 나침반은 끌어서 옮겨요',
+  load: () => import('./src/coil-3d.js').then(({ createCoil3D }) => {
+    const v = createCoil3D({ stage: $('.stage'), svg: $('#scene'), reducedMotion, ring: RING, moveProbe, probeStart: PROBE_START });
+    v.setMode(mode);
+    return v;
+  }),
+  onChange: active => { use3d = active; linesKey = ''; renderText(); },
+});
 $('#show-detail').onchange = e => { show = e.target.checked; linesKey = ''; };
 
 function frame(now) {

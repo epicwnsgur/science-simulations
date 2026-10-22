@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import { charges, interaction, chargeLabel, MAX_TRANSFER, SPOON_TOOLS, SPOON_A_SIGN } from './friction-model.js';
 import { currentMA, resistanceFrom, WIRES, materialCurrentMA, MATERIALS } from './ohm-model.js';
 import { solve } from './circuit-model.js';
-import { coilField, magnetField, needleDeg, EARTH, add } from './magnet-model.js';
+import { needleDeg, EARTH, add } from './magnet-model.js';
+import { boardField, coilField3, magnetField3 } from './field3d.js';
 import { swingDirection, swingAngle, motorTorque, simpleMotorTorque, simpleMotorContact } from './force-model.js';
 
 test('마찰 전기: 전자만 이동하고 전하량은 보존됨', () => {
@@ -43,15 +44,15 @@ test('저항의 연결: 직렬은 어둡고 하나 끊으면 모두 꺼짐, 병�
 });
 
 test('자기장: 코일의 전류 방향을 바꾸면 자기장 방향이 반대, 세기가 커지면 자기장도 셈', () => {
-  const coil = { x: 400, y: 230, r: 58 };
   const p = { x: 580, y: 230 };
-  const a = coilField(p, coil, 1, 1), b = coilField(p, coil, 1, -1), c = coilField(p, coil, 2, 1);
+  const f = (s, d) => boardField(q => coilField3(q, s, d), p);
+  const a = f(1, 1), b = f(1, -1), c = f(2, 1);
   assert.ok(Math.abs(a.x + b.x) < 1e-12 && Math.abs(a.y + b.y) < 1e-12);
   assert.ok(Math.hypot(c.x, c.y) > Math.hypot(a.x, a.y));
-  assert.deepEqual(coilField(p, coil, 0), { x: 0, y: 0 });
+  assert.deepEqual(f(0, 1), { x: 0, y: 0 });
   assert.equal(Math.round(needleDeg(EARTH)), 0, '전류가 없으면 북쪽');
   // 막대자석: N극(왼쪽) 바깥에서는 자기장이 N극에서 나가는 방향(왼쪽)
-  const m = magnetField({ x: 250, y: 230 }, { x: 400, y: 230, half: 80 });
+  const m = boardField(magnetField3, { x: 250, y: 230 });
   assert.ok(m.x < 0);
   assert.ok(Math.abs(needleDeg(add(m, EARTH)) + 90) < 20);
 });

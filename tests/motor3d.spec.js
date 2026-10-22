@@ -5,7 +5,7 @@ import { openObserveUnlocked } from './poe-helpers.js';
 const URL = '/simulations/electric-motor/';
 const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
 const close = (a, b, eps = .02) => a.every((v, i) => Math.abs(v - b[i]) < eps);
-const probe = page => page.locator('canvas.motor3d').evaluate(c => c.probe());
+const probe = page => page.locator('canvas.lab3d').evaluate(c => c.probe());
 async function open3D(page) {
   await openObserveUnlocked(page, URL);
   await expect(page.locator('.stage')).toHaveAttribute('data-view', '3d', { timeout: 15000 });
@@ -101,7 +101,7 @@ test('전동기 3D: 매끄럽게 움직임 — 프레임 간격이 고르고, �
   await page.locator('[data-v="1"]').click();
   await page.locator('#switch-btn').click();
   await page.waitForTimeout(1500);
-  const stats = await page.locator('canvas.motor3d').evaluate(c => new Promise(done => {
+  const stats = await page.locator('canvas.lab3d').evaluate(c => new Promise(done => {
     const gaps = [], turns = [];
     let prev = performance.now();
     const end = prev + 3000;
@@ -127,11 +127,11 @@ test('전동기 3D: 매끄럽게 움직임 — 프레임 간격이 고르고, �
 
 test('전동기 3D: 2D 그림으로 바꿀 수 있고, 고른 보기를 기억함', async ({ page }) => {
   await open3D(page);
-  await expect(page.locator('canvas.motor3d')).toBeVisible();
+  await expect(page.locator('canvas.lab3d')).toBeVisible();
   await expect(page.locator('#motor-scene')).toBeHidden();
   await page.locator('[data-view="2d"]').click();
   await expect(page.locator('.stage')).toHaveAttribute('data-view', '2d');
-  await expect(page.locator('canvas.motor3d')).toBeHidden();
+  await expect(page.locator('canvas.lab3d')).toBeHidden();
   await expect(page.locator('#motor-scene')).toBeVisible();
   await expect(page.locator('[data-cam="axis"]')).toBeDisabled();
   await page.reload();
@@ -149,7 +149,7 @@ test('전동기 3D: WebGL을 못 쓰는 기기에서는 2D 그림으로 그대�
   await openObserveUnlocked(page, URL);
   await expect(page.locator('.stage')).toHaveAttribute('data-view', '2d');
   await expect(page.locator('#view-bar')).toBeHidden();
-  await expect(page.locator('canvas.motor3d')).toHaveCount(0);
+  await expect(page.locator('canvas.lab3d')).toHaveCount(0);
   await page.locator('#switch-btn').click();
   await expect(page.locator('#rotor path')).not.toHaveCount(0);
   await page.waitForTimeout(1200);

@@ -381,10 +381,10 @@ button[data-gated]::before{content:'🔒 '}
   .flow-toast{transition:none}
 }
 
-/* 전동기 3D 화면: 그림(svg) 자리에 3D 캔버스를 겹쳐요. 회전 빠르기 계기판과 글자는 그대로 위에 보여요. */
-.stage .motor3d{position:absolute;display:block;touch-action:none;cursor:grab;outline:none}
-.stage .motor3d.grabbing{cursor:grabbing}
-.stage:not(.three-on) .motor3d{display:none}
+/* 3D 실험 화면(전동기, 전류가 만든 자기장): 그림(svg) 자리에 3D 캔버스를 겹쳐요. 회전 빠르기 계기판과 글자는 그대로 위에 보여요. */
+.stage .lab3d{position:absolute;display:block;touch-action:none;cursor:grab;outline:none}
+.stage .lab3d.grabbing{cursor:grabbing}
+.stage:not(.three-on) .lab3d{display:none}
 .stage.three-on #scene{pointer-events:none}
 .stage.three-on #motor-scene,.stage.three-on #simple-scene>:not(#contact-label){display:none}
 .view-bar{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:10px 22px 0;font-size:12px}
@@ -396,3 +396,6 @@ button[data-gated]::before{content:'🔒 '}
 .view-bar .view-gap{width:8px}
 .view-bar .view-tip{color:var(--faint);margin-left:auto;font-size:11px}
 @media(max-width:480px){.view-bar{padding:8px 13px 0}.view-bar .view-tip{margin-left:0;width:100%}}
+/* 전류가 만든 자기장 3D: 판·나침반·코일을 모두 3D로 그려요. 움직이는 나침반(#probe)은 방향키로 옮길 수 있게 남겨 두고 보이지만 않게 해요. */
+.stage.three-on.coil3d #scene>:not(#probe):not(defs){display:none}
+.stage.three-on.coil3d #probe{opacity:0}
