@@ -64,15 +64,57 @@ export function markAnswer(buttons, chosen, right, feedback, text) {
   feedback.classList.toggle('right', right); feedback.classList.toggle('wrong', !right);
 }
 
-// 관찰 단계 체크리스트. steps: [[이름, 완료 여부], ...]
+// 관찰 단계 체크리스트. steps: [[이름, 완료 여부, 하는 방법, 이 단계에서 처음 쓰는 조작(CSS 선택자)], ...]
+// 넷째 값을 주면 앞 단계를 마치기 전에는 그 조작이 잠겨 실험 순서대로 진행돼요(src/poe-flow.js의 gate).
 export function checklist(steps) {
   const done = steps.filter(([, d]) => d).length;
   const next = steps.find(([, d]) => !d);
   return {
     ready: done === steps.length,
     message: done === steps.length ? `${steps.length}가지 관찰을 모두 해 보았어요. 직접 본 결과를 기록해 주세요.` : `관찰 ${done}/${steps.length} · 다음: ${next[0]}`,
-    // 왼쪽 실험 순서 안내에 쓰는 단계 목록: [이름, 완료 여부, 하는 방법]
-    steps: steps.map(([label, isDone, hint]) => ({ label, done: !!isDone, hint: hint ?? '' })),
+    // 왼쪽 실험 순서 안내와 순서 잠금에 쓰는 단계 목록
+    steps: steps.map(([label, isDone, hint, unlocks]) => ({ label, done: !!isDone, hint: hint ?? '', unlocks: unlocks ?? '' })),
+  };
+}
+
+/* ---------- 부드러운 끌기 ----------
+   손가락·마우스로 물체를 끌면 물체가 포인터를 매끄럽게 따라와요(모션 그래픽처럼 살짝 미끄러지듯). 방향키도 같은 방식이에요.
+   el: 끌 SVG 요소, scene: 좌표를 바꿀 svg, get(): 지금 위치, set(x, y): 위치 정하기(실험의 범위 제한·충돌 처리 포함).
+   canStart(): 지금 끌어도 되는지(예: 자동 재생 중이면 false). 실험의 프레임마다 follow(dt)를 불러 주세요(dt는 초). */
+export function smoothDrag(el, { scene, get, set, canStart = () => true, onStart, onEnd, keyStep = 18, smoothing = 22 }) {
+  let target = null, dragging = false, offset = null, delta = { x: 0, y: 0 };
+  const point = e => new DOMPoint(e.clientX, e.clientY).matrixTransform(scene.getScreenCTM().inverse());
+  const begin = () => { onStart?.(); };
+  el.addEventListener('pointerdown', e => {
+    if (!canStart()) return;
+    e.preventDefault();
+    const p = point(e), q = get();
+    offset = { x: p.x - q.x, y: p.y - q.y }; target = { ...q }; dragging = true;
+    el.setPointerCapture?.(e.pointerId); begin();
+  });
+  el.addEventListener('pointermove', e => { if (!dragging) return; const p = point(e); target = { x: p.x - offset.x, y: p.y - offset.y }; });
+  for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) el.addEventListener(ev, () => { dragging = false; });
+  el.addEventListener('keydown', e => {
+    const d = { ArrowLeft: [-keyStep, 0], ArrowRight: [keyStep, 0], ArrowUp: [0, -keyStep], ArrowDown: [0, keyStep] }[e.key];
+    if (!d || !canStart()) return;
+    e.preventDefault();
+    const from = target ?? get();
+    target = { x: from.x + d[0], y: from.y + d[1] }; begin();
+  });
+  return {
+    follow(dt) {
+      if (!target) { delta = { x: 0, y: 0 }; return; }
+      const q = get(), k = reducedMotion.matches ? 1 : 1 - Math.exp(-Math.max(0, dt) * smoothing);
+      set(q.x + (target.x - q.x) * k, q.y + (target.y - q.y) * k);
+      const now = get();
+      delta = { x: now.x - q.x, y: now.y - q.y };
+      // 손을 뗀 뒤 목표에 닿았거나(범위 밖이라) 더 갈 수 없으면 멈춰요.
+      if (!dragging && Math.hypot(delta.x, delta.y) < .05) { target = null; onEnd?.(); }
+    },
+    cancel() { target = null; dragging = false; delta = { x: 0, y: 0 }; },
+    get dragging() { return dragging; },
+    get active() { return !!target; },
+    get delta() { return delta; },
   };
 }
 

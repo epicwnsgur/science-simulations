@@ -4,7 +4,7 @@ import './lab.css';
 import './theme-electric.css';
 import './readable.css';
 import { setupPOEFlow } from './src/poe-flow.js';
-import { $, $$, setText, setHTML, buildLab, checklist, toast, reducedMotion } from './src/lab-shell.js';
+import { $, $$, setText, setHTML, buildLab, checklist, toast, reducedMotion, smoothDrag } from './src/lab-shell.js';
 import { EARTH, coilField, magnetField, add, needleDeg, trace, toPath } from './src/magnet-model.js';
 
 // 교과서 258–259쪽, 지도서 584–589쪽(11차시).
@@ -48,7 +48,7 @@ const lab = buildLab({
 
 /* ---------- 상태 ---------- */
 let mode = 'magnet', show = false, on = false, direction = 1, level = 1, onTime = 0, warned = false, lastFrame = 0;
-let probe = { x: 700, y: 360 }, drag = null, linesKey = '', magnetTime = 0;
+let probe = { x: 700, y: 360 }, linesKey = '', magnetTime = 0;
 const needles = new Map();
 const seen = { magnet: false, current: false, reversed: false, stronger: false, probe: false };
 const levelsTried = new Set();
@@ -183,32 +183,29 @@ function setMode(next) {
   $('#supply').toggleAttribute('hidden', next !== 'coil');
   renderControls();
 }
-function point(e) { return new DOMPoint(e.clientX, e.clientY).matrixTransform($('#scene').getScreenCTM().inverse()); }
 function moveProbe(x, y) {
   probe = { x: Math.max(160, Math.min(780, x)), y: Math.max(80, Math.min(420, y)) };
   if (!seen.probe) seen.probe = true;
 }
-const probeEl = $('#probe');
-probeEl.addEventListener('pointerdown', e => { e.preventDefault(); const p = point(e); drag = { dx: p.x - probe.x, dy: p.y - probe.y }; probeEl.setPointerCapture(e.pointerId); });
-probeEl.addEventListener('pointermove', e => { if (!drag) return; const p = point(e); moveProbe(p.x - drag.dx, p.y - drag.dy); });
-for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) probeEl.addEventListener(ev, () => drag = null);
-probeEl.addEventListener('keydown', e => { const d = { ArrowLeft: [-14, 0], ArrowRight: [14, 0], ArrowUp: [0, -14], ArrowDown: [0, 14] }[e.key]; if (d) { e.preventDefault(); moveProbe(probe.x + d[0], probe.y + d[1]); } });
+// 움직이는 나침반은 손가락·마우스·방향키를 부드럽게 따라와요(공통 부품 smoothDrag).
+const probeDrag = smoothDrag($('#probe'), { scene: $('#scene'), get: () => probe, set: moveProbe, keyStep: 14 });
 
 $('#tab-magnet').onclick = () => setMode('magnet');
 $('#tab-coil').onclick = () => setMode('coil');
-$('#reset').onclick = () => { direction = 1; level = 1; probe = { x: 700, y: 360 }; setMode(mode); };
+$('#reset').onclick = () => { direction = 1; level = 1; probeDrag.cancel(); probe = { x: 700, y: 360 }; setMode(mode); };
 $('#show-detail').onchange = e => { show = e.target.checked; linesKey = ''; };
 
 function frame(now) {
   const dt = Math.min(.05, (now - (lastFrame || now)) / 1000); lastFrame = now;
   if (!flow || flow.stage === 'observe') {
+    probeDrag.follow(dt);
     paint(dt);
     if (mode === 'magnet' && !seen.magnet && (magnetTime += dt) > 1.5) { seen.magnet = true; toast('🧲 막대자석 주위 나침반을 관찰했어요'); }
     flow?.update(checklist([
       ['막대자석 주위 나침반 관찰하기', seen.magnet, '‘막대자석 주위’ 탭에서 바늘의 N극(빨강)을 살펴요'],
-      ['코일에 전류를 흘려 나침반 관찰하기', seen.current, '‘코일 주위’ 탭 → 스위치를 누르고 있어요'],
-      ['전류의 방향을 바꾸어 관찰하기', seen.reversed, '‘전류 방향 바꾸기’ 뒤 다시 스위치를 눌러요'],
-      ['전류의 세기를 바꾸어 관찰하기', seen.stronger, '전류의 세기를 바꾸고 다시 스위치를 눌러요'],
+      ['코일에 전류를 흘려 나침반 관찰하기', seen.current, '‘코일 주위’ 탭 → 스위치를 누르고 있어요', '#tab-coil'],
+      ['전류의 방향을 바꾸어 관찰하기', seen.reversed, '‘전류 방향 바꾸기’ 뒤 다시 스위치를 눌러요', '#flip-btn'],
+      ['전류의 세기를 바꾸어 관찰하기', seen.stronger, '전류의 세기를 바꾸고 다시 스위치를 눌러요', '[data-level]'],
     ]));
   }
   requestAnimationFrame(frame);

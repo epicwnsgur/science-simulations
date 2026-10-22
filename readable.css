@@ -68,7 +68,10 @@
 .autoplay{margin:6px 22px 4px;padding:12px 14px;border-radius:10px;border:1px solid var(--line-2);background:#0a1029}
 .autoplay-buttons{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
 .autoplay .pace{margin-left:auto;font-size:calc(15px * var(--fs));color:var(--muted)}
-.autoplay select{margin-left:6px;padding:8px 10px;border-radius:6px;border:1px solid var(--line-2);background:#0d1430;color:var(--ink);font:inherit;font-size:calc(15px * var(--fs))}
+.autoplay .pace{display:flex;align-items:center;gap:6px}
+.autoplay .pace span{margin-right:2px}
+.autoplay .pace button{padding:9px 14px;border-radius:8px;border:1px solid var(--line-2);background:#0d1430;color:var(--ink);font:inherit;font-size:calc(15px * var(--fs));font-weight:600}
+.autoplay .pace button[aria-pressed=true]{background:var(--volt);border-color:var(--volt);color:#2a1600}
 .autoplay-steps{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 0;padding:0;list-style:none}
 .autoplay-steps li{padding:5px 10px;border-radius:14px;border:1px solid var(--line-2);font-size:calc(14px * var(--fs));color:var(--muted)}
 .autoplay-steps li.done{color:var(--ok);border-color:#5dff9a66}

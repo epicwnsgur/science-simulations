@@ -1,11 +1,11 @@
 import { test, expect } from '@playwright/test';
-import { finishReview } from './poe-helpers.js';
+import { finishReview, savePrediction, openObserveUnlocked } from './poe-helpers.js';
 const url = '/simulations/electrostatic-induction/';
 async function begin(page) {
   if (await page.locator('#review-panel').isVisible()) await finishReview(page);
   await page.locator('input[name="prediction"][value="0"]').check();
   await page.locator('#prediction-reason').fill('대전체가 숟가락 속 전자를 한쪽으로 움직일 것 같아요.');
-  await page.locator('#start-observation').click();
+  await savePrediction(page);
 }
 const angleOf = async page => Number((await page.locator('#spoon').getAttribute('transform')).match(/rotate\((-?[\d.]+)\)/)[1]);
 const leafAngleOf = async page => Number((await page.locator('#leaf-left').getAttribute('transform')).match(/rotate\((-?[\d.]+)\)/)[1]);
@@ -56,7 +56,7 @@ test('쇠숟가락: 대전되지 않은 빨대는 그대로, (−)빨대와 (+)�
 });
 
 test('검전기: 문지른 횟수가 많을수록 더 벌어지고, (+)대전체도 벌어지게 함', async ({ page }) => {
-  await page.emulateMedia({ reducedMotion: 'reduce' }); await page.goto(url); await begin(page);
+  await page.emulateMedia({ reducedMotion: 'reduce' }); await openObserveUnlocked(page, url);
   await page.locator('#scope-tab').click(); await page.locator('#show-charges').check();
   await expect(page.locator('#scope-scene')).toBeVisible(); await expect(page.locator('#spoon-scene')).toBeHidden();
   await page.locator('[data-rub="0"]').click(); await page.locator('#approach-button').click();

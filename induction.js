@@ -4,7 +4,7 @@ import './lab.css';
 import './induction.css';
 import './theme-electric.css';
 import './readable.css';
-import { FX_DEFS, toast, burst, checklist, headerHTML, setupTextSize } from './src/lab-shell.js';
+import { FX_DEFS, toast, burst, checklist, headerHTML, setupTextSize, smoothDrag } from './src/lab-shell.js';
 import { setupPOEFlow } from './src/poe-flow.js';
 import {
   SPOON_OBJECTS, SCOPE_OBJECTS, RUB_LEVELS, scopeCharge, closeness, segmentDistance, clamp,
@@ -43,7 +43,7 @@ const OBJECT_DIR = (() => { const d = Math.hypot(150, -112); return { x: 150 / d
 
 let mode = 'spoon', show = false;
 let spoonKey = 'straw', scopeKey = 'straw', rubLevel = 1;
-let obj = { ...SPOON_START }, angle = 0, shownShift = 0, drag = null, motion = null, lastFrame = 0;
+let obj = { ...SPOON_START }, angle = 0, shownShift = 0, motion = null, lastFrame = 0;
 let leafShown = leafAngle(0);
 const scopeState = new Map();
 const seen = { spoonMinus: false, spoonPlus: false, levels: new Set() };
@@ -362,9 +362,9 @@ function setHTML(selector, html) { const el = $(selector); if (el.dataset.html !
 function progress() {
   const steps = [
     ['(−)전하를 띤 빨대로 숟가락 움직이기', seen.spoonMinus, '‘쇠숟가락 움직이기’ 탭 → (−)빨대를 손잡이 끝에 가까이'],
-    ['(+)전하를 띤 장갑으로 숟가락 움직이기', seen.spoonPlus, '(+)장갑을 고르고 가까이 가져가요'],
-    ['검전기: 2~3번 문지른 물체 가까이 하기', seen.levels.has(1), '‘검전기 관찰하기’ 탭 → ‘2~3번 문지름’ → 가까이'],
-    ['검전기: 10번 이상 문지른 물체 가까이 하기', seen.levels.has(2), '‘10번 이상 문지름’으로 바꾸어 비교해요'],
+    ['(+)전하를 띤 장갑으로 숟가락 움직이기', seen.spoonPlus, '(+)장갑을 고르고 가까이 가져가요', '[data-spoon="glove"]'],
+    ['검전기: 2~3번 문지른 물체 가까이 하기', seen.levels.has(1), '‘검전기 관찰하기’ 탭 → ‘2~3번 문지름’ → 가까이', '#scope-tab'],
+    ['검전기: 10번 이상 문지른 물체 가까이 하기', seen.levels.has(2), '‘10번 이상 문지름’으로 바꾸어 비교해요', '[data-rub="2"]'],
   ];
   return checklist(steps);
 }
@@ -417,6 +417,7 @@ function celebrate(msg) {
 function frame(now) {
   const dt = Math.min(.05, (now - (lastFrame || now)) / 1000); lastFrame = now;
   if (flow && flow.stage !== 'observe') { requestAnimationFrame(frame); return; }
+  objectDrag.follow(dt);
   if (motion) {
     const t = clamp((now - motion.start) / motion.duration, 0, 1), f = t * t * (3 - 2 * t);
     place(motion.from.x + (motion.to.x - motion.from.x) * f, motion.from.y + (motion.to.y - motion.from.y) * f);
@@ -437,7 +438,7 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 function resetScene() {
-  motion = null; drag = null; angle = 0; shownShift = 0; leafShown = leafAngle(0); scopeState.clear();
+  motion = null; objectDrag.cancel(); angle = 0; shownShift = 0; leafShown = leafAngle(0); scopeState.clear();
   obj = startPosition();
   const now = performance.now();
   if (mode === 'scope') stepScope(now, 1);
@@ -454,15 +455,8 @@ function setMode(next) {
 }
 
 /* ---------- 조작 ---------- */
-function point(e) { return new DOMPoint(e.clientX, e.clientY).matrixTransform($('#scene').getScreenCTM().inverse()); }
-const objectEl = $('#charged-object');
-objectEl.addEventListener('pointerdown', e => { e.preventDefault(); motion = null; const p = point(e); drag = { dx: p.x - obj.x, dy: p.y - obj.y }; objectEl.setPointerCapture(e.pointerId); });
-objectEl.addEventListener('pointermove', e => { if (!drag) return; const p = point(e); place(p.x - drag.dx, p.y - drag.dy); });
-for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) objectEl.addEventListener(ev, () => drag = null);
-objectEl.addEventListener('keydown', e => {
-  const d = { ArrowLeft: [-16, 0], ArrowRight: [16, 0], ArrowUp: [0, -16], ArrowDown: [0, 16] }[e.key];
-  if (!d) return; e.preventDefault(); motion = null; place(obj.x + d[0], obj.y + d[1]);
-});
+// 대전체는 손가락·마우스·방향키를 부드럽게 따라와요(공통 부품 smoothDrag).
+const objectDrag = smoothDrag($('#charged-object'), { scene: $('#scene'), get: () => obj, set: place, keyStep: 16, onStart: () => { motion = null; } });
 $('#approach-button').onclick = () => animateObject(approachTarget(), 1100);
 // 멀리 할 때는 대전체가 있던 쪽(손잡이의 위 또는 아래)에서 가장 먼 모서리로 옮깁니다.
 // 손잡이 끝을 가로질러 지나가면 숟가락이 반대로 끌려갈 수 있기 때문이에요.
@@ -528,7 +522,7 @@ flow = setupPOEFlow({
     ],
     note: '가까운 쪽에 (+)전하만 있는 것은 아니에요. 두 종류의 전하가 모두 있지만, 한 종류의 전하가 상대적으로 많아진 거예요.',
   },
-  onStageChange: () => { motion = null; drag = null; },
+  onStageChange: () => { motion = null; objectDrag.cancel(); },
   onRestart: () => {
     show = false; $('#show-charges').checked = false;
     seen.spoonMinus = false; seen.spoonPlus = false; seen.levels.clear();

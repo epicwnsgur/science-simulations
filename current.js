@@ -266,8 +266,8 @@ function frame(now) {
     flow?.update(checklist([
       ['마찰 전기로 네온전구 켜기', seen.lit, '3번 이상 문지르기 → 접시 올려놓기 → 네온전구 대기'],
       ['네온전구를 다시 대어 보기', seen.noLight, '‘네온전구 떼기’ 뒤 한 번 더 대 봐요'],
-      ['전지를 연결해 전자의 움직임 관찰하기', seen.battery, '‘전기 회로와 수로 모형’ 탭 → ‘전지 연결하기’'],
-      ['펌프를 작동해 수로 모형 관찰하기', seen.pump, '‘펌프 작동하기’를 눌러 물레방아를 살펴요'],
+      ['전지를 연결해 전자의 움직임 관찰하기', seen.battery, '‘전기 회로와 수로 모형’ 탭 → ‘전지 연결하기’', '#tab-circuit, #battery-btn'],
+      ['펌프를 작동해 수로 모형 관찰하기', seen.pump, '‘펌프 작동하기’를 눌러 물레방아를 살펴요', '#pump-btn'],
     ]));
   }
   requestAnimationFrame(frame);

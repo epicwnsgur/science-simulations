@@ -318,3 +318,65 @@ body:has(.report-preview[open]){overflow:hidden}
   .print-item .empty{color:#888}
   .print-foot{margin-top:16pt;font-size:8.5pt;color:#888;text-align:right}
 }
+
+/* ---------- 뒤로 가기 · 단계 줄 ---------- */
+.flow-nav{display:flex;align-items:center;gap:12px;margin:0 0 26px;scroll-margin-top:16px}
+.flow-nav .poe-steps{margin:0;flex:1}
+.flow-back{white-space:nowrap}
+.flow-nav .flow-back{align-self:stretch;padding:0 18px;border-radius:6px;font-size:inherit}
+.poe-actions .flow-back{margin-right:auto}
+@media(max-width:600px){
+  .flow-nav{flex-direction:column;align-items:stretch;gap:8px}
+  .flow-nav .flow-back{padding:10px 14px;align-self:flex-start}
+  .poe-actions .flow-back{margin-right:0}
+}
+
+/* ---------- 예상 확인 창 ---------- */
+.flow-dialog{width:min(620px,calc(100vw - 24px));max-height:calc(100dvh - 24px);padding:0;border:1px solid var(--line-2);border-radius:14px;background:var(--panel);color:var(--ink);display:none;flex-direction:column;overflow:hidden}
+.flow-dialog[open]{display:flex;position:fixed;inset:0;margin:auto;z-index:50;animation:dialog-in .22s ease-out}
+.flow-dialog::backdrop{background:#020512cc}
+body:has(.flow-dialog[open]){overflow:hidden}
+.flow-dialog-body{overflow:auto;padding:22px 24px 10px}
+.flow-dialog h2{margin:0 0 10px;font-size:22px}
+.confirm-warning{margin:0 0 14px;padding:12px 14px;border-radius:8px;background:#3a2a06;border:1px solid var(--volt);color:#ffe9a8;line-height:1.7}
+.flow-dialog dl{margin:0;display:grid;gap:10px}
+.flow-dialog dl>div{padding:12px 14px;border-radius:8px;background:#0a1029;border:1px solid var(--line)}
+.flow-dialog dt{font-size:14px;font-weight:700;color:var(--muted)}
+.flow-dialog dd{margin:6px 0 0;font-size:17px;line-height:1.75;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--ink)}
+.flow-dialog-actions{display:flex;gap:12px;justify-content:flex-end;padding:14px 24px calc(14px + env(safe-area-inset-bottom));border-top:1px solid var(--line);background:var(--panel-2)}
+@media(max-width:600px){.flow-dialog-actions{flex-direction:column-reverse}.flow-dialog-actions button{width:100%}}
+@keyframes dialog-in{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
+
+/* ---------- 순서 잠금 · 안내 토스트 ---------- */
+[data-gated]{opacity:.4!important;cursor:not-allowed!important;filter:grayscale(.5)}
+button[data-gated]::before{content:'🔒 '}
+.experiment-switch button.locked{opacity:.55;cursor:not-allowed;border-style:dashed}
+.guide-steps li.locked{opacity:.6}
+.guide-steps li.locked .guide-num{font-size:12px}
+.flow-toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));z-index:60;max-width:min(560px,calc(100vw - 32px));padding:12px 18px;border-radius:12px;background:#16264f;border:1px solid var(--volt);color:#fff;font-size:16px;line-height:1.6;box-shadow:0 10px 30px #0009;transform:translate(-50%,20px);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s}
+.flow-toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* ---------- 퀴즈: 고른 보기를 또렷하게 ---------- */
+.answers button{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;transition:background .2s,border-color .2s,box-shadow .2s,transform .12s}
+.answers.stacked button{justify-content:space-between}
+.answers button.chosen{background:#163a7a;border:2px solid var(--volt);color:#fff;font-weight:700;box-shadow:0 0 0 2px #ffd23f44}
+.answers button.chosen.right{background:#0f3b2a;border-color:var(--ok);color:#fff}
+.answers button.chosen.wrong{background:#3a1420;border-color:#ff6b7a;color:#fff}
+.pick-tag:empty{display:none}
+.pick-tag{flex:none;padding:2px 9px;border-radius:12px;font-size:13px;font-weight:700;background:var(--volt);color:#2a1600}
+.answers button.chosen.right .pick-tag{background:var(--ok);color:#06210f}
+.answers button.chosen.wrong .pick-tag{background:#ff6b7a;color:#2a0006}
+.answers button.answer .pick-tag{background:transparent;border:1px dashed var(--ok);color:#c9ffe0}
+
+/* ---------- 부드러운 움직임 ---------- */
+.poe-panel,#observe-panel,#concept-review,.next-experiment,.quiz-result,.submit-done{animation:panel-in .38s cubic-bezier(.2,.7,.3,1)}
+@keyframes panel-in{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.primary,.secondary,.choice-row button,.pair-controls button,.review-choice,.term-buttons button,.tabs button,.experiment-switch button,.material-picker button{transition:background-color .2s,border-color .2s,box-shadow .2s,transform .12s,opacity .2s}
+.primary:active:enabled,.secondary:active:enabled,.choice-row button:active:enabled,.pair-controls button:active:enabled,.review-choice:active,.answers button:active:enabled,.material-picker button:active:enabled{transform:scale(.97)}
+#scene .draggable{will-change:transform}
+.guide-bar span{transition:width .6s cubic-bezier(.2,.7,.3,1)}
+.char-count{transition:color .2s}
+@media(prefers-reduced-motion:reduce){
+  .poe-panel,#observe-panel,#concept-review,.next-experiment,.quiz-result,.submit-done,.flow-dialog[open]{animation:none}
+  .flow-toast{transition:none}
+}
