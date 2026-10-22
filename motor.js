@@ -6,7 +6,7 @@ import './readable.css';
 import { setupPOEFlow } from './src/poe-flow.js';
 import { $, $$, setText, setHTML, buildLab, checklist, toast, burst, reducedMotion } from './src/lab-shell.js';
 import { motorTorque, simpleMotorContact, simpleMotorTorque } from './src/force-model.js';
-import { webglAvailable } from './src/motor-3d-support.js';
+import { setupViewToggle } from './src/view-toggle.js';
 
 // 교과서 262–264쪽(전동기의 구조와 작동 원리, 과학과 나: 간이 전동기 만들기), 지도서 590–593쪽.
 // 지도상 유의점: 전류가 흐르는 코일과 자석의 상호 작용 관점에서 전동기의 원리를 이해하도록 합니다.
@@ -62,7 +62,7 @@ let angle = .5, omega = 0, phase = .3, phaseOmega = 0, stripping = 'half', turns
 const seen = { spin: false, reversed: false, simpleSpin: false, fullStuck: false };
 let lastSign = 0, fullTime = 0;
 let flow = null;
-let view3d = null, use3d = false;
+let use3d = false;
 
 /* ---------- 전동기의 원리 ---------- */
 function stepMotor(dt) {
@@ -179,7 +179,7 @@ function renderText() {
 }
 function setMode(next) {
   mode = next; lab.selectTab(next); on = false; turns = 0; lastSign = 0;
-  view3d?.setMode(next);
+  view3d?.view?.setMode(next);
   $('#motor-scene').toggleAttribute('hidden', next !== 'motor');
   $('#simple-scene').toggleAttribute('hidden', next !== 'simple');
   renderControls();
@@ -189,33 +189,12 @@ $('#tab-simple').onclick = () => setMode('simple');
 $('#reset').onclick = () => { current = 1; magnet = 1; vIndex = 0; omega = 0; phaseOmega = 0; angle = .5; phase = .3; stripping = 'half'; setMode(mode); };
 $('#show-detail').onchange = e => { show = e.target.checked; };
 
-/* ---------- 3D로 보기 ----------
-   WebGL을 쓸 수 있으면 3D 화면(src/motor-3d.js)을 불러와 그림 위에 겹쳐 보여 줘요. 2D 그림으로도 바꿔 볼 수 있어요.
-   3D 화면을 쓸 수 없는 기기에서는 지금까지처럼 2D 그림으로 실험해요. */
-const stage = $('.stage');
-stage.insertAdjacentHTML('afterend', `<div class="view-bar" id="view-bar" role="group" aria-label="보는 방법" hidden><span class="group-label">보기</span><button data-view="3d" aria-pressed="false">🧊 3D 입체</button><button data-view="2d" aria-pressed="true">▭ 2D 그림</button><span class="view-gap"></span><button data-cam="oblique">비스듬히</button><button data-cam="axis">축을 따라</button><button data-cam="top">위에서</button><span class="view-tip">화면을 끌면 이리저리 돌려 볼 수 있어요</span></div>`);
-const VIEW_KEY = 'motor-view';
-function setView(next) {
-  use3d = next === '3d' && !!view3d;
-  stage.classList.toggle('three-on', use3d);
-  stage.dataset.view = use3d ? '3d' : '2d';
-  $$('[data-view]').forEach(b => b.setAttribute('aria-pressed', b.dataset.view === (use3d ? '3d' : '2d')));
-  $$('[data-cam]').forEach(b => { b.disabled = !use3d; });
-  if (use3d) view3d.invalidate(); else paintMotor();
-  renderText();
-}
-$$('[data-view]').forEach(b => b.onclick = () => { setView(b.dataset.view); try { localStorage.setItem(VIEW_KEY, b.dataset.view); } catch { /* 저장이 안 돼도 괜찮아요 */ } });
-$$('[data-cam]').forEach(b => b.onclick = () => view3d?.setView(b.dataset.cam));
-if (webglAvailable()) {
-  import('./src/motor-3d.js').then(({ createMotor3D }) => {
-    view3d = createMotor3D({ stage, svg: $('#scene'), reducedMotion });
-    view3d.setMode(mode);
-    $('#view-bar').hidden = false;
-    let saved = null;
-    try { saved = localStorage.getItem(VIEW_KEY); } catch { /* 없으면 3D부터 */ }
-    setView(saved === '2d' ? '2d' : '3d');
-  }).catch(() => setView('2d'));
-} else stage.dataset.view = '2d';
+/* ---------- 3D로 보기 ---------- */
+const view3d = setupViewToggle({
+  stage: $('.stage'), key: 'motor-view', cams: [['oblique', '비스듬히'], ['axis', '축을 따라'], ['top', '위에서']],
+  load: () => import('./src/motor-3d.js').then(({ createMotor3D }) => { const v = createMotor3D({ stage: $('.stage'), svg: $('#scene'), reducedMotion }); v.setMode(mode); return v; }),
+  onChange: active => { use3d = active; if (!active) paintMotor(); renderText(); },
+});
 
 function frame(now) {
   const dt = Math.min(.05, (now - (lastFrame || now)) / 1000); lastFrame = now;
@@ -224,7 +203,7 @@ function frame(now) {
     for (let i = 0; i < steps; i++) { if (mode === 'motor') stepMotor(dt / steps); else stepSimple(dt / steps); }
     if (mode === 'motor') { if (!use3d) paintMotor(); } else { paintSimple(); renderText(); }
     paintSpeed();
-    if (use3d) view3d.update({ mode, on, show, current, magnet, vIndex, angle, phase, stripping, contact: simpleMotorContact(phase, stripping) }, dt);
+    if (use3d) view3d.view.update({ mode, on, show, current, magnet, vIndex, angle, phase, stripping, contact: simpleMotorContact(phase, stripping) }, dt);
     flow?.update(checklist([
       ['전동기에 전류를 흘려 회전 관찰하기', seen.spin, '‘전동기의 원리’ 탭 → ‘전류 흘리기’'],
       ['전류의 방향이나 자석의 극을 바꾸어 회전 방향 비교하기', seen.reversed, '돌고 있을 때 ‘전류의 방향 바꾸기’나 ‘자석의 극 바꾸기’', '#flip-current, #flip-magnet'],
