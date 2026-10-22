@@ -6,6 +6,7 @@ import './readable.css';
 import { setupPOEFlow } from './src/poe-flow.js';
 import { $, $$, setText, setHTML, buildLab, checklist, toast, burst, reducedMotion } from './src/lab-shell.js';
 import { motorTorque, simpleMotorContact, simpleMotorTorque } from './src/force-model.js';
+import { webglAvailable } from './src/motor-3d-support.js';
 
 // 교과서 262–264쪽(전동기의 구조와 작동 원리, 과학과 나: 간이 전동기 만들기), 지도서 590–593쪽.
 // 지도상 유의점: 전류가 흐르는 코일과 자석의 상호 작용 관점에서 전동기의 원리를 이해하도록 합니다.
@@ -61,6 +62,7 @@ let angle = .5, omega = 0, phase = .3, phaseOmega = 0, stripping = 'half', turns
 const seen = { spin: false, reversed: false, simpleSpin: false, fullStuck: false };
 let lastSign = 0, fullTime = 0;
 let flow = null;
+let view3d = null, use3d = false;
 
 /* ---------- 전동기의 원리 ---------- */
 function stepMotor(dt) {
@@ -92,8 +94,9 @@ function paintMotor() {
   $('#rotor').innerHTML = `${flowing ? `<path d="M${L.x} ${L.y} L${R.x} ${R.y}" stroke="#ffb36b" stroke-width="16" opacity=".4" filter="url(#glow-strong)"/>` : ''}<path d="M${L.x} ${L.y} L${R.x} ${R.y}" stroke="url(#copper)" stroke-width="10" stroke-linecap="round"/>${dot(leftEnd, outLeft)}${dot(rightEnd, !outLeft)}`;
   // 앞에서 보면 회전축은 코일 가운데의 점이고, 정류 고리(금색)는 축에 붙어 코일과 함께 돌아요.
   // 양쪽 브러시는 고정되어 있어, 반 바퀴마다 고리의 다른 쪽과 닿으며 코일의 전류 방향을 바꾸어 줘요.
+  // 고리의 반쪽은 각각 자기와 이어진 변 쪽에 있어서, 틈은 코일과 수직이에요. 코일이 세로로 설 때(힘이 회전시키지 못할 때) 틈이 브러시를 지나요.
   const deg = (angle * 180 / Math.PI).toFixed(1);
-  $('#commutator').innerHTML = `<g transform="translate(${C.x} ${C.y}) rotate(${deg})"><path d="M-20 -4 A20 20 0 0 1 20 -4" stroke="#e8c15a" stroke-width="7" fill="none"/><path d="M-20 4 A20 20 0 0 0 20 4" stroke="#e8c15a" stroke-width="7" fill="none"/></g><circle cx="${C.x}" cy="${C.y}" r="6" fill="#d8dde3"/><rect x="${C.x - 34}" y="${C.y - 6}" width="10" height="12" rx="2" fill="#6d7898"/><rect x="${C.x + 24}" y="${C.y - 6}" width="10" height="12" rx="2" fill="#6d7898"/>`;
+  $('#commutator').innerHTML = `<g transform="translate(${C.x} ${C.y}) rotate(${deg})"><path d="M4 -20 A20 20 0 0 1 4 20" stroke="#e8c15a" stroke-width="7" fill="none"/><path d="M-4 20 A20 20 0 0 1 -4 -20" stroke="#e8c15a" stroke-width="7" fill="none"/></g><circle cx="${C.x}" cy="${C.y}" r="6" fill="#d8dde3"/><rect x="${C.x - 34}" y="${C.y - 6}" width="10" height="12" rx="2" fill="#6d7898"/><rect x="${C.x + 24}" y="${C.y - 6}" width="10" height="12" rx="2" fill="#6d7898"/>`;
   const dirL = current * magnet > 0 ? 1 : -1; // +1: 왼쪽 변이 아래로, 오른쪽 변이 위로 힘을 받아요.
   $('#force-vectors').innerHTML = on ? `<path d="M${leftEnd.x} ${leftEnd.y + dirL * 20} v${dirL * 46}" stroke="#ff6b6b" stroke-width="4" marker-end="url(#arrow-head)"/><path d="M${rightEnd.x} ${rightEnd.y - dirL * 20} v${-dirL * 46}" stroke="#ff6b6b" stroke-width="4" marker-end="url(#arrow-head)"/><text x="${leftEnd.x - 24}" y="${leftEnd.y + dirL * 70}" font-size="13" text-anchor="end" style="fill:#ff9a9a">힘</text><text x="${rightEnd.x + 24}" y="${rightEnd.y - dirL * 62}" font-size="13" style="fill:#ff9a9a">힘</text>` : '';
   $('#force-vectors').setAttribute('opacity', show ? 1 : 0);
@@ -156,8 +159,12 @@ function renderText() {
     setText('#subguide', '전류의 방향이나 자석의 극을 바꾸면 회전 방향이 어떻게 될까요?');
     setText('#stage-state', `전류 ${conducting ? '흐름' : '끊김'} · ${VOLTS[vIndex]} V · 전류 ${current > 0 ? '처음 방향' : '반대 방향'} · 자석 ${magnet > 0 ? '처음' : '극 바꿈'}`);
     setText('#note-title', on ? '코일의 왼쪽과 오른쪽이 받는 힘을 비교해 보세요' : '전류를 흘려 보세요');
-    setText('#note-text', '‘자기장·전류·힘 보기’를 켜면 코일의 두 변에 흐르는 전류(⊙, ⊗)와 힘의 방향을 볼 수 있어요.');
-    setText('#model-note', '그림 Ⅶ-16의 전동기를 앞에서 본 모습이에요. 금색 고리는 코일이 반 바퀴 돌 때마다 전류의 방향을 바꾸어 주어 코일이 같은 방향으로 계속 돌게 해요. 빠르기와 힘의 크기는 보기 쉽게 나타냈어요.');
+    setText('#note-text', use3d
+      ? '‘자기장·전류·힘 보기’를 켜면 자기장(하늘색), 코일의 두 변에 흐르는 전류(노란색), 두 변이 받는 힘(빨간색)을 화살표로 볼 수 있어요.'
+      : '‘자기장·전류·힘 보기’를 켜면 코일의 두 변에 흐르는 전류(⊙, ⊗)와 힘의 방향을 볼 수 있어요.');
+    setText('#model-note', use3d
+      ? '그림 Ⅶ-16의 전동기를 3D로 나타냈어요. 화면을 끌어 돌려 보고, ‘축을 따라’를 누르면 코일을 앞에서 본 모습이 돼요. 금색 고리는 코일이 반 바퀴 돌 때마다 전류의 방향을 바꾸어 주어 코일이 같은 방향으로 계속 돌게 해요. 빠르기와 힘의 크기는 보기 쉽게 나타냈어요.'
+      : '그림 Ⅶ-16의 전동기를 앞에서 본 모습이에요. 금색 고리는 코일이 반 바퀴 돌 때마다 전류의 방향을 바꾸어 주어 코일이 같은 방향으로 계속 돌게 해요. 빠르기와 힘의 크기는 보기 쉽게 나타냈어요.');
     setText('#discovery', '선풍기, 드론, 청소기, 스마트폰 진동에도 전동기가 들어 있어요.');
   } else {
     setText('#guide', '간이 전동기를 만들어 코일이 계속 회전하게 해 보세요.');
@@ -172,6 +179,7 @@ function renderText() {
 }
 function setMode(next) {
   mode = next; lab.selectTab(next); on = false; turns = 0; lastSign = 0;
+  view3d?.setMode(next);
   $('#motor-scene').toggleAttribute('hidden', next !== 'motor');
   $('#simple-scene').toggleAttribute('hidden', next !== 'simple');
   renderControls();
@@ -181,13 +189,42 @@ $('#tab-simple').onclick = () => setMode('simple');
 $('#reset').onclick = () => { current = 1; magnet = 1; vIndex = 0; omega = 0; phaseOmega = 0; angle = .5; phase = .3; stripping = 'half'; setMode(mode); };
 $('#show-detail').onchange = e => { show = e.target.checked; };
 
+/* ---------- 3D로 보기 ----------
+   WebGL을 쓸 수 있으면 3D 화면(src/motor-3d.js)을 불러와 그림 위에 겹쳐 보여 줘요. 2D 그림으로도 바꿔 볼 수 있어요.
+   3D 화면을 쓸 수 없는 기기에서는 지금까지처럼 2D 그림으로 실험해요. */
+const stage = $('.stage');
+stage.insertAdjacentHTML('afterend', `<div class="view-bar" id="view-bar" role="group" aria-label="보는 방법" hidden><span class="group-label">보기</span><button data-view="3d" aria-pressed="false">🧊 3D 입체</button><button data-view="2d" aria-pressed="true">▭ 2D 그림</button><span class="view-gap"></span><button data-cam="oblique">비스듬히</button><button data-cam="axis">축을 따라</button><button data-cam="top">위에서</button><span class="view-tip">화면을 끌면 이리저리 돌려 볼 수 있어요</span></div>`);
+const VIEW_KEY = 'motor-view';
+function setView(next) {
+  use3d = next === '3d' && !!view3d;
+  stage.classList.toggle('three-on', use3d);
+  stage.dataset.view = use3d ? '3d' : '2d';
+  $$('[data-view]').forEach(b => b.setAttribute('aria-pressed', b.dataset.view === (use3d ? '3d' : '2d')));
+  $$('[data-cam]').forEach(b => { b.disabled = !use3d; });
+  if (use3d) view3d.invalidate(); else paintMotor();
+  renderText();
+}
+$$('[data-view]').forEach(b => b.onclick = () => { setView(b.dataset.view); try { localStorage.setItem(VIEW_KEY, b.dataset.view); } catch { /* 저장이 안 돼도 괜찮아요 */ } });
+$$('[data-cam]').forEach(b => b.onclick = () => view3d?.setView(b.dataset.cam));
+if (webglAvailable()) {
+  import('./src/motor-3d.js').then(({ createMotor3D }) => {
+    view3d = createMotor3D({ stage, svg: $('#scene'), reducedMotion });
+    view3d.setMode(mode);
+    $('#view-bar').hidden = false;
+    let saved = null;
+    try { saved = localStorage.getItem(VIEW_KEY); } catch { /* 없으면 3D부터 */ }
+    setView(saved === '2d' ? '2d' : '3d');
+  }).catch(() => setView('2d'));
+} else stage.dataset.view = '2d';
+
 function frame(now) {
   const dt = Math.min(.05, (now - (lastFrame || now)) / 1000); lastFrame = now;
   if (!flow || flow.stage === 'observe') {
     const steps = reducedMotion.matches ? 1 : 4;
     for (let i = 0; i < steps; i++) { if (mode === 'motor') stepMotor(dt / steps); else stepSimple(dt / steps); }
-    if (mode === 'motor') paintMotor(); else { paintSimple(); renderText(); }
+    if (mode === 'motor') { if (!use3d) paintMotor(); } else { paintSimple(); renderText(); }
     paintSpeed();
+    if (use3d) view3d.update({ mode, on, show, current, magnet, vIndex, angle, phase, stripping, contact: simpleMotorContact(phase, stripping) }, dt);
     flow?.update(checklist([
       ['전동기에 전류를 흘려 회전 관찰하기', seen.spin, '‘전동기의 원리’ 탭 → ‘전류 흘리기’'],
       ['전류의 방향이나 자석의 극을 바꾸어 회전 방향 비교하기', seen.reversed, '돌고 있을 때 ‘전류의 방향 바꾸기’나 ‘자석의 극 바꾸기’', '#flip-current, #flip-magnet'],
