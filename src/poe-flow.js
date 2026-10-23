@@ -2,6 +2,8 @@ import { CONCEPT_QUIZZES } from './concept-quizzes.js';
 import { mountConceptQuiz } from './concept-quiz-ui.js';
 import { mountReportSubmit } from './report-submit.js';
 import { REVIEWS } from './reviews.js';
+import { enableGlossary } from './glossary.js';
+import { teacherMode, mountTeacherMode } from './teacher-mode.js';
 const $ = selector => document.querySelector(selector);
 export const MIN_CHARS = 20;
 const STAGES = ['predict', 'observe', 'explain'];
@@ -15,6 +17,9 @@ const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 // 화면 순서: 복습 → 실험 1(예상 → 관찰 → 설명) → 실험 2(…) … ‘← 뒤로 가기’(화면 버튼, 브라우저·휴대폰의 뒤로 가기)는 이 순서에서 한 칸 앞으로 가요.
 // 순서 지키기: 앞 실험을 마쳐야 다음 실험이 열리고, 관찰하기에서는 실험 순서 안내의 앞 단계를 해야 다음 단계 조작이 열려요
 //   (checklist의 넷째 값 unlocks: 그 단계에서 처음 쓰는 조작의 CSS 선택자).
+// 아직 할 단계가 남았는데 다음으로 넘어가려 하면, 실험 순서 안내를 반짝이며 가리키고 지금 쓸 조작에 표시를 해 줘요.
+// 교사 모드(src/teacher-mode.js, 비밀번호): 단계를 자유롭게 오가고 순서 잠금이 모두 풀려요. 학생 기록 검사도 건너뛰어요.
+// 주요 과학 낱말은 눌러서 뜻을 볼 수 있어요(src/glossary.js).
 export function setupPOEFlow(config) {
   const experiments = config.experiments ?? [{ id: 'main', name: '', predict: config.predict, observe: config.observe, explain: config.explain }];
   const multi = experiments.length > 1;
@@ -37,6 +42,7 @@ export function setupPOEFlow(config) {
   intro.querySelector('p').textContent = multi ? `실험 ${experiments.length}가지를 차례로 해요. 실험마다 먼저 예상하고, 직접 실험한 뒤, 본 것을 설명해 보세요.` : '먼저 예상하고, 직접 실험한 뒤, 관찰한 까닭을 설명해 보세요.';
   const glossary = config.glossary ? `<details class="glossary"><summary>📖 어려운 낱말 뜻 보기</summary><dl>${config.glossary.map(([t, d]) => `<div><dt>${t}</dt><dd>${d}</dd></div>`).join('')}</dl></details>` : '';
   intro.insertAdjacentHTML('afterend', `
+    <div class="teacher-bar" id="teacher-bar"></div>
     ${review ? `<section id="review-panel" class="poe-panel review-panel" aria-labelledby="review-title" hidden>
       <p class="poe-kicker">실험 전 1분 복습</p><h2 id="review-title" tabindex="-1">${review.title}</h2>
       ${review.items.map((item, n) => `<div class="review-item"><p class="review-question">${item.question}</p><div class="review-choices" role="group" aria-label="${n + 1}번 복습 질문">${item.choices.map((c, i) => `<button type="button" class="review-choice" data-review="${n}" data-choice="${i}">${c}</button>`).join('')}</div><p class="review-feedback" id="review-feedback-${n}" aria-live="polite"></p></div>`).join('')}
@@ -81,7 +87,7 @@ export function setupPOEFlow(config) {
         <p id="observation-progress" role="status"></p>
         <label class="writing-label" for="observation-record"></label>
         <textarea id="observation-record" rows="3" maxlength="1500" required></textarea><p class="char-count" data-for="observation-record" aria-live="polite"></p>
-        <div class="poe-actions"><button type="button" class="secondary flow-back">← 뒤로 가기</button><button class="primary big" id="to-explanation" disabled>관찰 저장하고 설명하기 →</button></div>
+        <div class="poe-actions"><button type="button" class="secondary flow-back">← 뒤로 가기</button><button class="primary big" id="to-explanation" aria-disabled="true">관찰 저장하고 설명하기 →</button></div>
       </form>
       </div>
       </div>
@@ -179,7 +185,8 @@ export function setupPOEFlow(config) {
   }
   const allExplained = (except = -1) => state.exps.every((e, i) => i === except || e.explained);
   function showWrapUp() {
-    const done = allExplained();
+    // 교사 모드에서는 학생이 설명을 쓰기 전에도 개념 정리를 보여 줄 수 있어요.
+    const done = allExplained() || teacherMode.on;
     $('#concept-review').hidden = !done;
     const next = $('#next-experiment');
     if (!next) return;
@@ -192,7 +199,7 @@ export function setupPOEFlow(config) {
     }
   }
   // 앞 실험의 설명까지 마쳐야 다음 실험이 열려요(이미 연 실험은 언제든 다시 볼 수 있어요).
-  const experimentOpen = n => n === 0 || state.exps.slice(0, n).every(e => e.explained) || state.exps[n].reached > 0 || n === state.current;
+  const experimentOpen = n => teacherMode.on || n === 0 || state.exps.slice(0, n).every(e => e.explained) || state.exps[n].reached > 0 || n === state.current;
   function renderSwitch() {
     if (!multi) return;
     document.querySelectorAll('[data-experiment]').forEach(b => {
@@ -226,7 +233,7 @@ export function setupPOEFlow(config) {
   }
 
   // ‘← 뒤로 가기’: 화면 순서에서 한 칸 앞으로. 쓴 글은 그대로 남아요. 더 갈 곳이 없으면 false.
-  const isReviewing = () => !!review && (!state.reviewed || state.onReview);
+  const isReviewing = () => !!review && ((!state.reviewed && !teacherMode.on) || state.onReview);
   const canGoBack = () => !isReviewing() && (STAGES.indexOf(exp().stage) > 0 || state.current > 0 || !!review);
   function goBack() {
     if (!canGoBack()) return false;
@@ -252,8 +259,10 @@ export function setupPOEFlow(config) {
       $(`#${value}-panel`).hidden = reviewing || value !== next;
       const item = $(`[data-step="${value}"]`), button = item.querySelector('button');
       if (value === next && !reviewing) item.setAttribute('aria-current', 'step'); else item.removeAttribute('aria-current');
-      // 한 번 가 본 단계는 눌러서 다시 갈 수 있어요. 쓴 글은 그대로 남아요.
-      button.disabled = reviewing || STAGES.indexOf(value) > e.reached;
+      // 한 번 가 본 단계는 눌러서 다시 갈 수 있어요. 쓴 글은 그대로 남아요. 교사 모드에서는 어느 단계든 갈 수 있어요.
+      // 아직 갈 수 없는 단계는 눌러도 넘어가지 않고, 먼저 할 일을 알려 줘요(aria-disabled).
+      const closed = !teacherMode.on && (reviewing || STAGES.indexOf(value) > e.reached);
+      if (closed) button.setAttribute('aria-disabled', 'true'); else button.removeAttribute('aria-disabled');
       item.classList.toggle('reached', STAGES.indexOf(value) <= e.reached);
     }
     document.body.dataset.poe = reviewing ? 'review' : next;
@@ -271,8 +280,8 @@ export function setupPOEFlow(config) {
     gate(progress);
     if (!force && lastProgress && progress.ready === lastProgress.ready && progress.message === lastProgress.message) return;
     lastProgress = progress;
-    const done = progress.ready || exp().observed;
-    $('#to-explanation').disabled = !done;
+    const done = progress.ready || exp().observed || teacherMode.on;
+    if (done) $('#to-explanation').removeAttribute('aria-disabled'); else $('#to-explanation').setAttribute('aria-disabled', 'true');
     $('#observation-progress').textContent = !progress.ready && exp().observed ? '이 실험은 이미 관찰을 마쳤어요. 더 실험해 보고 기록을 고쳐도 좋아요.' : progress.message;
     renderGuide(progress);
   }
@@ -282,7 +291,7 @@ export function setupPOEFlow(config) {
   function gate(progress) {
     const steps = progress.steps ?? [];
     let current = steps.findIndex(v => !v.done);
-    if (current === -1 || exp().observed || state.locked) current = steps.length;
+    if (current === -1 || exp().observed || state.locked || teacherMode.on) current = steps.length;
     const later = steps.slice(current + 1).filter(v => v.unlocks);
     gateMessage = current < steps.length ? `🔒 실험 순서대로 해요. 먼저 ‘${steps[current].label}’부터 해 보세요.` : '';
     const selector = later.map(v => v.unlocks).join(', ');
@@ -302,7 +311,7 @@ export function setupPOEFlow(config) {
     const el = ev.target?.closest?.('[data-gated]');
     if (!el || (ev.type === 'keydown' && !['Enter', ' ', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(ev.key))) return;
     ev.preventDefault(); ev.stopImmediatePropagation();
-    if (ev.type === 'click' || ev.type === 'keydown') toast(gateMessage || '🔒 앞 단계를 먼저 해 보세요.');
+    if (ev.type === 'click' || ev.type === 'keydown') pointToGuide(gateMessage || '🔒 앞 단계를 먼저 해 보세요.');
   }
   for (const type of ['pointerdown', 'mousedown', 'touchstart', 'click', 'keydown']) window.addEventListener(type, blockGated, { capture: true, passive: false });
 
@@ -314,6 +323,26 @@ export function setupPOEFlow(config) {
     clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), 3200);
   }
 
+  // 다음 단계로 넘어가려는데 아직 할 실험 단계가 남았으면: 안내 문구 + 실험 순서 안내를 반짝이며 가리키고,
+  // 지금 할 단계에서 쓰는 조작(있으면)에 ‘여기부터!’ 표시를 잠깐 붙여요.
+  let pointTimer = null;
+  function pointToGuide(message) {
+    toast(message);
+    const guide = $('#step-guide');
+    document.querySelectorAll('.step-target').forEach(el => el.classList.remove('step-target'));
+    if (guide.hidden) return;
+    guide.classList.remove('attention'); void guide.offsetWidth; guide.classList.add('attention');
+    const r = guide.getBoundingClientRect();
+    if (r.bottom < 60 || r.top > innerHeight - 60) guide.scrollIntoView({ behavior: reducedMotion.matches ? 'instant' : 'smooth', block: 'center' });
+    guide.querySelector('li.current')?.scrollIntoView?.({ block: 'nearest' });
+    const step = (lastProgress?.steps ?? []).find(v => !v.done);
+    const target = step?.unlocks ? [...document.querySelectorAll(step.unlocks)].find(el => el.offsetParent) : null;
+    target?.classList.add('step-target');
+    clearTimeout(pointTimer);
+    pointTimer = setTimeout(() => { guide.classList.remove('attention'); target?.classList.remove('step-target'); }, 4500);
+  }
+  const nextStepLabel = () => (lastProgress?.steps ?? []).find(v => !v.done)?.label;
+
   // 왼쪽 실험 순서 안내: 끝낸 단계는 ✓, 지금 할 단계는 강조, 뒤 단계는 🔒, 모두 끝나면 마지막 ‘기록하기’ 단계를 강조해요.
   let guideDone = -1;
   function renderGuide(progress) {
@@ -324,7 +353,7 @@ export function setupPOEFlow(config) {
     const done = steps.filter(v => v.done).length, current = steps.findIndex(v => !v.done);
     const items = steps.map((v, i) => {
       const state = v.done ? 'done' : i === current ? 'current' : 'todo';
-      const lockedStep = state === 'todo' && !exp().observed;
+      const lockedStep = state === 'todo' && !exp().observed && !teacherMode.on;
       return `<li class="${state}${lockedStep ? ' locked' : ''}"${state === 'current' ? ' aria-current="step"' : ''}><span class="guide-num">${v.done ? '✓' : lockedStep ? '🔒' : i + 1}</span><div><b>${v.label}</b>${state === 'current' ? `<small class="guide-now">지금 할 일</small>` : ''}${v.hint && state === 'current' ? `<small>${v.hint}</small>` : ''}${lockedStep ? '<small>앞 단계를 마치면 열려요</small>' : ''}</div></li>`;
     });
     const allDone = current === -1;
@@ -367,6 +396,8 @@ export function setupPOEFlow(config) {
   $('#prediction-form').onsubmit = ev => {
     ev.preventDefault();
     if (exp().prediction) return changeStage('observe');
+    // 교사 모드: 예상을 쓰지 않아도 관찰하기로 넘어가요(학생 기록은 저장하지 않아요).
+    if (teacherMode.on && plain($('#prediction-reason').value).length < MIN_CHARS) return changeStage('observe');
     if (!requireWriting('#prediction-reason')) return;
     const checked = document.querySelector('input[name="prediction"]:checked');
     $('#confirm-choice').textContent = checked.nextElementSibling.textContent;
@@ -385,8 +416,10 @@ export function setupPOEFlow(config) {
     changeStage('observe');
   };
   $('#observation-form').onsubmit = ev => {
-    ev.preventDefault(); if ($('#to-explanation').disabled) return;
+    ev.preventDefault();
+    if ($('#to-explanation').getAttribute('aria-disabled') === 'true') return;
     const e = exp();
+    if (teacherMode.on && plain($('#observation-record').value).length < MIN_CHARS) { $('#saved-observation').textContent = e.saved; return changeStage('explain'); }
     if (!state.locked) {
       if (!requireWriting('#observation-record')) return;
       e.saved = $('#observation-record').value.trim(); e.observed = true;
@@ -394,9 +427,18 @@ export function setupPOEFlow(config) {
     $('#saved-observation').textContent = e.saved;
     changeStage('explain');
   };
+  // 실험 단계를 다 하지 않았을 때 누르면(빈 기록 칸 검사보다 먼저) 실험 순서 안내를 가리켜요.
+  $('#to-explanation').addEventListener('click', ev => {
+    if ($('#to-explanation').getAttribute('aria-disabled') !== 'true') return;
+    ev.preventDefault();
+    const label = nextStepLabel();
+    pointToGuide(`🧭 아직 해 보지 않은 실험 단계가 있어요. ‘실험 순서 안내’를 보고 ${label ? `‘${label}’부터` : '남은 단계를'} 해 보세요.`);
+  });
   document.querySelectorAll('.flow-back').forEach(b => b.onclick = () => goBack());
   $('#explanation-form').onsubmit = ev => {
-    ev.preventDefault(); if (state.locked || !requireWriting('#explanation-record')) return;
+    ev.preventDefault();
+    if (teacherMode.on && plain($('#explanation-record').value).length < MIN_CHARS) { showWrapUp(); $('#concept-review').scrollIntoView({ behavior: 'instant', block: 'start' }); return; }
+    if (state.locked || !requireWriting('#explanation-record')) return;
     const e = exp();
     e.explanation = $('#explanation-record').value; e.explained = true; save();
     fill();
@@ -404,7 +446,23 @@ export function setupPOEFlow(config) {
     (target.id === 'concept-review' ? $('#concept-title') : target.querySelector('button')).focus({ preventScroll: true });
     target.scrollIntoView({ behavior: 'instant', block: 'start' });
   };
-  document.querySelectorAll('[data-goto]').forEach(b => b.onclick = () => changeStage(b.dataset.goto));
+  document.querySelectorAll('[data-goto]').forEach(b => b.onclick = () => {
+    if (b.getAttribute('aria-disabled') === 'true') return explainClosedStep(b.dataset.goto);
+    if (teacherMode.on && isReviewing()) { state.onReview = false; save(); }
+    changeStage(b.dataset.goto);
+  });
+  // 아직 갈 수 없는 단계를 누르면 먼저 할 일을 알려 줘요.
+  function explainClosedStep(target) {
+    if (isReviewing()) return toast('📝 먼저 ‘실험 전 1분 복습’ 질문에 모두 답하고 ‘복습 마치고 실험 시작하기’를 눌러요.');
+    const now = exp().stage;
+    if (now === 'predict') { toast('✏️ 먼저 예상을 고르고 까닭을 쓴 뒤 ‘예상 저장하고 실험하기’를 눌러요.'); $('#start-observation').classList.add('step-target'); setTimeout(() => $('#start-observation').classList.remove('step-target'), 4500); return; }
+    if (now === 'observe' && target === 'explain') {
+      const label = nextStepLabel();
+      if (label) return pointToGuide(`🧭 아직 해 보지 않은 실험 단계가 있어요. ‘실험 순서 안내’를 보고 ‘${label}’부터 해 보세요.`);
+      toast('✎ 본 것을 아래 ‘실제로 무엇을 보았나요?’에 쓰고 ‘관찰 저장하고 설명하기’를 눌러요.');
+      $('#observation-record').focus();
+    }
+  }
   document.querySelectorAll('[data-experiment]').forEach(b => b.onclick = () => { if (+b.dataset.experiment !== state.current || isReviewing()) { state.onReview = false; selectExperiment(+b.dataset.experiment); } });
   $('#revisit-lab').onclick = () => changeStage('observe');
   $('#restart-poe').onclick = () => {
@@ -416,6 +474,7 @@ export function setupPOEFlow(config) {
     fill(); config.onRestart?.(); config.onExperimentChange?.(experiments[0].id, 0); changeStage('predict');
   };
 
+  let refreshReview = () => {};
   if (review) {
     // 질문마다 보기를 하나씩 골라야 ‘복습 마치고 실험 시작하기’ 버튼이 켜져요. 건너뛸 수 없어요.
     const answers = state.reviewAnswers ??= [];
@@ -430,15 +489,16 @@ export function setupPOEFlow(config) {
         out.dataset.state = right ? 'right' : 'wrong';
       });
       const done = review.items.filter((_, n) => answers[n] !== undefined && answers[n] !== null).length;
-      $('#finish-review').disabled = done < review.items.length;
+      $('#finish-review').disabled = done < review.items.length && !teacherMode.on;
       $('#review-progress').textContent = done < review.items.length ? `${done} / ${review.items.length} 질문에 답했어요 · 모든 질문에 답하면 실험을 시작할 수 있어요.` : '모든 질문에 답했어요. 실험을 시작해 볼까요?';
     };
     document.querySelectorAll('[data-review]').forEach(b => b.onclick = () => { answers[+b.dataset.review] = +b.dataset.choice; save(); showReview(); });
     $('#finish-review').onclick = () => {
-      if (review.items.some((_, n) => answers[n] === undefined || answers[n] === null)) return;
+      if (!teacherMode.on && review.items.some((_, n) => answers[n] === undefined || answers[n] === null)) return;
       state.reviewed = true; state.onReview = false; save(); changeStage(exp().stage);
     };
     showReview();
+    refreshReview = showReview;
   }
 
   // 브라우저·휴대폰의 뒤로 가기도 한 화면씩 돌아가게 해요. 첫 화면(복습)에서 누르면 원래대로 실험 목록으로 나가요.
@@ -454,6 +514,17 @@ export function setupPOEFlow(config) {
     } else if (goBack()) history.pushState({ poeGuard: true }, '');
     else history.back();
   });
+
+  // 교사 모드: 켜고 끌 때 지금 화면을 다시 그려요.
+  mountTeacherMode($('#teacher-bar'), {
+    onChange: () => {
+      lastProgress = lastProgress && { ...lastProgress };
+      refreshReview(); fill(); changeStage(isReviewing() ? exp().stage : exp().stage, true);
+      document.querySelectorAll('[data-gated]').forEach(el => { if (teacherMode.on) { el.removeAttribute('data-gated'); el.removeAttribute('aria-disabled'); } });
+    },
+  });
+  // 과학 낱말 뜻 풀이: 실험 안내, 예상·관찰·설명의 글, 개념 정리, 복습 질문에서 찾아요.
+  enableGlossary(['#review-panel', '#predict-title', '#predict-lead', '#observe-title', '.instruction', '#simulation-mount .observation', '#model-note', '.guide-steps', 'label[for="observation-record"]', 'label[for="explanation-record"]', '#concept-review .concept-sequence', '#concept-review .concept-note', '#concept-activities .mission']);
 
   fill();
   config.onExperimentChange?.(info().id, state.current);

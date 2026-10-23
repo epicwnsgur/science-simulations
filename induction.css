@@ -1,8 +1,6 @@
-/* 정전기 유도 실험 전용 스타일. 공통 모양은 style.css, 학습 흐름은 poe.css를 따릅니다. */
-.choice-row{display:flex;flex-wrap:wrap;gap:8px 0;align-items:center}
-.choice-row [role=group]{display:flex;flex-wrap:wrap;gap:8px 0;margin-right:10px}
-.choice-row button[aria-pressed=true]{background:#e2e9d9;border-color:#8ea27c;color:#3b5433;font-weight:600}
-.choice-row p{width:100%;margin:6px 0 0}
+/* 정전기 유도 실험 전용 스타일(실험 그림의 모양만). 공통 모양은 style.css·lab.css, 학습 흐름은 poe.css, 색은 theme-electric.css를 따릅니다.
+   배포(빌드)하면 이 파일이 공통 CSS보다 나중에 읽혀요. 그래서 공통 파일에 있는 선택자(버튼, 안내 상자 등)를 여기서 다시 쓰면
+   어두운 테마를 덮어써 밝은 바탕에 밝은 글씨가 될 수 있어요. 이 실험에만 있는 그림 요소만 여기에 둬요(src/css-scope.test.js가 확인). */
 .spoon-body{fill:url(#metal);stroke:#8c959c;stroke-width:1.2}
 .part-label{fill:#7a8073;font-size:12px}
 .jar{fill:url(#glass);stroke:#9ccbe6;stroke-width:2}
@@ -15,14 +13,4 @@
 .glove-line{stroke:#cbd2d8;stroke-width:1.5;fill:none}
 #charged-object:focus{outline:none}
 #charged-object:focus-visible .shape{filter:drop-shadow(0 0 3px #426449)}
-.answers.stacked{flex-direction:column}
-.answers.stacked button{padding:9px 10px;text-align:left}
-.mission h3+.answers+p+h3{margin-top:22px}
-.prediction-illustration svg{display:block;width:100%;height:245px;margin:12px 0}
-.concept-note{font-size:13px;line-height:1.8;color:#5b6751;background:#f1f4ec;border-left:3px solid #8ea27c;padding:10px 14px;margin:8px 0 0}
-/* 이 실험은 모형 안내를 관찰 중에도 보여 줍니다. */
-body[data-poe=observe] .model-note{display:block}
-@media(max-width:800px){.prediction-illustration svg{height:200px}}
-@media(max-width:600px){.prediction-illustration svg{height:170px;margin:0}}
-@media(max-width:480px){.choice-row [role=group]{margin-right:0}.choice-row button{font-size:11px;margin-right:6px}.choice-row{padding:8px 13px}}
 .stage.night .jar{opacity:.5}

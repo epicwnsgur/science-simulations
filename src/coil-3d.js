@@ -58,21 +58,32 @@ export function createCoil3D({ stage, svg, reducedMotion, ring, moveProbe, probe
     g.shadowColor = '#ff4d4d'; g.shadowBlur = 14; g.fillStyle = '#ff4d4d'; g.fillText(`${text} V`, 128, 52);
     screenTex.needsUpdate = true;
   }
-  // 단자는 전원 장치의 동쪽(코일 쪽) 옆면에 있어요. 코일의 두 끝은 판 아래로 나와 단자에 이어져요.
+  // 단자는 전원 장치의 동쪽(코일 쪽) 옆면에 있어요: 앞(남)쪽이 (+)극(빨강), 뒤(북)쪽이 (−)극(검정).
+  // 코일의 두 끝은 판 아래로 나와 단자에 이어져요. 전류의 방향을 바꾸면 두 전선을 서로 바꾸어 꽂아요(실제 실험과 같아요).
+  // 처음 방향: (+)극 → 코일의 동쪽 끝, 서쪽 끝 → (−)극. 이때 북쪽 도선에서는 위로, 남쪽 도선에서는 아래로 흘러요.
   const terminals = [[-1, 0x222222], [1, 0xd83b3b]].map(([side, color]) => {
-    const t = new THREE.Mesh(new THREE.CylinderGeometry(.07, .07, .12, 14), new THREE.MeshStandardMaterial({ color, roughness: .5 }));
+    const t = new THREE.Mesh(new THREE.CylinderGeometry(.075, .075, .12, 14), new THREE.MeshStandardMaterial({ color, roughness: .5 }));
     t.rotation.z = Math.PI / 2; t.position.set(SUP.x + .74, SUP.y - .12, SUP.z + side * .14); coil.add(t); return t;
   });
-  for (const [i, k] of [[0, 0], [1, COIL3.turns - 1]]) {
-    const x0 = turnXs[k], t = terminals[i].position, depth = -1.25 - i * .14, xr = SUP.x + 1.0 + i * .12;
-    coil.add(wire([[x0, -COIL3.radius, 0], [x0, depth, 0], [xr, depth, t.z], [xr, t.y, t.z], [t.x + .05, t.y, t.z]], .03, mat.wire).mesh);
-  }
+  [['−', '#d8def5', 0], ['+', '#ff7b7b', 1]].forEach(([text, color, i]) => { const l = label(text, { size: .3, color }); const t = terminals[i].position; l.position.set(t.x + .05, t.y + .3, t.z + (i ? .12 : -.12)); coil.add(l); });
+  const plusWire = new THREE.MeshStandardMaterial({ color: 0xd83b3b, roughness: .5 }), minusWire = new THREE.MeshStandardMaterial({ color: 0xaab4d6, roughness: .5 });
+  const leadSets = new Map([1, -1].map(dir => {
+    const set = [[COIL3.turns - 1, dir > 0 ? 1 : 0], [0, dir > 0 ? 0 : 1]].map(([k, ti], n) => {
+      const x0 = turnXs[k], t = terminals[ti].position, depth = -1.22 - n * .16, xr = SUP.x + 1.0 + ti * .14;
+      const w = wire([[x0, -COIL3.radius, 0], [x0, depth, 0], [xr, depth, t.z], [xr, t.y, t.z], [t.x + .06, t.y, t.z]], .032, ti ? plusWire : minusWire);
+      w.plus = ti === 1; w.mesh.visible = dir > 0; coil.add(w.mesh);
+      return w;
+    });
+    return [dir, set];
+  }));
   const supplyLabel = label('전원 장치', { size: .24, color: '#aab4d6' }); supplyLabel.position.set(SUP.x, SUP.y + .62, SUP.z); coil.add(supplyLabel);
   const coilLabel = label('코일', { size: .26, color: '#e8c15a' }); coilLabel.position.set(-.5, COIL3.radius + .25, .55); coil.add(coilLabel);
   // 전류 알갱이: 가운데 감은 줄을 따라 전류의 방향으로 흘러요.
   const dots = Array.from({ length: 16 }, () => { const d = new THREE.Mesh(new THREE.SphereGeometry(.055, 10, 8), mat.dot); coil.add(d); return d; });
   // 전류 화살표: 판을 뚫고 지나는 두 곳(북쪽은 위로, 남쪽은 아래로 — 전류의 방향이 처음일 때)
   const crossArrows = [-1, 1].map(() => { const a = arrow(COLORS.current, .035); coil.add(a); return a; });
+  // 전선 위의 전류 알갱이: (+)극에서 나와 코일을 지나 (−)극으로 들어가요.
+  const leadDots = Array.from({ length: 2 }, () => Array.from({ length: 9 }, () => { const d = new THREE.Mesh(new THREE.SphereGeometry(.045, 8, 6), mat.dot); coil.add(d); return d; }));
   const currentLabel = label('전류', { size: .26, color: '#ffd166' }); coil.add(currentLabel);
 
   /* ---------- 막대자석 ---------- */
@@ -184,7 +195,7 @@ export function createCoil3D({ stage, svg, reducedMotion, ring, moveProbe, probe
     if (!drag && Math.hypot(target.x - probePx.x, target.y - probePx.y) < .5) target = null;
   }
 
-  let flowU = 0, headU = 0, last = {};
+  let flowU = 0, headU = 0, leadU = 0, last = {};
   function paint(s, dt) {
     const coilMode = s.mode === 'coil', flowing = coilMode && s.on;
     coil.visible = coilMode; magnet.visible = !coilMode;
@@ -194,13 +205,22 @@ export function createCoil3D({ stage, svg, reducedMotion, ring, moveProbe, probe
     // 전류 알갱이: direction > 0이면 북쪽 도선에서 위로, 남쪽 도선에서 아래로 흘러요(coilPoint의 t가 커지는 방향).
     if (flowing && !reducedMotion.matches) flowU = (flowU + s.direction * dt * (.1 + .07 * s.level) + 1) % 1;
     dots.forEach((d, i) => { d.visible = flowing; if (flowing) d.position.set(...coilPoint(((flowU + i / dots.length) % 1) * 2 * Math.PI, 0)); });
+    // 전선: 전류의 방향에 따라 두 전선을 바꾸어 꽂은 모습
+    for (const [dir, set] of leadSets) set.forEach(w => { w.mesh.visible = dir === Math.sign(s.direction); });
+    const leads = leadSets.get(Math.sign(s.direction));
+    if (flowing && !reducedMotion.matches) leadU = (leadU + dt * (.12 + .06 * s.level)) % 1;
+    leadDots.forEach((row, n) => row.forEach((d, i) => {
+      d.visible = flowing;
+      // 전선의 길은 코일 끝에서 단자 쪽으로 정해 두었어요. (+)극 전선은 거꾸로, (−)극 전선은 그대로 따라가요.
+      if (flowing) { const u = (leadU + i / row.length) % 1; d.position.copy(leads[n].path.getPointAt(leads[n].plus ? 1 - u : u)); }
+    }));
     crossArrows.forEach((a, i) => {
       // i = 0: 북쪽(z = −1) 도선, i = 1: 남쪽(z = +1) 도선
-      a.visible = flowing && s.show;
+      a.visible = flowing;
       const up = (i === 0 ? 1 : -1) * s.direction;
       setArrow(a, [.42, -up * .55, i === 0 ? -COIL3.radius : COIL3.radius], [0, up, 0], 1.1);
     });
-    currentLabel.visible = flowing && s.show;
+    currentLabel.visible = flowing;
     currentLabel.position.set(.78, .5, -COIL3.radius - .1);
     // 나침반 바늘: 0°는 북쪽(−z), 동쪽(+x)으로 돌면 +. y축 둘레로 −각도만큼 돌리면 돼요.
     compasses.forEach((c, i) => { c.needle.rotation.y = -s.needles[i] * Math.PI / 180; });
@@ -247,6 +267,8 @@ export function createCoil3D({ stage, svg, reducedMotion, ring, moveProbe, probe
         probe: { at: [probe.g.position.x, probe.g.position.z], north: horiz(probe.needle) },
         crossArrows: crossArrows.map(a => ({ visible: a.visible, dir: worldDir(a), at: a.position.toArray() })),
         dotsVisible: dots.filter(d => d.visible).length,
+        // 지금 보이는 전선: (+)극 전선이 이어진 코일 끝(동쪽 +1 / 서쪽 −1)
+        plusLeadEnd: (() => { const w = [...leadSets.values()].flat().find(v => v.mesh.visible && v.plus); return Math.sign(w.path.getPointAt(0).x); })(),
         heads: visibleLines ? visibleLines.userData.heads.filter(h => h.userData.track.board).map(h => ({ at: h.position.toArray(), dir: worldDir(h) })) : [],
         volts: shownVolts,
         // 움직이는 나침반이 화면에서 보이는 자리(시험에서 끌기용)
