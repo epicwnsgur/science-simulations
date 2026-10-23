@@ -169,3 +169,34 @@ test('자기장 3D: 매끄럽게 움직임 — 자기장 화살표가 흐르는 
   expect(p95 - median).toBeLessThan(17);
   await page.mouse.up();
 });
+
+test('자기장: 전류 방향을 바꾸면 전원 장치의 두 전선이 바뀌어 꽂히고(2D·3D), 판을 뚫는 곳의 ⊙·⊗와 바늘이 반대로', async ({ page }) => {
+  await open3D(page);
+  await page.locator('#tab-coil').click();
+  expect((await probe(page)).plusLeadEnd).toBe(1); // 처음: (+)극 → 코일의 동쪽 끝
+  await holdSwitch(page);
+  await page.waitForTimeout(2600);
+  const before = (await probe(page)).compasses.map(c => c.north);
+  await page.mouse.up();
+  await page.locator('#flip-btn').click();
+  await expect(page.locator('.toast')).toContainText('두 전선을 바꾸어 꽂았어요');
+  expect((await probe(page)).plusLeadEnd).toBe(-1); // 바꾼 뒤: (+)극 → 서쪽 끝
+  await holdSwitch(page);
+  await page.waitForTimeout(2600);
+  const p = await probe(page);
+  expect(p.crossArrows[0].visible).toBe(true); // 전류가 흐르면 ‘자기장 모습 보기’를 켜지 않아도 전류 화살표가 보여요.
+  expect(p.crossArrows[0].dir[1]).toBeCloseTo(-1, 2); // 북쪽 도선: 이제 아래로
+  expectNeedles(p, q => coilField3(q, LEVEL_S[1], -1));
+  // 코일 가까이(북·남쪽) 나침반은 방향이 거의 반대로 돌아요.
+  for (const i of [0, 1]) expect(angleBetween(before[i], p.compasses[i].north)).toBeGreaterThan(150);
+  await page.mouse.up();
+  // 2D 그림도 같아요: (+)극 전선이 서쪽 끝으로, 북쪽은 ⊗(판 아래로), 남쪽은 ⊙(판 위로)
+  await page.locator('[data-view="2d"]').click();
+  await holdSwitch(page);
+  await expect(page.locator('#crossings')).toHaveAttribute('opacity', '1');
+  expect(await page.locator('#lead-p').getAttribute('d')).toMatch(/H392 V236$/);
+  await expect(page.locator('#cross-n .mark path')).toHaveCount(1);
+  await expect(page.locator('#cross-s .mark circle')).toHaveCount(1);
+  await expect(page.locator('#leads')).toHaveClass(/on/);
+  await page.mouse.up();
+});

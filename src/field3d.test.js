@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { COIL3, EARTH3, coilField3, magnetField3, coilPoint, needleDeg3, addV, fieldLines, boardField, MAGNET3, BOARD_BOUNDS } from './field3d.js';
+import { COIL3, EARTH3, coilField3, magnetField3, coilPoint, needleDeg3, addV, fieldLines, boardField, MAGNET3, BOARD_BOUNDS, K_COIL } from './field3d.js';
 
 const deg = v => Math.atan2(v[0], -v[2]) * 180 / Math.PI;
 const unit = v => { const m = Math.hypot(...v); return v.map(x => x / m); };
@@ -14,7 +14,7 @@ test('전류가 만든 자기장 3D: 코일을 잘게 나눈 계산(비오-사�
   for (const x of [0, .5, 1.5, 3]) {
     const exact = xs.reduce((s, t) => s + per(x - t), 0);
     const B = coilField3([x, 0, 0], 1, 1);
-    assert.ok(Math.abs(B[0] / 1.6 - exact) / exact < .01, `x = ${x}`);
+    assert.ok(Math.abs(B[0] / K_COIL - exact) / exact < .01, `x = ${x}`);
     assert.ok(Math.abs(B[1]) + Math.abs(B[2]) < 1e-9); // 축 위에서는 축 방향뿐
   }
 });
@@ -108,4 +108,14 @@ test('전류가 만든 자기장 3D: 2D 그림의 나침반 8개와 3D 계산이
     assert.equal(Math.sign(a), expected[i], `나침반 ${i}`);
   });
   assert.ok(Math.abs(deg(unit(coilField3([0, 0, 0], 1, 1))) - 90) < 1e-6);
+});
+
+test('전류가 만든 자기장 3D: 둘레 나침반 8개는 교과서 그림처럼 자기장 모습(선)의 방향을 거의 따라감', () => {
+  const off = (src, p) => { const B = src(toBoard(p)); let d = needleDeg3(addV(B, EARTH3)) - needleDeg3(B); d = ((d + 540) % 360) - 180; return Math.abs(d); };
+  for (const p of RING) {
+    assert.ok(off(magnetField3, p) < 12, `막대자석 ${p}`);
+    assert.ok(off(q => coilField3(q, .9, 1), p) < 12, `코일 보통 ${p}`);
+    assert.ok(off(q => coilField3(q, 1.8, 1), p) < 6, `코일 세게 ${p}`);
+    assert.ok(off(q => coilField3(q, .4, 1), p) < 25, `코일 약하게 ${p}`);
+  }
 });

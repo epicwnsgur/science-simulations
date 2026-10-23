@@ -35,11 +35,13 @@ const scene = `
 <clipPath id="board-clip"><rect x="140" y="62" width="520" height="340" rx="16"/></clipPath>
 <g id="field-lines" opacity="0" clip-path="url(#board-clip)"></g>
 <g id="magnet-group" hidden><rect x="${MAGNET.x - MAGNET.half - 6}" y="${MAGNET.y - 18}" width="${MAGNET.half + 6}" height="36" rx="4" fill="#e04848"/><rect x="${MAGNET.x}" y="${MAGNET.y - 18}" width="${MAGNET.half + 6}" height="36" rx="4" fill="#3a6fd8"/><text x="${MAGNET.x - 46}" y="${MAGNET.y + 7}" font-size="20" font-weight="800" text-anchor="middle" style="fill:#fff">N</text><text x="${MAGNET.x + 46}" y="${MAGNET.y + 7}" font-size="20" font-weight="800" text-anchor="middle" style="fill:#fff">S</text></g>
-<g id="coil-group"><ellipse cx="${COIL.x}" cy="${COIL.y}" rx="12" ry="${COIL.r + 10}" fill="none" stroke="url(#copper)" stroke-width="9"/><ellipse id="coil-glow" cx="${COIL.x}" cy="${COIL.y}" rx="12" ry="${COIL.r + 10}" fill="none" stroke="#ffb36b" stroke-width="10" opacity="0" filter="url(#glow-strong)"/><g id="current-arrow" opacity="0"><path id="current-path" stroke="#ff6b6b" stroke-width="4" marker-end="url(#arrow-head)"/><text x="${COIL.x + 38}" y="${COIL.y + 5}" font-size="13" style="fill:#ff9a9a">전류</text></g><text x="${COIL.x}" y="${COIL.y + COIL.r + 34}" text-anchor="middle" font-size="12" class="muted">코일</text></g>
+<mask id="off-board"><rect width="800" height="440" fill="#fff"/><rect x="140" y="62" width="520" height="340" rx="16" fill="#000"/></mask>
+<g id="leads" aria-hidden="true">${['p', 'm'].map(k => `<path id="lead-${k}" class="lead lead-${k}" mask="url(#off-board)"/><path id="lead-${k}-under" class="lead lead-${k} under" clip-path="url(#board-clip)"/><path id="lead-${k}-flow" class="lead-flow"/>`).join('')}</g>
+<g id="coil-group"><ellipse cx="${COIL.x}" cy="${COIL.y}" rx="12" ry="${COIL.r + 10}" fill="none" stroke="url(#copper)" stroke-width="9"/><ellipse id="coil-glow" cx="${COIL.x}" cy="${COIL.y}" rx="12" ry="${COIL.r + 10}" fill="none" stroke="#ffb36b" stroke-width="10" opacity="0" filter="url(#glow-strong)"/><g id="current-arrow" opacity="0"><path id="current-path" stroke="#ff6b6b" stroke-width="4" marker-end="url(#arrow-head)"/><text x="${COIL.x + 38}" y="${COIL.y + 5}" font-size="13" style="fill:#ff9a9a">전류</text></g><g id="crossings" opacity="0">${[-1, 1].map(k => `<g class="crossing" id="cross-${k < 0 ? 'n' : 's'}" transform="translate(${COIL.x} ${COIL.y + k * COIL.r})"><circle r="10"/><g class="mark"></g></g>`).join('')}</g><text x="${COIL.x}" y="${COIL.y + COIL.r + 34}" text-anchor="middle" font-size="12" class="muted">코일</text></g>
 <g id="compasses">${RING.map(([x, y], i) => compassSVG(`c${i}`, x, y)).join('')}</g>
 ${compassSVG('probe', PROBE_START.x, PROBE_START.y, true)}
 <text x="${PROBE_START.x - 36}" y="${PROBE_START.y + 5}" text-anchor="end" font-size="11" style="fill:#ffd166">끌어서 옮겨 보세요</text>
-<g id="supply" transform="translate(30 70)"><rect width="96" height="70" rx="8" fill="#1d2440" stroke="#8f9bc4"/><text id="supply-v" x="48" y="38" text-anchor="middle" font-family="monospace" font-size="24" style="fill:#ff4d4d" filter="url(#glow)">0.0</text><text x="48" y="58" text-anchor="middle" font-size="10" class="muted">전원 장치 (V)</text></g>`;
+<g id="supply" transform="translate(30 70)"><rect width="96" height="70" rx="8" fill="#1d2440" stroke="#8f9bc4"/><text id="supply-v" x="48" y="38" text-anchor="middle" font-family="monospace" font-size="24" style="fill:#ff4d4d" filter="url(#glow)">0.0</text><text x="48" y="58" text-anchor="middle" font-size="10" class="muted">전원 장치 (V)</text><g aria-label="전원 장치의 (+)극과 (−)극"><circle cx="24" cy="82" r="10" fill="#d83b3b" stroke="#ffb0b0"/><text x="24" y="87" text-anchor="middle" font-size="15" font-weight="800" style="fill:#fff">+</text><circle cx="72" cy="82" r="10" fill="#20242f" stroke="#c9d1e8"/><text x="72" y="87" text-anchor="middle" font-size="15" font-weight="800" style="fill:#fff">−</text></g></g>`;
 
 const lab = buildLab({
   crumb: '자기 01 전류가 만든 자기장',
@@ -98,6 +100,27 @@ function paintLines() {
   const px = ([x, z]) => ({ x: PX.x + x * PX.unit, y: PX.y + z * PX.unit });
   $('#field-lines').innerHTML = fieldLines(mode, direction).map(pts => `<path d="${toPath(pts.map(px))}" class="field-line"/>`).join('');
 }
+// 전원 장치와 코일을 잇는 두 전선(위에서 본 모습). 코일의 두 끝은 판 아래(가운데)로 나와요.
+// 처음 방향: (+)극 → 코일의 동쪽 끝, 서쪽 끝 → (−)극. ‘전류 방향 바꾸기’를 누르면 두 전선을 서로 바꾸어 꽂아요.
+// 판을 뚫는 두 곳에는 전류의 방향을 ⊙(판 위로 나옴), ⊗(판 아래로 들어감)로 나타내요. 3D 화면과 같아요.
+const LEAD = { plus: [54, 162], minus: [102, 162], east: [COIL.x + 8, COIL.y + 6], west: [COIL.x - 8, COIL.y + 6] };
+let leadsKey = '';
+function paintLeads() {
+  const key = `${direction}:${on}`;
+  if (key === leadsKey) return;
+  leadsKey = key;
+  const plusEnd = direction > 0 ? LEAD.east : LEAD.west, minusEnd = direction > 0 ? LEAD.west : LEAD.east;
+  // 두 전선이 겹치지 않게, 동쪽 끝으로 가는 전선은 조금 더 아래로 돌아가요.
+  const low = end => (end === LEAD.east ? 430 : 422);
+  const plus = `M${LEAD.plus[0]} ${LEAD.plus[1]} V${low(plusEnd)} H${plusEnd[0]} V${plusEnd[1]}`;
+  const minus = `M${minusEnd[0]} ${minusEnd[1]} V${low(minusEnd)} H${LEAD.minus[0]} V${LEAD.minus[1]}`;
+  for (const [k, d] of [['p', plus], ['m', minus]]) for (const id of [`#lead-${k}`, `#lead-${k}-under`, `#lead-${k}-flow`]) $(id).setAttribute('d', d);
+  $('#leads').classList.toggle('on', on);
+  $('#crossings').setAttribute('opacity', on ? 1 : 0);
+  const dot = '<circle r="3.5"/>', cross = '<path d="M-5 -5 L5 5 M5 -5 L-5 5"/>';
+  $('#cross-n .mark').innerHTML = direction > 0 ? dot : cross;
+  $('#cross-s .mark').innerHTML = direction > 0 ? cross : dot;
+}
 function paint(dt) {
   if (mode === 'coil') {
     if (on) {
@@ -108,6 +131,7 @@ function paint(dt) {
     $('#current-arrow').setAttribute('opacity', on ? 1 : 0);
     // 위에서 본 모습: direction > 0이면 위쪽 도선에서 판 위로 나온 전류가 판 위의 코일을 따라 아래쪽 도선으로 들어가요.
     // 자기장 모형(coilField)의 부호와 같은 방향이에요(오른손 법칙). 그래서 화살표는 화면 아래쪽을 향해요.
+    paintLeads();
     $('#current-path').setAttribute('d', direction > 0 ? `M${COIL.x + 26} ${COIL.y - 30} V${COIL.y + 30}` : `M${COIL.x + 26} ${COIL.y + 30} V${COIL.y - 30}`);
     setText('#supply-v', on ? ['1.0', '3.0', '5.0'][level] : '0.0');
   }
@@ -137,7 +161,7 @@ function renderControls() {
     $('#controls').innerHTML = `<div role="group" aria-label="전류의 세기"><span class="group-label">전류의 세기</span>${LEVELS.map((l, i) => `<button data-level="${i}" aria-pressed="${i === level}">${l.label}</button>`).join('')}</div><div role="group" aria-label="전류의 방향"><button id="flip-btn">⇅ 전류 방향 바꾸기</button></div>`;
     $('#actions').innerHTML = `<button id="press-btn" class="primary hold" aria-pressed="false">스위치 누르고 있기 (누르는 동안 전류가 흘러요)</button>`;
     $$('[data-level]').forEach(b => b.onclick = () => { level = +b.dataset.level; press(false); renderControls(); });
-    $('#flip-btn').onclick = () => { direction *= -1; press(false); toast('⇅ 전류의 방향을 바꾸었어요'); renderText(); };
+    $('#flip-btn').onclick = () => { direction *= -1; press(false); toast('⇅ 전원 장치의 두 전선을 바꾸어 꽂았어요. 전류의 방향이 반대가 돼요'); renderText(); };
     const btn = $('#press-btn');
     btn.onpointerdown = e => { e.preventDefault(); btn.setPointerCapture?.(e.pointerId); press(true); };
     for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) btn.addEventListener(ev, () => press(false));
@@ -174,6 +198,7 @@ function setMode(next) {
   $('#magnet-group').toggleAttribute('hidden', next !== 'magnet');
   $('#coil-group').toggleAttribute('hidden', next !== 'coil');
   $('#supply').toggleAttribute('hidden', next !== 'coil');
+  $('#leads').toggleAttribute('hidden', next !== 'coil');
   renderControls();
 }
 // 움직이는 나침반은 판 위에서만 옮길 수 있어요.

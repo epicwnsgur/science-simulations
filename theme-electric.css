@@ -399,3 +399,54 @@ button[data-gated]::before{content:'🔒 '}
 /* 전류가 만든 자기장 3D: 판·나침반·코일을 모두 3D로 그려요. 움직이는 나침반(#probe)은 방향키로 옮길 수 있게 남겨 두고 보이지만 않게 해요. */
 .stage.three-on.coil3d #scene>:not(#probe):not(defs){display:none}
 .stage.three-on.coil3d #probe{opacity:0}
+/* 전류가 만든 자기장: 전원 장치와 코일을 잇는 전선(판 아래 부분은 점선), 전류가 흐르면 노란 무늬가 전류의 방향으로 흘러요. */
+#leads .lead{fill:none;stroke-width:4;stroke-linejoin:round}
+#leads .lead-p{stroke:#e04848}
+#leads .lead-m{stroke:#aab4d6}
+#leads .lead.under{stroke-dasharray:7 6;opacity:.55}
+#leads .lead-flow{fill:none;stroke:#ffd166;stroke-width:3;stroke-dasharray:6 16;opacity:0}
+#leads.on .lead-flow{opacity:1;animation:lead-flow .9s linear infinite}
+@keyframes lead-flow{to{stroke-dashoffset:-22}}
+#crossings .crossing>circle{fill:#1b2340;stroke:#ffd166;stroke-width:2.5}
+#crossings .mark circle{fill:#ffd166}
+#crossings .mark path{stroke:#ffd166;stroke-width:2.5}
+@media(prefers-reduced-motion:reduce){#leads.on .lead-flow{animation:none}}
+
+/* ---------- 아직 열리지 않은 단계(눌러도 넘어가지 않고 할 일을 알려 줘요) ---------- */
+#to-explanation[aria-disabled=true]{opacity:.45;cursor:help;box-shadow:none}
+.poe-steps li>button[aria-disabled=true]{cursor:help}
+
+/* ---------- 실험 순서 안내 가리키기 ---------- */
+.step-guide.attention{border-color:var(--volt);box-shadow:0 0 0 3px #ffd23f88,0 0 32px #ffd23f66;animation:guide-attn .5s ease-in-out 3 alternate}
+@keyframes guide-attn{from{transform:translateX(0)}to{transform:translateX(6px)}}
+.step-guide.attention li.current{position:relative}
+.step-guide.attention li.current::before{content:'👉';position:absolute;left:-30px;top:50%;font-size:22px;transform:translateY(-50%);animation:guide-point .6s ease-in-out infinite alternate}
+@keyframes guide-point{from{left:-34px}to{left:-24px}}
+.step-target{position:relative;outline:3px solid var(--volt)!important;outline-offset:3px;box-shadow:0 0 0 6px #ffd23f44,0 0 24px #ffd23f88!important;animation:target-pulse 1s ease-in-out infinite}
+.step-target::after{content:'👆 여기부터!';position:absolute;left:50%;top:calc(100% + 8px);z-index:5;transform:translateX(-50%);padding:3px 10px;border-radius:12px;background:var(--volt);color:#2a1600;font-size:13px;font-weight:800;white-space:nowrap;pointer-events:none}
+@keyframes target-pulse{50%{outline-color:#fff}}
+@media(max-width:800px){.step-guide.attention li.current::before{content:'👇';left:auto;right:12px;top:-6px;transform:none;animation:none}}
+@media(prefers-reduced-motion:reduce){.step-guide.attention,.step-guide.attention li.current::before,.step-target{animation:none}}
+
+/* ---------- 교사 모드 ---------- */
+.teacher-bar{display:flex;align-items:center;justify-content:flex-end;gap:12px;flex-wrap:wrap;margin:-12px 0 14px}
+.teacher-btn{padding:6px 12px;border-radius:16px;border:1px solid var(--line-2);background:#0a1029;color:var(--muted);font-size:13px}
+.teacher-btn:hover{border-color:var(--current);color:var(--ink)}
+body.teacher-on .teacher-btn{color:var(--ink)}
+.teacher-status{margin:0;padding:6px 12px;border-radius:16px;background:#3a3000;border:1px solid var(--volt);color:#ffe9a8;font-size:14px;font-weight:600}
+.teacher-status[hidden]{display:none}
+.teacher-dialog label{display:block;margin:14px 0 6px;font-weight:700;color:var(--ink)}
+.teacher-dialog input{width:100%;padding:12px 14px;border-radius:8px;border:1px solid var(--line-2);background:#070c22;color:var(--ink);font:inherit;font-size:20px;letter-spacing:4px}
+.teacher-dialog input:focus{outline:2px solid var(--current)}
+.teacher-error{min-height:1.6em;color:#ff9aa6;margin:8px 0 0}
+.lab-readable .teacher-btn,.lab-readable .teacher-status{font-size:calc(14px * var(--fs))}
+
+/* ---------- 과학 낱말 뜻 풀이 ---------- */
+button.term{display:inline;padding:0 1px;margin:0;border:0;background:none;font:inherit;color:inherit;text-decoration:underline dotted #5fe0ff;text-decoration-thickness:2px;text-underline-offset:4px;cursor:help;border-radius:3px}
+button.term:hover,button.term[aria-expanded=true]{background:#5fe0ff22;color:#fff}
+button.term:focus-visible{outline:2px solid var(--current);outline-offset:2px}
+.term-pop{position:absolute;z-index:70;padding:14px 16px 12px;border-radius:12px;background:#16264f;border:1px solid var(--current);box-shadow:0 12px 30px #000a;color:var(--ink);font-size:16px;line-height:1.65}
+.term-pop[hidden]{display:none}
+.term-pop b{display:block;margin-bottom:4px;color:var(--volt);font-size:17px}
+.term-pop p{margin:0 0 8px;color:#e8eeff}
+.term-pop .term-close{float:right;padding:4px 12px;border-radius:12px;border:1px solid var(--line-2);background:#0a1029;color:var(--ink);font-size:13px}

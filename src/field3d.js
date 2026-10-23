@@ -9,8 +9,11 @@ export const toBoard = p => [(p.x - PX.x) / PX.unit, 0, (p.y - PX.y) / PX.unit];
 export const EARTH3 = Object.freeze([0, 0, -1]); // 지구 자기장(수평 성분)은 북쪽(−z)을 향해요.
 export const COIL3 = Object.freeze({ radius: 1, turns: 5, width: .36, segments: 48 });
 export const MAGNET3 = Object.freeze({ half: 80 / 58, height: .3, thick: .55 });
-const K_COIL = 1.6;   // 전류의 세기 1일 때 코일 가운데 자기장 ≈ 지구 자기장의 50배
-const K_MAGNET = 9;
+// 세기 비율: 교과서 그림처럼 둘레의 나침반 8개가 코일(자석)의 자기장 방향을 거의 따라가도록 정했어요.
+// (지구 자기장과의 차이: 막대자석 10° 안팎, 코일은 ‘보통’ 10° 안팎·‘세게’ 5° 안팎, ‘약하게’는 20°쯤 어긋나 전류의 세기 차이가 보여요.)
+// 판 가장자리처럼 먼 곳은 지구 자기장의 영향이 커져 북쪽에 가깝게 가리켜요.
+export const K_COIL = 8;     // 전류의 세기 1일 때 코일 가운데 자기장 ≈ 지구 자기장의 250배
+export const K_MAGNET = 45;
 
 const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
 const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
