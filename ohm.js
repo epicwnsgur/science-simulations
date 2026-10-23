@@ -234,9 +234,9 @@ function frame(now) {
     const full = kind => [1, 2, 3, 4].every(v => records[kind][v] !== undefined);
     const tc = [...tested];
     flow?.update(checklist([
-      ['긴 니크롬선: 1~4 V에서 전류 기록하기', full('long'), '+1 V → 스위치 닫기 → 측정값 기록 → 스위치 열기를 4번'],
+      ['긴 니크롬선: 1~4 V에서 전류 기록하기', full('long'), '‘+ 1 V’ → ‘스위치 닫기’ → ‘측정값 기록하기’ → ‘스위치 열기’를 4번'],
       ['짧은 니크롬선: 1~4 V에서 전류 기록하기', full('short'), '‘짧은 니크롬선’을 고르고 같은 방법으로 4번', '[data-wire="short"]'],
-      ['도체와 부도체를 두 가지씩 확인하기', tc.filter(k => MATERIALS[k].conductor).length >= 2 && tc.filter(k => !MATERIALS[k].conductor).length >= 2, '‘도체와 부도체’ 탭 → 물질을 고르고 스위치 닫기', '#tab-material'],
+      ['도체와 부도체를 두 가지씩 확인하기', tc.filter(k => MATERIALS[k].conductor).length >= 2 && tc.filter(k => !MATERIALS[k].conductor).length >= 2, '‘도체와 부도체’ 탭 → 물질을 고르고 ‘스위치 닫기’', '#tab-material'],
     ]));
   }
   requestAnimationFrame(frame);

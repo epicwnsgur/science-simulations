@@ -361,10 +361,10 @@ function setText(selector, text) { const el = $(selector); if (el.textContent !=
 function setHTML(selector, html) { const el = $(selector); if (el.dataset.html !== html) { el.innerHTML = html; el.dataset.html = html; } }
 function progress() {
   const steps = [
-    ['(−)전하를 띤 빨대로 숟가락 움직이기', seen.spoonMinus, '‘쇠숟가락 움직이기’ 탭 → (−)빨대를 손잡이 끝에 가까이'],
-    ['(+)전하를 띤 장갑으로 숟가락 움직이기', seen.spoonPlus, '(+)장갑을 고르고 가까이 가져가요', '[data-spoon="glove"]'],
-    ['검전기: 2~3번 문지른 물체 가까이 하기', seen.levels.has(1), '‘검전기 관찰하기’ 탭 → ‘2~3번 문지름’ → 가까이', '#scope-tab'],
-    ['검전기: 10번 이상 문지른 물체 가까이 하기', seen.levels.has(2), '‘10번 이상 문지름’으로 바꾸어 비교해요', '[data-rub="2"]'],
+    ['(−)전하를 띤 빨대로 숟가락 움직이기', seen.spoonMinus, '‘쇠숟가락 움직이기’ 탭 → ‘(−)전하를 띤 빨대’ → ‘가까이 가져가기’'],
+    ['(+)전하를 띤 장갑으로 숟가락 움직이기', seen.spoonPlus, '‘(+)전하를 띤 장갑’을 고르고 ‘가까이 가져가기’', '[data-spoon="glove"]'],
+    ['검전기: 2~3번 문지른 물체 가까이 하기', seen.levels.has(1), '‘검전기 관찰하기’ 탭 → ‘2~3번 문지름’ → ‘가까이 가져가기’', '#scope-tab'],
+    ['검전기: 10번 이상 문지른 물체 가까이 하기', seen.levels.has(2), '‘10번 이상 문지름’으로 바꾸고 ‘가까이 가져가기’', '[data-rub="2"]'],
   ];
   return checklist(steps);
 }

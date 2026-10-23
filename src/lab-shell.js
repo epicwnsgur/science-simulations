@@ -64,7 +64,8 @@ export function markAnswer(buttons, chosen, right, feedback, text) {
   feedback.classList.toggle('right', right); feedback.classList.toggle('wrong', !right);
 }
 
-// 관찰 단계 체크리스트. steps: [[이름, 완료 여부, 하는 방법, 이 단계에서 처음 쓰는 조작(CSS 선택자)], ...]
+// 관찰 단계 체크리스트. steps: [[이름, 완료 여부, 하는 방법, 이 단계에서 처음 쓰는 조작(CSS 선택자), 눌러야 할 조작(선택)], ...]
+// ‘하는 방법’에는 눌러야 할 단추 이름을 ‘ ’로 감싸 적어요. 학생이 실험 순서 안내의 단계를 누르면 그 단추를 찾아 ‘👆 여기를 눌러요’로 알려 줘요.
 // 넷째 값을 주면 앞 단계를 마치기 전에는 그 조작이 잠겨 실험 순서대로 진행돼요(src/poe-flow.js의 gate).
 export function checklist(steps) {
   const done = steps.filter(([, d]) => d).length;
@@ -73,7 +74,8 @@ export function checklist(steps) {
     ready: done === steps.length,
     message: done === steps.length ? `${steps.length}가지 관찰을 모두 해 보았어요. 직접 본 결과를 기록해 주세요.` : `관찰 ${done}/${steps.length} · 다음: ${next[0]}`,
     // 왼쪽 실험 순서 안내와 순서 잠금에 쓰는 단계 목록
-    steps: steps.map(([label, isDone, hint, unlocks]) => ({ label, done: !!isDone, hint: hint ?? '', unlocks: unlocks ?? '' })),
+    // press(다섯째 값, 고를 수 있어요): 안내 글에 단추 이름(‘…’)이 없을 때 눌러야 할 조작의 CSS 선택자
+    steps: steps.map(([label, isDone, hint, unlocks, press]) => ({ label, done: !!isDone, hint: hint ?? '', unlocks: unlocks ?? '', press: press ?? '' })),
   };
 }
 

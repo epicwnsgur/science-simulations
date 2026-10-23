@@ -15,7 +15,7 @@ test('과학 낱말: 낱말의 일부(부도체 속 도체, 전자석 속 전자
 test('과학 낱말: 뜻 풀이는 짧고 쉬운 말이며, 교육과정 밖의 말(자기력선 등)을 쓰지 않음', () => {
   for (const [term, text] of Object.entries(TERMS)) {
     assert.ok(text.length >= 15 && text.length <= 120, term);
-    assert.ok(!/자기력선|비오|사바르|쿨롱/.test(text), term);
+    assert.ok(!/자기력선|비오|사바르|쿨롱|알갱이/.test(text), term); // 교과서 낱말: ‘알갱이’ 대신 ‘입자’
     assert.ok(/요[.)]?$|\)$/.test(text.trim()), `${term}: 해요체로 끝나요`);
   }
 });

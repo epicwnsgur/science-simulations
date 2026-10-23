@@ -1,7 +1,8 @@
 import { test, expect } from '@playwright/test';
 import { beginObservation, openObserveUnlocked } from './poe-helpers.js';
 
-test('전기 그네: 스위치를 누르는 동안만 전류 화살표가 나타남', async ({ page }) => {
+test('전기 그네(2D 그림): 스위치를 누르는 동안만 전류 화살표가 나타남', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('swing-view', '2d'));
   await page.goto('/simulations/electric-swing/');
   await beginObservation(page);
   await page.locator('#show-detail').check();
