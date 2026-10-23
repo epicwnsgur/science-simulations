@@ -130,3 +130,28 @@ test('설명하기: 개념 정리·퀴즈·안내 상자의 글씨가 바탕과 
     expect(bad, slug).toEqual([]);
   }
 });
+
+test('순서 안내: 단계를 누르면 그 단계를 하는 방법과 눌러야 할 단추(‘👆 여기를 눌러요’)를 알려 줌', async ({ browser }) => {
+  const LIST = [['friction-electricity', 2, '① 털에 문지르기'], ['electrostatic-induction', 1, '가까이 가져가기'], ['electric-current', 1, '털가죽으로 접시 문지르기'], ['ohms-law', 1, '+ 1 V'], ['series-parallel', 1, '스위치 S1 닫기'], ['electric-swing', 1, '스위치 누르고 있기'], ['electric-motor', 1, '전류 흘리기'], ['coil-magnetic-field', 1, null]];
+  for (const [slug, count, button] of LIST) {
+    const page = await browser.newPage();
+    await page.addInitScript(() => localStorage.setItem('motor-view', '2d'));
+    const { openObserveUnlocked } = await import('./poe-helpers.js');
+    await openObserveUnlocked(page, `/simulations/${slug}/`, { count, observed: false });
+    await page.locator('[data-guide-step="0"]').click();
+    await expect(page.locator('.flow-toast'), slug).toContainText('이렇게 해요');
+    if (button) {
+      const target = page.locator('.step-target');
+      await expect(target, slug).toHaveCount(1);
+      await expect(target, slug).toContainText(button);
+      await expect(target).toHaveAttribute('data-target-label', '👆 여기를 눌러요');
+    }
+    // 아직 열리지 않은 뒤 단계를 누르면 앞 단계부터 하라고 알려 줘요.
+    await page.locator('[data-guide-step="1"]').click();
+    await expect(page.locator('.flow-toast'), slug).toContainText('앞 단계를 마치면 열려요');
+    // 마지막 ‘관찰 결과 기록하기’를 누르면 기록 칸으로 가요.
+    await page.locator('[data-guide-step="final"]').click();
+    await expect(page.locator('#observation-record')).toBeFocused();
+    await page.close();
+  }
+});

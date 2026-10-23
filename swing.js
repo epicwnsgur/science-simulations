@@ -6,6 +6,7 @@ import './readable.css';
 import { setupPOEFlow } from './src/poe-flow.js';
 import { $, $$, setText, setHTML, buildLab, checklist, toast, burst, reducedMotion } from './src/lab-shell.js';
 import { VOLTAGES, swingAngle, swingDirection } from './src/force-model.js';
+import { setupViewToggle } from './src/view-toggle.js';
 
 // 교과서 260–261쪽, 지도서 590–593쪽(12차시).
 // 지도상 유의점: 전류의 방향, 자기장의 방향에 따라 힘의 방향이 바뀌고, 전류의 세기에 따라 힘의 크기가 달라짐을 이해합니다.
@@ -54,6 +55,7 @@ const results = {}; // '1,1': 'out' 처럼 조건별 관찰 결과
 const maxByVoltage = {};
 const seen = { first: false, reversed: false, flipped: false, voltage: false };
 let flow = null;
+let use3d = false;
 
 function magnetSVG() {
   // 말굽자석: 오른쪽이 굽은 부분, 왼쪽으로 두 팔이 뻗어 있어요. magnet=+1이면 위쪽 팔이 S극(파랑), 아래쪽 팔이 N극(빨강).
@@ -90,11 +92,14 @@ function paint(dt) {
   const target = -swingAngle(current, magnet, VOLTAGES[vIndex], on);
   if (reducedMotion.matches) { angle = target; vel = 0; }
   else { vel += ((target - angle) * 40 - vel * 2.6) * dt; angle += vel * dt; }
-  setHTML('#magnet', magnetSVG());
-  $('#swing-far').innerHTML = swingSVG('far');
-  $('#swing-near').innerHTML = swingSVG('near');
-  $('#arrows').innerHTML = arrowsSVG();
-  $('#arrows').setAttribute('opacity', show ? 1 : 0);
+  if (use3d) view3d.view.update({ angle, on, show, current, magnet, vIndex, volts: on ? VOLTAGES[vIndex].toFixed(1) : '0.0' }, dt);
+  else {
+    setHTML('#magnet', magnetSVG());
+    $('#swing-far').innerHTML = swingSVG('far');
+    $('#swing-near').innerHTML = swingSVG('near');
+    $('#arrows').innerHTML = arrowsSVG();
+    $('#arrows').setAttribute('opacity', show ? 1 : 0);
+  }
   setText('#supply-v', on ? VOLTAGES[vIndex].toFixed(1) : '0.0');
   if (on) {
     onTime += dt;
@@ -124,7 +129,7 @@ function renderControls() {
   $('#controls').innerHTML = `<div role="group" aria-label="전압"><span class="group-label">전압</span>${VOLTAGES.map((v, i) => `<button data-v="${i}" aria-pressed="${i === vIndex}">${v} V</button>`).join('')}</div><div role="group" aria-label="바꾸기"><button id="flip-current">⇅ 전류의 방향 바꾸기</button><button id="flip-magnet">🧲 자석의 N극과 S극 바꾸기</button></div>`;
   $('#actions').innerHTML = `<button id="press-btn" class="primary hold" aria-pressed="false">스위치 누르고 있기 (누르는 동안 전류가 흘러요)</button>`;
   $$('[data-v]').forEach(b => b.onclick = () => { vIndex = +b.dataset.v; press(false); renderControls(); });
-  $('#flip-current').onclick = () => { current *= -1; press(false); toast('⇅ 전류의 방향을 바꾸었어요'); renderText(); };
+  $('#flip-current').onclick = () => { current *= -1; press(false); toast('⇅ 전원 장치의 두 전선을 바꾸어 꽂았어요. 전류의 방향이 반대가 돼요'); renderText(); };
   $('#flip-magnet').onclick = () => { magnet *= -1; press(false); toast('🧲 자석의 극을 바꾸었어요'); renderText(); };
   const btn = $('#press-btn');
   btn.onpointerdown = e => { e.preventDefault(); btn.setPointerCapture?.(e.pointerId); press(true); };
@@ -139,13 +144,22 @@ function renderText() {
   setText('#subguide', '전류의 방향, 자석의 극, 전압을 하나씩 바꾸어 비교해요. 관찰한 뒤에는 바로 손을 떼요.');
   setText('#stage-state', `전류 ${on ? '흐름' : '흐르지 않음'} · 전류 방향 ${current > 0 ? '처음' : '반대'} · 자석 ${magnet > 0 ? '처음' : '극 바꿈'} · ${VOLTAGES[vIndex]} V`);
   setText('#note-title', on ? '그네가 어느 쪽으로 움직이나요?' : '스위치를 눌러 전류를 흘려 보세요');
-  setText('#note-text', '‘자기장·전류·힘 보기’를 켜면 자기장(하늘색), 전류(초록색), 힘(빨간색)의 방향을 함께 볼 수 있어요.');
+  setText('#note-text', `‘자기장·전류·힘 보기’를 켜면 자기장(하늘색), 전류(${use3d ? '노란색' : '초록색'}), 힘(빨간색)의 방향을 함께 볼 수 있어요.`);
   const row = (label, key) => `<tr><td>${label}</td><td>${results[key] ?? ''}</td></tr>`;
   setHTML('#readout', `<table class="data-table"><tr><th>과정</th><th>움직이는 방향</th></tr>${row('과정 2: 처음 상태', '1,1')}${row('과정 3: 전류 방향 바꿈', '-1,1')}${row('과정 4: 자석 극 바꿈', '1,-1')}${row('전류와 극 모두 바꿈', '-1,-1')}</table><table class="data-table"><tr><th>전압</th>${VOLTAGES.map(v => `<th>${v} V</th>`).join('')}</tr><tr><td>움직인 정도</td>${VOLTAGES.map(v => `<td>${maxByVoltage[v] ? '▮'.repeat(Math.max(1, Math.round(maxByVoltage[v] / 2.5))) : ''}</td>`).join('')}</tr></table>`);
-  setText('#model-note', '말굽자석은 위쪽 팔과 아래쪽 팔 사이에 자기장을 만들어요. 그네가 움직이는 정도와 흔들림은 보기 쉽게 나타냈어요. 오른손으로 힘의 방향을 찾을 수도 있어요.');
+  setText('#model-note', `말굽자석은 위쪽 팔과 아래쪽 팔 사이에 자기장을 만들어요. 코일 중 두 팔 사이를 지나는 아래 변이 힘을 받아요.${use3d ? ' 3D 화면을 끌어 돌려 보고, ‘앞에서’를 누르면 그네가 움직이는 방향이 잘 보여요. 전류의 방향을 바꾸면 전원 장치의 두 전선을 바꾸어 꽂아요.' : ''} 그네가 움직이는 정도와 흔들림은 보기 쉽게 나타냈어요. 오른손으로 힘의 방향을 찾을 수도 있어요.`);
   setText('#discovery', '패러데이는 자석 주변에 놓인 전선에 전류를 흘려주면 전선이 회전한다는 것을 알아냈어요.');
 }
 $('#tab-swing').onclick = () => {};
+
+/* ---------- 3D로 보기 ----------
+   말굽자석의 두 팔 사이를 지나는 코일 아래 변, 전원 장치와 전선, 자기장·전류·힘을 입체로 보여 줘요(src/swing-3d.js).
+   WebGL을 쓸 수 없는 기기에서는 2D 그림으로 실험해요. */
+const view3d = setupViewToggle({
+  stage: $('.stage'), key: 'swing-view', cams: [['oblique', '비스듬히'], ['front', '앞에서'], ['side', '옆에서']],
+  load: () => import('./src/swing-3d.js').then(({ createSwing3D }) => createSwing3D({ stage: $('.stage'), svg: $('#scene'), reducedMotion })),
+  onChange: active => { use3d = active; renderText(); },
+});
 $('#reset').onclick = () => { press(false); current = 1; magnet = 1; vIndex = 0; angle = 0; vel = 0; renderControls(); };
 $('#show-detail').onchange = e => { show = e.target.checked; };
 
@@ -155,9 +169,9 @@ function frame(now) {
     paint(dt);
     flow?.update(checklist([
       ['과정 2: 처음 상태에서 그네 관찰하기', seen.first, '‘스위치 누르고 있기’를 눌러 움직이는 방향을 봐요'],
-      ['과정 3: 전류의 방향을 바꾸어 관찰하기', seen.reversed, '‘전류의 방향 바꾸기’ 뒤 스위치를 눌러요', '#flip-current'],
-      ['과정 4: 자석의 극을 바꾸어 관찰하기', seen.flipped, '‘자석의 N극과 S극 바꾸기’ 뒤 스위치를 눌러요', '#flip-magnet'],
-      ['과정 5: 전압을 바꾸어 움직이는 정도 비교하기', seen.voltage, '전압을 바꾸어 두 번 이상 스위치를 눌러요', '[data-v]'],
+      ['과정 3: 전류의 방향을 바꾸어 관찰하기', seen.reversed, '‘전류의 방향 바꾸기’를 누른 뒤 ‘스위치 누르고 있기’', '#flip-current'],
+      ['과정 4: 자석의 극을 바꾸어 관찰하기', seen.flipped, '‘자석의 N극과 S극 바꾸기’를 누른 뒤 ‘스위치 누르고 있기’', '#flip-magnet'],
+      ['과정 5: 전압을 바꾸어 움직이는 정도 비교하기', seen.voltage, '‘5 V’처럼 전압을 바꾸어 두 번 이상 ‘스위치 누르고 있기’', '[data-v]'],
     ]));
   }
   requestAnimationFrame(frame);

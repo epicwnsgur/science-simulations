@@ -176,11 +176,11 @@ function frame(now) {
   if (!flow || flow.stage === 'observe') {
     paint(dt);
     flow?.update(checklist([
-      ['① 전구 1개 회로의 밝기 확인하기', seen.single, '‘전구 1개’ 탭 → 스위치를 닫고 밝기를 기억해요'],
+      ['① 전구 1개 회로의 밝기 확인하기', seen.single, '‘전구 1개’ 탭 → ‘스위치 S1 닫기’를 누르고 밝기를 기억해요'],
       ['② 직렬연결: 스위치 모두 닫기', seen.seriesAll, '‘직렬연결’ 탭 → ‘스위치 모두 닫기’', '#tab-series'],
-      ['② 직렬연결: 스위치 하나만 열기', seen.seriesOne, '스위치 하나를 다시 눌러 열어요'],
+      ['② 직렬연결: 스위치 하나만 열기', seen.seriesOne, '그림의 스위치(S1이나 S2) 하나를 눌러 열어요', '', '[data-switch]'],
       ['③ 병렬연결: 스위치 모두 닫기', seen.parallelAll, '‘병렬연결’ 탭 → ‘스위치 모두 닫기’', '#tab-parallel'],
-      ['③ 병렬연결: 스위치 하나만 열기', seen.parallelOne, '스위치 하나를 다시 눌러 열어요'],
+      ['③ 병렬연결: 스위치 하나만 열기', seen.parallelOne, '그림의 스위치(S1이나 S2) 하나를 눌러 열어요', '', '[data-switch]'],
     ]));
   }
   requestAnimationFrame(frame);

@@ -423,7 +423,7 @@ button[data-gated]::before{content:'🔒 '}
 .step-guide.attention li.current::before{content:'👉';position:absolute;left:-30px;top:50%;font-size:22px;transform:translateY(-50%);animation:guide-point .6s ease-in-out infinite alternate}
 @keyframes guide-point{from{left:-34px}to{left:-24px}}
 .step-target{position:relative;outline:3px solid var(--volt)!important;outline-offset:3px;box-shadow:0 0 0 6px #ffd23f44,0 0 24px #ffd23f88!important;animation:target-pulse 1s ease-in-out infinite}
-.step-target::after{content:'👆 여기부터!';position:absolute;left:50%;top:calc(100% + 8px);z-index:5;transform:translateX(-50%);padding:3px 10px;border-radius:12px;background:var(--volt);color:#2a1600;font-size:13px;font-weight:800;white-space:nowrap;pointer-events:none}
+.step-target::after{content:attr(data-target-label);position:absolute;left:50%;top:calc(100% + 8px);z-index:5;transform:translateX(-50%);padding:3px 10px;border-radius:12px;background:var(--volt);color:#2a1600;font-size:13px;font-weight:800;white-space:nowrap;pointer-events:none}
 @keyframes target-pulse{50%{outline-color:#fff}}
 @media(max-width:800px){.step-guide.attention li.current::before{content:'👇';left:auto;right:12px;top:-6px;transform:none;animation:none}}
 @media(prefers-reduced-motion:reduce){.step-guide.attention,.step-guide.attention li.current::before,.step-target{animation:none}}
@@ -450,3 +450,13 @@ button.term:focus-visible{outline:2px solid var(--current);outline-offset:2px}
 .term-pop b{display:block;margin-bottom:4px;color:var(--volt);font-size:17px}
 .term-pop p{margin:0 0 8px;color:#e8eeff}
 .term-pop .term-close{float:right;padding:4px 12px;border-radius:12px;border:1px solid var(--line-2);background:#0a1029;color:var(--ink);font-size:13px}
+
+/* 실험 순서 안내의 단계는 눌러서 ‘어떻게 하는지’를 볼 수 있어요. */
+.guide-steps li{padding:0}
+.guide-item{display:flex;gap:10px;align-items:flex-start;width:100%;padding:10px;border:0;border-radius:10px;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.guide-item:hover{background:#ffffff0d}
+.guide-item:focus-visible{outline:2px solid var(--current);outline-offset:-2px}
+.guide-steps small.guide-how{color:var(--current);opacity:.85}
+.guide-steps li.done small.guide-how,.guide-steps li.todo small.guide-how{opacity:.6}
+/* 전기 그네 3D: 장치를 모두 3D로 그려요. */
+.stage.three-on.swing3d #scene>:not(defs){display:none}

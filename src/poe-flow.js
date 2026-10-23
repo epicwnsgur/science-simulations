@@ -336,11 +336,56 @@ export function setupPOEFlow(config) {
     if (r.bottom < 60 || r.top > innerHeight - 60) guide.scrollIntoView({ behavior: reducedMotion.matches ? 'instant' : 'smooth', block: 'center' });
     guide.querySelector('li.current')?.scrollIntoView?.({ block: 'nearest' });
     const step = (lastProgress?.steps ?? []).find(v => !v.done);
-    const target = step?.unlocks ? [...document.querySelectorAll(step.unlocks)].find(el => el.offsetParent) : null;
-    target?.classList.add('step-target');
+    const target = step ? stepTarget(step) ?? (step.unlocks ? [...document.querySelectorAll(step.unlocks)].find(el => el.offsetParent) : null) : null;
+    if (target) { target.dataset.targetLabel = '👆 여기부터!'; target.classList.add('step-target'); }
     clearTimeout(pointTimer);
     pointTimer = setTimeout(() => { guide.classList.remove('attention'); target?.classList.remove('step-target'); }, 4500);
   }
+  // 단계에서 눌러야 할 조작 찾기: 안내 글의 ‘단추 이름’을 차례로 보며, 화면에 보이고 아직 고르지 않은 첫 단추를 골라요.
+  // (탭은 이미 열려 있으면 건너뛰어요.) 이름이 없으면 단계의 press 선택자를 써요.
+  const words = t => t.replace(/[()‘’'"↑↓↻▶⇅🧲👆🥄🧤✔·:,]/g, ' ').split(/\s+/).filter(Boolean);
+  function stepTarget(step) {
+    const visible = el => el.offsetParent || el.closest('svg');
+    const fresh = el => !el.disabled && el.getAttribute('aria-selected') !== 'true' && el.getAttribute('aria-pressed') !== 'true';
+    const pool = [...document.querySelectorAll('#simulation-mount button, #simulation-mount [role=button], #simulation-mount [role=tab]')].filter(el => !el.closest('.step-guide, .term-pop') && !el.matches('.term') && visible(el));
+    for (const name of [...step.hint.matchAll(/‘([^’]+)’/g)].map(m => m[1])) {
+      const want = words(name);
+      const hits = pool.filter(el => { const have = words(el.textContent || el.getAttribute('aria-label') || ''); return want.every(w => have.includes(w)); });
+      if (!hits.length) continue;
+      const pick = hits.find(fresh);
+      if (pick) return pick;
+    }
+    return step.press ? [...document.querySelectorAll(step.press)].find(visible) ?? null : null;
+  }
+  function markTarget(el, text) {
+    document.querySelectorAll('.step-target').forEach(v => v.classList.remove('step-target'));
+    if (!el) return;
+    el.dataset.targetLabel = text;
+    el.classList.add('step-target');
+    const r = el.getBoundingClientRect();
+    if (r.top < 70 || r.bottom > innerHeight - 70) el.scrollIntoView({ behavior: reducedMotion.matches ? 'instant' : 'smooth', block: 'center' });
+    clearTimeout(pointTimer);
+    pointTimer = setTimeout(() => el.classList.remove('step-target'), 5000);
+  }
+  // 실험 순서 안내의 단계를 누르면: 그 단계를 하는 방법을 알려 주고, 눌러야 할 단추에 ‘👆 여기를 눌러요’를 표시해요.
+  $('#step-guide').addEventListener('click', ev => {
+    const item = ev.target.closest('[data-guide-step]');
+    if (!item) return;
+    if (item.dataset.guideStep === 'final') {
+      toast('✎ 아래 ‘실제로 무엇을 보았나요?’에 본 것을 적고 ‘관찰 저장하고 설명하기’를 눌러요.');
+      $('#observation-record').scrollIntoView({ behavior: reducedMotion.matches ? 'instant' : 'smooth', block: 'center' });
+      $('#observation-record').focus({ preventScroll: true });
+      return;
+    }
+    const steps = lastProgress?.steps ?? [], i = +item.dataset.guideStep, step = steps[i];
+    if (!step) return;
+    const current = steps.findIndex(v => !v.done);
+    const locked = !step.done && i > current && !exp().observed && !teacherMode.on;
+    if (locked) { markTarget(null); return toast(`🔒 ‘${step.label}’은(는) 앞 단계를 마치면 열려요. 먼저 ‘${steps[current].label}’부터 해요.`); }
+    const target = stepTarget(step);
+    toast(`${step.done ? '✓ 이미 해 본 단계예요. 다시 해 보려면 · ' : '👉 이렇게 해요 · '}${step.hint || step.label}`);
+    markTarget(target, '👆 여기를 눌러요');
+  });
   const nextStepLabel = () => (lastProgress?.steps ?? []).find(v => !v.done)?.label;
 
   // 왼쪽 실험 순서 안내: 끝낸 단계는 ✓, 지금 할 단계는 강조, 뒤 단계는 🔒, 모두 끝나면 마지막 ‘기록하기’ 단계를 강조해요.
@@ -354,10 +399,10 @@ export function setupPOEFlow(config) {
     const items = steps.map((v, i) => {
       const state = v.done ? 'done' : i === current ? 'current' : 'todo';
       const lockedStep = state === 'todo' && !exp().observed && !teacherMode.on;
-      return `<li class="${state}${lockedStep ? ' locked' : ''}"${state === 'current' ? ' aria-current="step"' : ''}><span class="guide-num">${v.done ? '✓' : lockedStep ? '🔒' : i + 1}</span><div><b>${v.label}</b>${state === 'current' ? `<small class="guide-now">지금 할 일</small>` : ''}${v.hint && state === 'current' ? `<small>${v.hint}</small>` : ''}${lockedStep ? '<small>앞 단계를 마치면 열려요</small>' : ''}</div></li>`;
+      return `<li class="${state}${lockedStep ? ' locked' : ''}"${state === 'current' ? ' aria-current="step"' : ''}><button type="button" class="guide-item" data-guide-step="${i}" aria-label="${v.label}: 어떻게 하는지 보기"><span class="guide-num">${v.done ? '✓' : lockedStep ? '🔒' : i + 1}</span><div><b>${v.label}</b>${state === 'current' ? `<small class="guide-now">지금 할 일</small>` : ''}${v.hint && state === 'current' ? `<small>${v.hint}</small>` : ''}${lockedStep ? '<small>앞 단계를 마치면 열려요</small>' : ''}<small class="guide-how">👆 눌러서 할 일 보기</small></div></button></li>`;
     });
     const allDone = current === -1;
-    items.push(`<li class="${allDone ? 'current final' : 'todo final'}"${allDone ? ' aria-current="step"' : ''}><span class="guide-num">✎</span><div><b>관찰 결과 기록하기</b>${allDone ? '<small class="guide-now">지금 할 일</small>' : ''}<small>아래에 본 것을 적고 ‘관찰 저장하고 설명하기’를 눌러요</small></div></li>`);
+    items.push(`<li class="${allDone ? 'current final' : 'todo final'}"${allDone ? ' aria-current="step"' : ''}><button type="button" class="guide-item" data-guide-step="final"><span class="guide-num">✎</span><div><b>관찰 결과 기록하기</b>${allDone ? '<small class="guide-now">지금 할 일</small>' : ''}<small>아래에 본 것을 적고 ‘관찰 저장하고 설명하기’를 눌러요</small></div></button></li>`);
     guide.querySelector('.guide-steps').innerHTML = items.join('');
     guide.querySelector('.guide-bar span').style.width = `${done / steps.length * 100}%`;
     guide.querySelector('.guide-count').textContent = `${done} / ${steps.length}`;
@@ -455,7 +500,7 @@ export function setupPOEFlow(config) {
   function explainClosedStep(target) {
     if (isReviewing()) return toast('📝 먼저 ‘실험 전 1분 복습’ 질문에 모두 답하고 ‘복습 마치고 실험 시작하기’를 눌러요.');
     const now = exp().stage;
-    if (now === 'predict') { toast('✏️ 먼저 예상을 고르고 까닭을 쓴 뒤 ‘예상 저장하고 실험하기’를 눌러요.'); $('#start-observation').classList.add('step-target'); setTimeout(() => $('#start-observation').classList.remove('step-target'), 4500); return; }
+    if (now === 'predict') { toast('✏️ 먼저 예상을 고르고 까닭을 쓴 뒤 ‘예상 저장하고 실험하기’를 눌러요.'); $('#start-observation').dataset.targetLabel = '👆 여기부터!'; $('#start-observation').classList.add('step-target'); setTimeout(() => $('#start-observation').classList.remove('step-target'), 4500); return; }
     if (now === 'observe' && target === 'explain') {
       const label = nextStepLabel();
       if (label) return pointToGuide(`🧭 아직 해 보지 않은 실험 단계가 있어요. ‘실험 순서 안내’를 보고 ‘${label}’부터 해 보세요.`);

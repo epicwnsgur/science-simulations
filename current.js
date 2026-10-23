@@ -24,44 +24,114 @@ const terms = [
   ['마찰 전기', '두 물체를 마찰할 때 전자가 이동하여 생기는 전기예요.'],
 ];
 
+// 그림은 실제 실험 기구처럼 그렸어요(교과서 242–243쪽): 털가죽, 플라스틱 접시, 절연 손잡이가 달린 알루미늄 접시, 유리관 속 두 전극이 보이는 네온전구,
+// 건전지(1.5 V), 유리구·필라멘트·소켓이 있는 전구, 피복을 입힌 구리 전선, 펌프·관·물레방아로 된 수로 모형.
+const FUR = Array.from({ length: 120 }, (_, i) => {
+  const x = B.x - 112 + (i * 37 % 224), y = 338 + (i * 13 % 28) - 8, bend = ((i * 7) % 9) - 4, h = 4 + (i * 5 % 5);
+  return `M${x} ${y} q${bend} ${-h / 2} ${bend * .6} ${-h}`;
+}).join('');
 const scene = `
+<defs>
+  <linearGradient id="cur-table" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5a4330"/><stop offset="1" stop-color="#3a2a1d"/></linearGradient>
+  <radialGradient id="cur-plastic" cx=".45" cy=".35" r=".75"><stop offset="0" stop-color="#ffffff"/><stop offset=".7" stop-color="#e6edf4"/><stop offset="1" stop-color="#b9c6d4"/></radialGradient>
+  <radialGradient id="cur-fur" cx=".5" cy=".4" r=".7"><stop offset="0" stop-color="#9a6b3f"/><stop offset="1" stop-color="#5d3b1f"/></radialGradient>
+  <linearGradient id="cur-alu" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f4f6f8"/><stop offset=".35" stop-color="#b8c1ca"/><stop offset=".55" stop-color="#eef1f4"/><stop offset="1" stop-color="#8d98a3"/></linearGradient>
+  <linearGradient id="cur-handle" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#9fd8ff" stop-opacity=".55"/><stop offset=".4" stop-color="#e8f6ff" stop-opacity=".9"/><stop offset="1" stop-color="#6fb6e6" stop-opacity=".55"/></linearGradient>
+  <linearGradient id="cur-glass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity=".55"/><stop offset=".45" stop-color="#cfe6ff" stop-opacity=".15"/><stop offset="1" stop-color="#ffffff" stop-opacity=".35"/></linearGradient>
+  <radialGradient id="cur-globe" cx=".38" cy=".32" r=".75"><stop offset="0" stop-color="#ffffff" stop-opacity=".55"/><stop offset=".5" stop-color="#d9ecff" stop-opacity=".18"/><stop offset="1" stop-color="#9fc4e8" stop-opacity=".35"/></radialGradient>
+  <linearGradient id="cur-screw" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8a8f99"/><stop offset=".45" stop-color="#e3e7ec"/><stop offset="1" stop-color="#6d727c"/></linearGradient>
+  <linearGradient id="cur-cell" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f2c27a"/><stop offset=".45" stop-color="#c87533"/><stop offset="1" stop-color="#7a3f17"/></linearGradient>
+  <linearGradient id="cur-cell-dark" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a4f5c"/><stop offset=".5" stop-color="#1f222b"/><stop offset="1" stop-color="#0d0f14"/></linearGradient>
+  <linearGradient id="cur-wood" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d6a46a"/><stop offset="1" stop-color="#8a5a2b"/></linearGradient>
+  <linearGradient id="cur-pump" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5b6c9e"/><stop offset="1" stop-color="#2c365a"/></linearGradient>
+</defs>
 <g id="neon-scene">
-  <ellipse cx="400" cy="372" rx="330" ry="16" fill="#000" opacity=".25"/>
-  <g id="plastic"><ellipse cx="${A.x}" cy="352" rx="120" ry="26" fill="#eef3f8" stroke="#b9c6d4" stroke-width="2"/><ellipse cx="${A.x}" cy="346" rx="96" ry="18" fill="#dfe7ef"/></g>
-  <g id="fur"><ellipse cx="${B.x}" cy="350" rx="125" ry="30" fill="#7a5532"/><path d="${Array.from({ length: 26 }, (_, i) => { const x = B.x - 112 + i * 9; return `M${x} 338 q4 -12 8 0`; }).join('')}" stroke="#a87b4f" stroke-width="3" fill="none"/></g>
+  <path d="M40 366 L760 366 L800 420 L0 420Z" fill="url(#cur-table)" opacity=".9"/><path d="M40 366 H760" stroke="#7a5c40" stroke-width="2"/>
+  <g id="plastic"><ellipse cx="${A.x}" cy="356" rx="122" ry="26" fill="#000" opacity=".25"/><ellipse cx="${A.x}" cy="350" rx="120" ry="26" fill="url(#cur-plastic)" stroke="#9fb0c2" stroke-width="2"/><ellipse cx="${A.x}" cy="346" rx="94" ry="17" fill="#e9eff5" stroke="#cbd6e1"/><path d="M${A.x - 70} 340 q40 -8 90 -4" stroke="#fff" stroke-width="3" fill="none" opacity=".8"/></g>
+  <g id="fur"><ellipse cx="${B.x}" cy="356" rx="128" ry="30" fill="#000" opacity=".25"/><ellipse cx="${B.x}" cy="350" rx="125" ry="30" fill="url(#cur-fur)"/><path d="${FUR}" stroke="#c4935e" stroke-width="2.2" fill="none" stroke-linecap="round" opacity=".9"/><path d="${FUR}" stroke="#6b4423" stroke-width="1" fill="none" transform="translate(3 4)" opacity=".7"/></g>
   <text class="muted" x="${A.x}" y="404" text-anchor="middle" font-size="13">플라스틱 접시</text>
   <text class="muted" x="${B.x}" y="404" text-anchor="middle" font-size="13">털가죽</text>
-  <g id="plate-b"><rect x="${B.x - 6}" y="200" width="12" height="104" rx="5" fill="#7cc7ff" opacity=".85"/><ellipse cx="${B.x}" cy="${B.y}" rx="98" ry="22" fill="#c9d1d9" stroke="#eef2f6" stroke-width="2"/><ellipse cx="${B.x}" cy="${B.y - 4}" rx="76" ry="13" fill="#aeb8c2"/></g>
-  <g id="plate-a"><rect x="${A.x - 6}" y="200" width="12" height="104" rx="5" fill="#7cc7ff" opacity=".85"/><ellipse cx="${A.x}" cy="${A.y}" rx="98" ry="22" fill="#c9d1d9" stroke="#eef2f6" stroke-width="2"/><ellipse cx="${A.x}" cy="${A.y - 4}" rx="76" ry="13" fill="#aeb8c2"/>
-    <path id="lead-a" d="M318 312 C334 266 352 228 ${BULB.x - 30} ${BULB.y}" stroke="#d8dde3" stroke-width="2.5" fill="none"/>
-    <g id="neon"><ellipse id="neon-glow" cx="${BULB.x}" cy="${BULB.y}" rx="70" ry="42" fill="#ff6a1f" opacity="0" filter="url(#glow-strong)"/><rect x="${BULB.x - 30}" y="${BULB.y - 13}" width="60" height="26" rx="13" fill="#ffffff22" stroke="#e8eef5" stroke-width="2"/><rect x="${BULB.x - 18}" y="${BULB.y - 4}" width="14" height="8" rx="2" fill="#9aa4ae"/><rect x="${BULB.x + 4}" y="${BULB.y - 4}" width="14" height="8" rx="2" fill="#9aa4ae"/><rect id="neon-gas" x="${BULB.x - 26}" y="${BULB.y - 9}" width="52" height="18" rx="9" fill="#ffb070" opacity="0" filter="url(#glow)"/></g>
+  ${['b', 'a'].map(k => { const P = k === 'a' ? A : B; return `<g id="plate-${k}">
+    <rect x="${P.x - 7}" y="196" width="14" height="110" rx="6" fill="url(#cur-handle)" stroke="#bfe6ff" stroke-width="1"/><circle cx="${P.x}" cy="196" r="11" fill="url(#cur-handle)" stroke="#bfe6ff"/>
+    ${k === 'a' ? `<text class="muted" x="${P.x - 14}" y="240" text-anchor="end" font-size="12">절연 손잡이</text>` : ''}
+    <ellipse cx="${P.x}" cy="${P.y + 3}" rx="100" ry="23" fill="#000" opacity=".2"/>
+    <ellipse cx="${P.x}" cy="${P.y}" rx="98" ry="22" fill="url(#cur-alu)" stroke="#f4f7fa" stroke-width="2"/>
+    <path d="${Array.from({ length: 24 }, (_, i) => { const a = i / 24 * Math.PI * 2, c = Math.cos(a), si = Math.sin(a); return `M${(P.x + c * 78).toFixed(1)} ${(P.y - 4 + si * 14).toFixed(1)} L${(P.x + c * 96).toFixed(1)} ${(P.y + si * 21).toFixed(1)}`; }).join('')}" stroke="#8d98a3" stroke-width="1" opacity=".7"/>
+    <ellipse cx="${P.x}" cy="${P.y - 4}" rx="76" ry="13" fill="#c3ccd5" stroke="#a6b1bc"/><path d="M${P.x - 50} ${P.y - 8} q30 -5 70 -2" stroke="#fff" stroke-width="2.5" fill="none" opacity=".7"/>
+    ${k === 'a' ? `<path id="lead-a" d="M318 312 C334 266 352 228 ${BULB.x - 34} ${BULB.y}" stroke="#d8dde3" stroke-width="2.5" fill="none"/>
+    <g id="neon">
+      <ellipse id="neon-glow" cx="${BULB.x}" cy="${BULB.y}" rx="70" ry="42" fill="#ff6a1f" opacity="0" filter="url(#glow-strong)"/>
+      <path d="M${BULB.x - 34} ${BULB.y} h8 M${BULB.x + 26} ${BULB.y} h8" stroke="#c9ced6" stroke-width="3"/>
+      <rect x="${BULB.x - 28}" y="${BULB.y - 14}" width="56" height="28" rx="14" fill="url(#cur-glass)" stroke="#eef4fb" stroke-width="2"/>
+      <path d="M${BULB.x - 26} ${BULB.y} h10 M${BULB.x + 16} ${BULB.y} h10" stroke="#b9c0c8" stroke-width="2"/>
+      <rect x="${BULB.x - 16}" y="${BULB.y - 8}" width="10" height="16" rx="1.5" fill="#9aa4ae" stroke="#6d7680"/>
+      <rect x="${BULB.x + 6}" y="${BULB.y - 8}" width="10" height="16" rx="1.5" fill="#9aa4ae" stroke="#6d7680"/>
+      <rect id="neon-gas" x="${BULB.x - 24}" y="${BULB.y - 10}" width="48" height="20" rx="10" fill="#ffb070" opacity="0" filter="url(#glow)"/>
+      <path d="M${BULB.x - 20} ${BULB.y - 9} q20 -4 40 0" stroke="#fff" stroke-width="2" fill="none" opacity=".75"/>
+    </g>
     <path id="lead-b" stroke="#d8dde3" stroke-width="2.5" fill="none"/>
     <circle id="lead-tip" r="4" fill="#eef2f6"/>
-    <text class="object-name" x="${BULB.x}" y="${BULB.y - 30}" text-anchor="middle">네온전구</text>
-  </g>
+    <text class="object-name" x="${BULB.x}" y="${BULB.y - 30}" text-anchor="middle">네온전구</text>` : ''}
+  </g>`; }).join('')}
   <path id="discharge-path" fill="none" stroke="none" d="M${A.x} ${A.y - 6} L318 312 C334 266 352 228 ${BULB.x - 30} ${BULB.y} L${BULB.x + 30} ${BULB.y} C${BULB.x + 50} ${BULB.y + 4} ${TIP_TOUCH.x - 10} ${TIP_TOUCH.y - 30} ${TIP_TOUCH.x} ${TIP_TOUCH.y} L${B.x} ${B.y - 6}"/>
   <g id="neon-charges"></g><g id="neon-fx"></g>
 </g>
 <g id="circuit-scene" hidden>
-  <text class="object-name" x="210" y="54" text-anchor="middle">전기 회로</text>
-  <text class="object-name" x="600" y="54" text-anchor="middle">수로 모형</text>
-  <path id="wire" d="M180 372 H60 V110 H360 V372 H240" stroke="#c08a4a" stroke-width="10" fill="none" stroke-linejoin="round" opacity=".55"/>
+  <text class="object-name" x="210" y="40" text-anchor="middle">전기 회로</text>
+  <text class="object-name" x="600" y="40" text-anchor="middle">수로 모형</text>
+  <!-- 피복을 입힌 구리 전선: 바깥은 피복, 안쪽 구리선을 따라 전자가 이동해요. -->
+  <path d="M180 372 H60 V110 H360 V372 H240" stroke="#2b3550" stroke-width="16" fill="none" stroke-linejoin="round" opacity=".9"/>
+  <path id="wire" d="M180 372 H60 V110 H360 V372 H240" stroke="#d98c45" stroke-width="7" fill="none" stroke-linejoin="round" opacity=".7"/>
   <g id="ions"></g>
-  <g id="battery"><rect x="176" y="358" width="68" height="28" rx="6" fill="#2a3150" stroke="#8f9bc4"/><rect id="cell" x="180" y="361" width="60" height="22" rx="4" fill="url(#copper)"/><text id="cell-minus" x="168" y="378" text-anchor="middle" font-size="16" font-weight="700">−</text><text id="cell-plus" x="254" y="378" text-anchor="middle" font-size="16" font-weight="700">+</text></g>
-  <path id="bridge" d="M180 372 H240" stroke="#c08a4a" stroke-width="10" opacity=".55"/>
+  <g id="battery">
+    <rect x="172" y="356" width="76" height="32" rx="7" fill="#1b2136" stroke="#5e6a92"/>
+    <g id="cell">
+      <rect x="182" y="361" width="50" height="22" rx="4" fill="url(#cur-cell-dark)"/>
+      <rect x="182" y="361" width="16" height="22" rx="3" fill="url(#cur-cell)"/>
+      <rect x="232" y="366" width="5" height="12" rx="1.5" fill="url(#cur-screw)"/>
+      <text x="214" y="376" text-anchor="middle" font-size="9" font-weight="700" style="fill:#e8edf8">1.5 V</text>
+      <path d="M186 364 h44" stroke="#fff" stroke-width="1.5" opacity=".35"/>
+    </g>
+    <text id="cell-minus" x="164" y="378" text-anchor="middle" font-size="16" font-weight="700">−</text><text id="cell-plus" x="258" y="378" text-anchor="middle" font-size="16" font-weight="700">+</text>
+  </g>
+  <path id="bridge" d="M180 372 H240" stroke="#d98c45" stroke-width="7" opacity=".7"/>
   <text class="muted" x="210" y="410" text-anchor="middle" font-size="12" id="battery-label">전지</text>
-  <g id="bulb"><circle id="bulb-glow" cx="210" cy="104" r="62" fill="url(#bulb-light)" opacity="0"/><circle cx="210" cy="96" r="22" fill="#ffffff18" stroke="#e8eef5" stroke-width="2"/><path id="filament" d="M200 110 l4 -14 l4 8 l4 -8 l4 14" stroke="#ffd36b" stroke-width="2" fill="none"/><rect x="198" y="112" width="24" height="10" fill="#8f9bc4"/></g>
+  <g id="bulb">
+    <circle id="bulb-glow" cx="210" cy="78" r="66" fill="url(#bulb-light)" opacity="0"/>
+    <rect x="186" y="104" width="48" height="16" rx="3" fill="#2a3150" stroke="#8f9bc4"/>
+    <rect x="198" y="88" width="24" height="18" fill="url(#cur-screw)"/>
+    <path d="M198 92 h24 M198 97 h24 M198 102 h24" stroke="#6d727c" stroke-width="1.5"/>
+    <path d="M196 88 C176 74 182 46 210 44 C238 46 244 74 224 88 Z" fill="url(#cur-globe)" stroke="#e8eef5" stroke-width="2"/>
+    <path d="M204 88 L203 68 M216 88 L217 68" stroke="#b9c0c8" stroke-width="1.5"/>
+    <path id="filament" d="M203 68 q2 -6 3.5 0 t3.5 0 t3.5 0 t3.5 0 t3.5 0" stroke="#ffd36b" stroke-width="2" fill="none"/>
+    <path d="M192 62 q4 -12 14 -14" stroke="#fff" stroke-width="2.5" fill="none" opacity=".6"/>
+  </g>
+  <text class="muted" x="250" y="96" font-size="12">전구</text>
   <g id="electron-layer"></g>
   <g id="direction" opacity="0"><path d="M92 320 V170" stroke="#5cc8ff" stroke-width="4" marker-end="url(#arrow-head)"/><path d="M118 170 V320" stroke="#ff9f43" stroke-width="4" marker-end="url(#arrow-head)"/><text x="136" y="236" font-size="13" fill="#9fdcff">↑ 전자의 이동 방향</text><text x="136" y="258" font-size="13" fill="#ffc48a">↓ 전류의 방향</text></g>
-  <text id="bulb-count" x="236" y="306" text-anchor="middle" font-size="12" class="muted"></text>
-  <path id="water-path" d="M450 250 A150 105 0 0 1 750 250 A150 105 0 0 1 450 250" stroke="#2d7fc1" stroke-width="30" fill="none" opacity=".35"/>
-  <path d="M450 250 A150 105 0 0 1 750 250 A150 105 0 0 1 450 250" stroke="#8fd3ff" stroke-width="2" fill="none" opacity=".35"/>
+  <text id="bulb-count" x="210" y="344" text-anchor="middle" font-size="12" class="muted"></text>
+  <!-- 수로 모형: 관 속을 물이 돌아요. 펌프 → (높은 곳) → 물레방아 → (낮은 곳) → 펌프 -->
+  <path d="M450 250 A150 105 0 0 1 750 250 A150 105 0 0 1 450 250" stroke="#4a5f8a" stroke-width="40" fill="none" opacity=".9"/>
+  <path id="water-path" d="M450 250 A150 105 0 0 1 750 250 A150 105 0 0 1 450 250" stroke="#2d7fc1" stroke-width="30" fill="none" opacity=".75"/>
+  <path d="M460 240 A140 96 0 0 1 740 240" stroke="#bfe6ff" stroke-width="2" fill="none" opacity=".45"/>
   <g id="water-layer"></g>
-  <g id="pump" transform="translate(450 250)"><rect x="-26" y="-24" width="52" height="48" rx="8" fill="#3d4a78" stroke="#8f9bc4"/><g id="impeller"><path d="M0 -15 L4 0 L0 15 L-4 0Z M-15 0 L0 -4 L15 0 L0 4Z" fill="#cfe3ff"/></g></g>
-  <text class="muted" x="450" y="302" text-anchor="middle" font-size="12">펌프</text>
+  <g id="pump" transform="translate(450 250)">
+    <rect x="-34" y="-30" width="68" height="60" rx="10" fill="url(#cur-pump)" stroke="#9fb0dc" stroke-width="2"/>
+    <rect x="-30" y="22" width="60" height="14" rx="3" fill="#1b2136" stroke="#5e6a92"/>
+    <circle r="19" fill="#0d1a33" stroke="#cfe3ff" stroke-width="2"/>
+    <g id="impeller"><path d="M0 -15 C6 -10 6 -4 0 0 C-6 -4 -6 -10 0 -15Z M15 0 C10 6 4 6 0 0 C4 -6 10 -6 15 0Z M0 15 C-6 10 -6 4 0 0 C6 4 6 10 0 15Z M-15 0 C-10 -6 -4 -6 0 0 C-4 6 -10 6 -15 0Z" fill="#cfe3ff"/><circle r="3" fill="#5b6c9e"/></g>
+  </g>
+  <text class="muted" x="450" y="304" text-anchor="middle" font-size="12">펌프</text>
   <g id="lift" opacity="0"><rect x="494" y="168" width="14" height="70" rx="4" fill="#4fc3ff" opacity=".7"/><path d="M516 168 H530 M516 238 H530 M523 172 V234" stroke="#ffd166" stroke-width="2" marker-start="url(#arrow-head)" marker-end="url(#arrow-head)"/><text x="540" y="208" font-size="12" fill="#ffd166">물의 높이 차</text></g>
-  <g id="wheel" transform="translate(750 250)"><circle r="34" fill="none" stroke="#c9a77c" stroke-width="4"/><g id="paddles">${Array.from({ length: 8 }, (_, i) => `<rect x="-3" y="-44" width="6" height="18" fill="#c9a77c" transform="rotate(${i * 45})"/>`).join('')}<circle r="6" fill="#c9a77c"/></g></g>
-  <text class="muted" x="750" y="304" text-anchor="middle" font-size="12">물레방아</text>
+  <g id="wheel" transform="translate(750 250)">
+    <rect x="-6" y="0" width="12" height="52" fill="#6b4a2a"/>
+    <g id="paddles">
+      <circle r="36" fill="none" stroke="url(#cur-wood)" stroke-width="6"/><circle r="22" fill="none" stroke="#8a5a2b" stroke-width="2"/>
+      ${Array.from({ length: 8 }, (_, i) => `<g transform="rotate(${i * 45})"><path d="M0 0 V-36" stroke="#a87444" stroke-width="3"/><rect x="-4" y="-50" width="8" height="18" rx="2" fill="url(#cur-wood)" stroke="#6b4a2a"/></g>`).join('')}
+      <circle r="7" fill="#6b4a2a" stroke="#d6a46a" stroke-width="2"/>
+    </g>
+  </g>
+  <text class="muted" x="750" y="318" text-anchor="middle" font-size="12">물레방아</text>
 </g>`;
 
 const lab = buildLab({
@@ -115,7 +185,7 @@ function paintNeon(now) {
   const off = plateOffset(), tip = tipPoint();
   $('#plate-a').setAttribute('transform', `translate(0 ${off})`);
   $('#plate-b').setAttribute('transform', `translate(0 ${off})`);
-  $('#lead-b').setAttribute('d', `M${BULB.x + 30} ${BULB.y} C${BULB.x + 50} ${BULB.y + 4} ${tip.x - 10} ${tip.y - 30} ${tip.x} ${tip.y}`);
+  $('#lead-b').setAttribute('d', `M${BULB.x + 34} ${BULB.y} C${BULB.x + 50} ${BULB.y + 4} ${tip.x - 10} ${tip.y - 30} ${tip.x} ${tip.y}`);
   $('#lead-tip').setAttribute('cx', tip.x); $('#lead-tip').setAttribute('cy', tip.y);
   const furShift = motion?.kind === 'rub' ? Math.sin(Math.max(0, Math.min(1, (now - motion.start) / motion.duration)) * Math.PI) * -(B.x - A.x - 40) : 0;
   $('#fur').setAttribute('transform', `translate(${furShift} ${furShift ? -18 : 0})`);
@@ -264,8 +334,8 @@ function frame(now) {
     if (mode === 'neon') { stepNeon(now, dt); paintNeon(now); renderText(); }
     else stepCircuit(now, dt);
     flow?.update(checklist([
-      ['마찰 전기로 네온전구 켜기', seen.lit, '3번 이상 문지르기 → 접시 올려놓기 → 네온전구 대기'],
-      ['네온전구를 다시 대어 보기', seen.noLight, '‘네온전구 떼기’ 뒤 한 번 더 대 봐요'],
+      ['마찰 전기로 네온전구 켜기', seen.lit, '‘털가죽으로 접시 문지르기’ 3번 이상 → ‘알루미늄 접시 올려놓기’ → ‘네온전구 끝을 접시에 대기’'],
+      ['네온전구를 다시 대어 보기', seen.noLight, '‘네온전구 떼기’를 누른 뒤 한 번 더 ‘네온전구 끝을 접시에 대기’'],
       ['전지를 연결해 전자의 움직임 관찰하기', seen.battery, '‘전기 회로와 수로 모형’ 탭 → ‘전지 연결하기’', '#tab-circuit, #battery-btn'],
       ['펌프를 작동해 수로 모형 관찰하기', seen.pump, '‘펌프 작동하기’를 눌러 물레방아를 살펴요', '#pump-btn'],
     ]));
