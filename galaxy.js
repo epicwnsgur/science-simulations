@@ -5,7 +5,7 @@ import './theme-electric.css';
 import './readable.css';
 import './theme-space.css';
 import { setupPOEFlow } from './src/poe-flow.js';
-import { $, $$, setText, setHTML, buildLab, checklist, toast, reducedMotion } from './src/lab-shell.js';
+import { $, $$, setText, setHTML, buildLab, checklist, toast, reducedMotion, instantLessons } from './src/lab-shell.js';
 import { setupViewToggle } from './src/view-toggle.js';
 import { setSky } from './src/sky-image.js';
 import { photoUrl, creditsHTML, SKY_CREDIT, PHOTOS } from './src/space-photos.js';
@@ -129,7 +129,7 @@ function renderBand() {
 function showObject(i) {
   objIndex = (i + CLASSIFY.length) % CLASSIFY.length; feedback = null;
   $('#obj-photo').setAttribute('href', photoUrl(CLASSIFY[objIndex][0]));
-  $('#obj-photo').animate?.([{ opacity: .1, transform: 'scale(1.04)' }, { opacity: 1, transform: 'scale(1)' }], { duration: reducedMotion.matches ? 0 : 500, easing: 'ease-out' });
+  $('#obj-photo').animate?.([{ opacity: .1, transform: 'scale(1.04)' }, { opacity: 1, transform: 'scale(1)' }], { duration: instantLessons.matches ? 0 : 500, easing: 'ease-out' });
   renderControls();
 }
 function classify(kind) {
@@ -202,7 +202,7 @@ function renderText() {
 /* ---------- 3D ---------- */
 const view3d = setupViewToggle({
   stage: $('.stage'), key: 'galaxy-view', cams: [],
-  load: () => import('./src/galaxy-3d.js').then(({ createGalaxy3D }) => createGalaxy3D({ stage: $('.stage'), svg: $('#scene'), reducedMotion })),
+  load: () => import('./src/galaxy-3d.js').then(({ createGalaxy3D }) => createGalaxy3D({ stage: $('.stage'), svg: $('#scene'), reducedMotion: instantLessons })),
   onChange: active => { use3d = active; $('.stage').classList.toggle('three-on', active && tab === 'shape'); if (active) view3d.view?.setView(gview); renderText(); },
 });
 $('#tab-shape').onclick = () => setTab('shape');

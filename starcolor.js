@@ -5,7 +5,7 @@ import './theme-electric.css';
 import './readable.css';
 import './theme-space.css';
 import { setupPOEFlow } from './src/poe-flow.js';
-import { $, $$, setText, setHTML, buildLab, checklist, toast, reducedMotion } from './src/lab-shell.js';
+import { $, $$, setText, setHTML, buildLab, checklist, toast, reducedMotion, instantLessons } from './src/lab-shell.js';
 import { STARS } from './src/space-stars.js';
 import { blackbodyRGB, starPaletteRGB, planck, colorClassOf, COLOR_CLASSES } from './src/space-model.js';
 import { setSky } from './src/sky-image.js';
@@ -124,7 +124,7 @@ const placed = new Set(), skyPicked = new Set();
 let photoSeen = false;
 const measuredStars = new Map();   // 사진에서 별빛 색을 잰 별
 const surfaceSeen = new Set();
-const viewer = createStarViewer($('#obs'), VIEW, { reducedMotion, onChange: what => {
+const viewer = createStarViewer($('#obs'), VIEW, { reducedMotion: instantLessons, onChange: what => {
   if (what === 'measured' && viewer.measured) { measuredStars.set(viewer.key, viewer.measured); toast(`🎨 ${STARS[viewer.key].name}의 사진 속 별빛: ${tintWord(viewer.measured)}`); renderControls(); }
   else if (tab === 'stars') renderStars();
 } });
@@ -141,7 +141,7 @@ const viewer = createStarViewer($('#obs'), VIEW, { reducedMotion, onChange: what
 function renderHeat(dt) {
   // 전원을 켜면 열선의 온도가 점점 올라가 약 1100 ℃에 가까워져요. 끄면 식어요.
   const target = heaterOn ? 1100 : 25;
-  heaterT += (target - heaterT) * (reducedMotion.matches ? 1 : 1 - Math.exp(-dt * (heaterOn ? .38 : .6)));
+  heaterT += (target - heaterT) * (instantLessons.matches ? 1 : 1 - Math.exp(-dt * (heaterOn ? .38 : .6)));
   if (heaterOn && heaterT > 1000 && !heaterDone) { heaterDone = true; toast('🔥 열선이 처음에는 붉은색이었다가 온도가 높아지면서 노란색에 가까워졌어요'); renderText(); }
   const b = Math.max(0, Math.min(1, (heaterT - 480) / 560)), bb = blackbodyRGB(K(heaterT));
   const metal = [.42, .44, .48];
@@ -241,7 +241,7 @@ function renderSky() {
       if (photoKey && !photoSeen) { photoSeen = true; renderText(); }
       renderSky();
       // 크게 볼 때는 사진이 부드럽게 다가오고, 별 이름표가 하나씩 나타나요.
-      if (photoKey && !reducedMotion.matches) {
+      if (photoKey && !instantLessons.matches) {
         $('#big-photo')?.animate([{ opacity: 0, transform: 'scale(.9)' }, { opacity: 1, transform: 'scale(1)' }], { duration: 650, easing: 'cubic-bezier(.2,.7,.3,1)' });
         $$('#photos .pin').forEach((p, i) => p.animate([{ opacity: 0, transform: 'scale(2.2)' }, { opacity: 1, transform: 'scale(1)' }], { duration: 600, delay: 450 + i * 250, easing: 'cubic-bezier(.2,.7,.3,1)', fill: 'backwards' }));
       }

@@ -5,7 +5,7 @@ import './theme-electric.css';
 import './readable.css';
 import './theme-space.css';
 import { setupPOEFlow } from './src/poe-flow.js';
-import { $, $$, setText, setHTML, buildLab, checklist, toast, reducedMotion } from './src/lab-shell.js';
+import { $, $$, setText, setHTML, buildLab, checklist, toast, reducedMotion, instantLessons } from './src/lab-shell.js';
 import { setupViewToggle } from './src/view-toggle.js';
 import { RADII, STICKERS, PAIRS, dirOf, angleBetween, surfaceCm, galaxyField, seenFrom } from './src/expansion-model.js';
 import { galaxyUrl, creditsHTML } from './src/space-photos.js';
@@ -107,14 +107,14 @@ function measure() {
 function stepBalloon(dt) {
   let moving = false;
   if (inflT < 1) {
-    inflT = Math.min(1, inflT + dt / (reducedMotion.matches ? .01 : 1.8));
+    inflT = Math.min(1, inflT + dt / (instantLessons.matches ? .01 : 3));
     r = rFrom + (rTo - rFrom) * ease(inflT) * (inflT < 1 ? elastic(inflT) : 1);
     pumpT += dt * 9; moving = true;
     if (inflT >= 1) { r = rTo; renderControls(); }
   }
-  if (phase !== 'flat' && stuck < 1 && inflT >= 1) { stuck = Math.min(1, stuck + dt / (reducedMotion.matches ? .01 : 1.4)); moving = true; if (stuck >= 1) { toast("🏷️ 은하 붙임딱지 세 개를 붙였어요. 이제 줄자로 거리를 재 보세요"); renderControls(); } }
+  if (phase !== 'flat' && stuck < 1 && inflT >= 1) { stuck = Math.min(1, stuck + dt / (instantLessons.matches ? .01 : 1.4)); moving = true; if (stuck >= 1) { toast("🏷️ 은하 붙임딱지 세 개를 붙였어요. 이제 줄자로 거리를 재 보세요"); renderControls(); } }
   if (measuring) {
-    measuring.f += dt / (reducedMotion.matches ? .01 : .7); moving = true;
+    measuring.f += dt / (instantLessons.matches ? .01 : .7); moving = true;
     if (measuring.f >= 1) {
       table[measuring.phase][measuring.i] = surfaceCm(r, ...PAIRS[measuring.i].map(i => STICKERS[i]));
       measuring.i++; measuring.f = 0;
@@ -163,7 +163,7 @@ function renderTable() {
 /* ---------- 팽창의 중심이 있을까? ---------- */
 function chooseRef(i) { ref = i; scale = 1; playing = false; refsTried.add(i); renderControls(); }
 function stepCenter(dt) {
-  if (playing) { scale = Math.min(1.8, scale + dt * (reducedMotion.matches ? 10 : .2)); if (scale > 1.5 && !expandedRefs.has(ref)) { expandedRefs.add(ref); renderText(); } if (scale >= 1.8) { playing = false; toast(`🌌 은하 ${REFS[ref][0]}에서 보아도 다른 모든 은하가 멀어졌어요`); renderControls(); } }
+  if (playing) { scale = Math.min(1.8, scale + dt * (instantLessons.matches ? 10 : .2)); if (scale > 1.5 && !expandedRefs.has(ref)) { expandedRefs.add(ref); renderText(); } if (scale >= 1.8) { playing = false; toast(`🌌 은하 ${REFS[ref][0]}에서 보아도 다른 모든 은하가 멀어졌어요`); renderControls(); } }
   const g = fx.begin(); if (!g) return;
   const R = ref === null ? { x: 0, y: 0 } : field[REFS[ref][1]];
   const P = gg => { const s = seenFrom(R, gg, scale); return [FIELD.cx + s.x * FIELD.k, FIELD.cy + s.y * FIELD.k]; };
@@ -203,7 +203,7 @@ function stepCenter(dt) {
 const funnelH = x => 6 + TIME.h * Math.pow(Math.max(0, (x - TIME.x0) / (TIME.x1 - TIME.x0)), .75);
 const timeGal = Array.from({ length: 70 }, (_, i) => { let s = i * 7919 + 13; const rr = () => { s = (s * 16807) % 2147483647; return s / 2147483647; }; return { t: .28 + rr() * .72, u: rr() * 2 - 1, v: rr() * 2 - 1, img: 1 + (i % 14), size: 8 + rr() * 12 }; });
 function stepTime(dt) {
-  if (tPlaying) { tCursor = Math.min(1, tCursor + dt / (reducedMotion.matches ? .01 : 7)); if (tCursor >= 1) { tPlaying = false; if (!timeDone) { timeDone = true; toast('🌌 우주는 약 138억 년 전 대폭발 이후 점점 팽창하여 현재와 같은 모습이 되었어요'); } renderControls(); } }
+  if (tPlaying) { tCursor = Math.min(1, tCursor + dt / (instantLessons.matches ? .01 : 7)); if (tCursor >= 1) { tPlaying = false; if (!timeDone) { timeDone = true; toast('🌌 우주는 약 138억 년 전 대폭발 이후 점점 팽창하여 현재와 같은 모습이 되었어요'); } renderControls(); } }
   const g = fx.begin(); if (!g) return;
   const xc = TIME.x0 + (TIME.x1 - TIME.x0) * tCursor;
   // 깔때기 모양(교과서 그림 VIII 9): 왼쪽 끝이 대폭발, 오른쪽이 현재
@@ -318,7 +318,7 @@ function renderText() {
 /* ---------- 3D ---------- */
 const view3d = setupViewToggle({
   stage: $('.stage'), key: 'balloon-view', cams: [['oblique', '비스듬히'], ['front', '앞에서'], ['top', '위에서']],
-  load: () => import('./src/balloon-3d.js').then(({ createBalloon3D }) => createBalloon3D({ stage: $('.stage'), svg: $('#scene'), reducedMotion })),
+  load: () => import('./src/balloon-3d.js').then(({ createBalloon3D }) => createBalloon3D({ stage: $('.stage'), svg: $('#scene'), reducedMotion: instantLessons })),
   onChange: active => { use3d = active; $('.stage').classList.toggle('three-on', active && tab === 'balloon'); renderText(); },
 });
 $('#tab-balloon').onclick = () => setTab('balloon');

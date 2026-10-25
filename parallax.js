@@ -5,7 +5,7 @@ import './theme-electric.css';
 import './readable.css';
 import './theme-space.css';
 import { setupPOEFlow } from './src/poe-flow.js';
-import { $, $$, setText, setHTML, buildLab, checklist, toast, reducedMotion } from './src/lab-shell.js';
+import { $, $$, setText, setHTML, buildLab, checklist, toast, reducedMotion, instantLessons } from './src/lab-shell.js';
 import { setupViewToggle } from './src/view-toggle.js';
 import { STARS, lightYears } from './src/space-stars.js';
 import { parallaxArcsec, parallaxMeasurable } from './src/space-model.js';
@@ -155,7 +155,7 @@ function renderBoard(dt) {
   $$('[data-board-model]').forEach(g => g.classList.toggle('chosen', g.dataset.boardModel === modelId));
   $$('[data-hole-mark]').forEach(g => g.classList.toggle('looking', g.dataset.holeMark === hole));
   // 구멍으로 본 모습: 별 모형이 눈금의 어디에 보이는지
-  const k = reducedMotion.matches ? 1 : 1 - Math.exp(-dt * 9);
+  const k = instantLessons.matches ? 1 : 1 - Math.exp(-dt * 9);
   peekX += (peekTarget - peekX) * k;
   const near = modelId === 'a';
   $('#peek-star').setAttribute('transform', `translate(${(PEEK.cx + peekX * PEEK.k).toFixed(1)} ${PEEK.cy + 34}) scale(${near ? 1.15 : .8})`);
@@ -165,7 +165,7 @@ function renderBoard(dt) {
   // 각도기
   const p = $('#protractor');
   if (measuring) {
-    measuring.t = Math.min(1, measuring.t + dt / (reducedMotion.matches ? .01 : 1.1));
+    measuring.t = Math.min(1, measuring.t + dt / (instantLessons.matches ? .01 : 1.1));
     const target = boardParallax(BOARD.models[measuring.id]);
     setHTML('#protractor', protractorSVG(measuring.id, target * (1 - (1 - measuring.t) ** 3)));
     p.setAttribute('opacity', 1);
@@ -210,7 +210,7 @@ function playOrbit() {
 function stepOrbit(dt) {
   const moving = moveT < 1;
   if (moving) {
-    moveT = Math.min(1, moveT + dt / (reducedMotion.matches ? .01 : 4.2));
+    moveT = Math.min(1, moveT + dt / (instantLessons.matches ? .01 : 5.5));
     theta = noOrbit ? thetaFrom : thetaFrom + (thetaTo - thetaFrom) * ease(moveT);
     if (moveT >= 1) {
       theta = noOrbit ? thetaFrom : thetaTo % (2 * Math.PI);
@@ -349,7 +349,7 @@ function renderText() {
 /* ---------- 3D ---------- */
 const view3d = setupViewToggle({
   stage: $('.stage'), key: 'parallax-view', cams: [['oblique', '비스듬히'], ['top', '위에서'], ['side', '옆에서']],
-  load: () => import('./src/parallax-3d.js').then(({ createParallax3D }) => createParallax3D({ stage: $('.stage'), svg: $('#scene'), reducedMotion })),
+  load: () => import('./src/parallax-3d.js').then(({ createParallax3D }) => createParallax3D({ stage: $('.stage'), svg: $('#scene'), reducedMotion: instantLessons })),
   onChange: active => { use3d = active; $('.stage').classList.toggle('three-on', active && tab === 'orbit'); renderText(); },
 });
 $('#tab-board').onclick = () => setTab('board');
