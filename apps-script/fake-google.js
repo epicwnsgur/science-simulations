@@ -47,7 +47,7 @@ class FakeSheet {
 }
 
 export class FakeSpreadsheet {
-  constructor() { this.sheets = [new FakeSheet('시트1')]; this.active = null; this.menu = []; this.alerts = []; }
+  constructor() { this.sheets = [new FakeSheet('시트1')]; this.active = null; this.menu = []; this.alerts = []; this.cache = new Map(); this.busy = false; }
   getActiveSheet() { return this.active ?? this.sheets[0]; }
   getSheets() { return [...this.sheets]; }
   getSheetByName(name) { return this.sheets.find(s => s.name === name) ?? null; }
@@ -55,15 +55,17 @@ export class FakeSpreadsheet {
   deleteSheet(sheet) { this.sheets = this.sheets.filter(s => s !== sheet); }
 }
 
-// 제출할 때마다 1초씩 흐르는 시계: 같은 순간에 여러 건이 저장되어 순서가 뒤섞이지 않게 합니다.
-function tickingDate() {
+// 제출할 때마다 2분씩 흐르는 시계: 같은 순간에 여러 건이 저장되어 순서가 뒤섞이지 않고, 다시 제출 간격(60초)에도 걸리지 않아요.
+// clock.step을 바꾸면 시험에서 ‘바로 다시 내기’를 흉내 낼 수 있어요.
+function tickingDate(clock) {
   let now = Date.UTC(2026, 9, 20, 0, 0, 0);
-  return class extends Date { constructor(...args) { if (args.length) super(...args); else super(now += 1000); } };
+  return class extends Date { constructor(...args) { if (args.length) super(...args); else super(now += clock.step); } };
 }
 
 export function loadAppsScript(ss = new FakeSpreadsheet()) {
+  const clock = { step: 120000 };
   const context = vm.createContext({
-    Date: tickingDate(),
+    Date: tickingDate(clock),
     console: { log() {}, error() {} },
     SpreadsheetApp: {
       getActive: () => ss,
@@ -72,7 +74,8 @@ export function loadAppsScript(ss = new FakeSpreadsheet()) {
         createMenu: title => { const menu = { addItem: (label, fn) => { ss.menu.push([title, label, fn]); return menu; }, addToUi() {} }; return menu; },
       }),
     },
-    LockService: { getScriptLock: () => ({ waitLock() {}, releaseLock() {} }) },
+    LockService: { getScriptLock: () => ({ waitLock() {}, tryLock: () => !ss.busy, releaseLock() {} }) },
+    CacheService: { getScriptCache: () => ({ get: k => ss.cache.get(k) ?? null, put: (k, v) => { ss.cache.set(k, v); }, remove: k => { ss.cache.delete(k); } }) },
     ContentService: {
       MimeType: { JSON: 'application/json' },
       createTextOutput: content => ({ content, setMimeType() { return this; } }),
@@ -80,5 +83,5 @@ export function loadAppsScript(ss = new FakeSpreadsheet()) {
   });
   vm.runInContext(readFileSync(new URL('./Code.gs', import.meta.url), 'utf8'), context);
   const post = data => JSON.parse(context.doPost({ postData: { contents: typeof data === 'string' ? data : JSON.stringify(data) } }).content);
-  return { ss, context, post };
+  return { ss, context, post, clock };
 }

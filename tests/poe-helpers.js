@@ -1,8 +1,9 @@
-// 실험 전 1분 복습: 모든 질문에 하나씩 답해야 ‘복습 마치고 실험 시작하기’가 켜져요.
+// 실험 전 1분 복습: 모든 질문에 하나씩 답하고 ‘정답 확인하기’를 눌러야 ‘복습 마치고 실험 시작하기’가 나와요.
 export async function finishReview(page) {
   const items = page.locator('.review-item');
   const n = await items.count();
   for (let i = 0; i < n; i++) await items.nth(i).locator('.review-choice').first().click();
+  await page.locator('#check-review').click();
   await page.locator('#finish-review').click();
 }
 // 예상 저장: ‘예상 저장하고 실험하기’를 누르면 확인 창이 뜨고, 확인해야 저장돼요.

@@ -62,6 +62,8 @@ async function fakeServer(page) {
     const body = route.request().postData();
     calls.push(JSON.parse(body));
     if (state.mode === 'down') return route.abort('failed');
+    // 학생이 몰려 선생님 시트가 차례를 오래 기다린 상황: 한 번은 ‘잠시 뒤 다시’라고 답해요.
+    if (state.mode === 'busyOnce') { state.mode = 'ok'; return route.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify({ ok: false, retry: true, message: '제출하는 친구들이 많아요. 잠시 뒤 다시 보내 주세요.' }) }); }
     const result = server.post(body);
     // 저장은 됐는데 응답이 학생에게 가지 못한 상황.
     if (state.mode === 'lost') return route.abort('timedout');
@@ -192,6 +194,8 @@ test('보고서 제출: 미리보기 → 수정하기(내용 유지) → 최종 
   await expect(page.locator('.submit-done')).toBeVisible();
   await expect(page.locator('.submit-done')).toContainText('보고서가 정상적으로 제출되었습니다.');
   await expect(page.locator('.submit-done')).toContainText(/제출 시각: \d{4}-\d\d-\d\d \d\d:\d\d/);
+  // 제출을 마치면 이 컴퓨터(localStorage)에 남긴 임시 저장 글을 지워요(함께 쓰는 컴퓨터의 다음 학생에게 보이지 않게).
+  expect(await page.evaluate(() => [localStorage.getItem('draft:poe:friction-electricity'), localStorage.getItem('draft:report:friction-electricity')])).toEqual([null, null]);
   await expect(page.locator('#submit-report')).toBeDisabled();
   await expect(page.locator('#explanation-record')).toHaveJSProperty('readOnly', true);
   expect(calls).toHaveLength(1);
@@ -219,11 +223,12 @@ test('보고서 제출: 응답을 못 받거나 서버에 닿지 못해도 답�
   await finishBoth(page);
   await fillIdentity(page, code);
   await page.locator('#submit-report').click();
-  // 1) 서버에 닿지 못함
+  // 1) 서버에 닿지 못함: 저절로 세 번 더 보내 보고(모두 4번), 그래도 안 되면 안내해요.
   state.mode = 'down';
   await page.locator('#preview-submit').click();
   await expect(page.locator('.preview-status')).toContainText('확인하지 못했어요');
   await expect(page.locator('#preview-submit')).toBeEnabled();
+  expect(calls).toHaveLength(4);
   expect(rows()).toHaveLength(0);
   // 2) 저장은 됐는데 응답을 못 받음
   state.mode = 'lost';
@@ -237,6 +242,18 @@ test('보고서 제출: 응답을 못 받거나 서버에 닿지 못해도 답�
   expect(rows()).toHaveLength(1);
   expect(new Set(calls.map(c => c.submissionId)).size).toBe(1);
   await expect(page.locator('#explanation-record')).toHaveValue('숟가락 ㉮와 ㉯는 같은 (−)전하라 척력이, 장갑은 (+)라 인력이 작용했어요.');
+});
+
+test('보고서 제출: 학생이 몰려 시트가 ‘잠시 뒤 다시’라고 답하면, 학생이 다시 누르지 않아도 저절로 다시 보내 제출됨', async ({ page }) => {
+  const { code, calls, state, rows } = await fakeServer(page);
+  await finishBoth(page);
+  await fillIdentity(page, code);
+  await page.locator('#submit-report').click();
+  state.mode = 'busyOnce';
+  await page.locator('#preview-submit').click();
+  await expect(page.locator('.submit-done')).toContainText('정상적으로 제출되었습니다');
+  expect(calls).toHaveLength(2);
+  expect(rows()).toHaveLength(1);
 });
 
 test('보고서 제출: 수업 코드가 틀리면 미리보기 안에서 알려 주고 다시 시도할 수 있음', async ({ page }) => {
@@ -320,6 +337,7 @@ test('PDF로 저장: 제출 버튼 옆 버튼을 누르면 인쇄 창을 열고,
 });
 
 test('글씨 크기 소·중·대: 누르면 바로 바뀌고 다른 실험에서도 기억하며, 크게 해도 화면이 넘치지 않음', async ({ page }) => {
+  test.setTimeout(90000); // 여러 실험을 차례로 열어 보는 시험이에요.
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/simulations/ohms-law/');
   const size = () => page.locator('#prediction-reason').evaluate(el => parseFloat(getComputedStyle(el).fontSize));
@@ -345,25 +363,37 @@ test('글씨 크기 소·중·대: 누르면 바로 바뀌고 다른 실험에�
   }
 });
 
-test('실험 전 1분 복습: 건너뛰기가 없고, 모든 질문에 답해야 실험을 시작할 수 있음(새로 고침해도 답 유지)', async ({ page }) => {
+test('실험 전 1분 복습: 건너뛰기가 없고, 모두 답해야 정답·해설이 나오며, 그 뒤에 실험을 시작할 수 있음(새로 고침해도 답 유지)', async ({ page }) => {
   await page.goto(URL_);
   await expect(page.locator('#review-panel')).toBeVisible();
   await expect(page.locator('#skip-review')).toHaveCount(0);
-  const finish = page.locator('#finish-review'), items = page.locator('.review-item');
+  const finish = page.locator('#finish-review'), check = page.locator('#check-review'), items = page.locator('.review-item');
   const n = await items.count();
   expect(n).toBe(3);
-  await expect(finish).toBeDisabled();
+  await expect(finish).toBeHidden();
+  await expect(check).toBeDisabled();
   await expect(page.locator('[data-step="predict"] button')).toBeDisabled();
+  // 하나만 답하면 아직 맞고 틀림·해설을 보여 주지 않아요(마지막 퀴즈처럼).
   await items.nth(0).locator('.review-choice').nth(1).click();
-  await expect(page.locator('#review-feedback-0')).toContainText('다시 떠올려 볼까요?');
+  await expect(page.locator('#review-feedback-0')).toHaveText('');
   await items.nth(1).locator('.review-choice').first().click();
-  await expect(finish).toBeDisabled();
+  await expect(check).toBeDisabled();
   await expect(page.locator('#review-progress')).toContainText('2 / 3');
   await page.reload();
   await expect(page.locator('.review-choice.chosen')).toHaveCount(2);
-  await expect(finish).toBeDisabled();
+  await expect(check).toBeDisabled();
   await items.nth(2).locator('.review-choice').first().click();
+  await expect(check).toBeEnabled();
+  await expect(finish).toBeHidden();
+  await check.click();
+  // 모두 답하고 확인하면 정답과 해설이 나오고, 답은 더 바꿀 수 없어요.
+  await expect(page.locator('#review-feedback-0')).toContainText('정답은');
+  await expect(page.locator('#review-feedback-2')).toContainText('맞아요!');
+  await expect(items.nth(0).locator('.review-choice').first()).toBeDisabled();
+  await expect(check).toBeHidden();
   await expect(finish).toBeEnabled();
+  await page.reload();
+  await expect(page.locator('#review-feedback-0')).toContainText('정답은');
   await finish.click();
   await expect(page.locator('#predict-panel')).toBeVisible();
   await page.reload();
