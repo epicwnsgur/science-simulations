@@ -213,3 +213,15 @@ test('메뉴에 정렬 항목을 만들고, 실험 탭이 아닌 곳에서 누�
   context.sortActiveById();
   assert.match(ss.alerts[0], /실험 탭/);
 });
+
+test('수업 모형에 맞는 칸 이름(fieldLabels)을 보내면 새 탭 머리글에 쓰고, 내용은 같은 순서로 저장한다', () => {
+  const { ss, post, report } = ready();
+  const labels = { prediction: '처음 생각', reason: '처음 생각의 까닭', observation: '모형 실험 기록', explanation: '비유 되돌아보기' };
+  assert.equal(post(report({ title: '우주 팽창', fieldLabels: labels })).ok, true);
+  const sheet = ss.getSheetByName('우주 팽창');
+  assert.deepEqual(sheet.rows[1], [...HEAD, '처음 생각', '처음 생각의 까닭', '모형 실험 기록', '비유 되돌아보기', '사용 후기', '제출 ID']);
+  assert.equal(sheet.rows[2][5], '전류가 2배가 된다');
+  // 이상한 값이 오면 원래 이름을 써요.
+  assert.equal(post(report({ title: '연주 시차', fieldLabels: { prediction: '', reason: 5 } })).ok, true);
+  assert.deepEqual(ss.getSheetByName('연주 시차').rows[1].slice(5, 9), ['예상', '예상한 까닭', '관찰', '설명']);
+});

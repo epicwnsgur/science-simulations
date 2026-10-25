@@ -146,8 +146,9 @@ export function createStage3D({ stage, svg, reducedMotion, ariaLabel, views, mod
   }
 
   /* ---------- 시점 ---------- */
+  // 시점마다 바라보는 곳을 다르게 하려면 views[모드].targets[시점 이름]을 주어요(없으면 target).
   function setView(name, animate = true) {
-    const v = views[mode], target = new THREE.Vector3(...v.target);
+    const v = views[mode], target = new THREE.Vector3(...(v.targets?.[name] ?? v.target));
     const to = new THREE.Spherical().setFromVector3(new THREE.Vector3(...v[name]).sub(target));
     if (!animate || reducedMotion.matches) { controls.target.copy(target); camera.position.setFromSpherical(to).add(target); controls.update(); tween = null; dirty = true; return; }
     const from = new THREE.Spherical().setFromVector3(camera.position.clone().sub(controls.target));

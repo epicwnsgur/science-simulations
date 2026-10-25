@@ -3,7 +3,7 @@ import { beginObservation } from './poe-helpers.js';
 
 // 교사 모드, 실험 순서 안내 가리키기, 과학 낱말 뜻 풀이(모든 실험 공통, src/poe-flow.js)
 const SERIES = '/simulations/series-parallel/';
-const LABS = ['friction-electricity', 'electrostatic-induction', 'electric-current', 'ohms-law', 'series-parallel', 'coil-magnetic-field', 'electric-swing', 'electric-motor'];
+const LABS = ['friction-electricity', 'electrostatic-induction', 'electric-current', 'ohms-law', 'series-parallel', 'coil-magnetic-field', 'electric-swing', 'electric-motor', 'stellar-parallax', 'star-brightness', 'star-color', 'milky-way', 'expanding-universe'];
 
 async function turnOnTeacher(page, password = '04210421') {
   await page.locator('#teacher-btn').click();
@@ -132,7 +132,7 @@ test('설명하기: 개념 정리·퀴즈·안내 상자의 글씨가 바탕과 
 });
 
 test('순서 안내: 단계를 누르면 그 단계를 하는 방법과 눌러야 할 단추(‘👆 여기를 눌러요’)를 알려 줌', async ({ browser }) => {
-  const LIST = [['friction-electricity', 2, '① 털에 문지르기'], ['electrostatic-induction', 1, '가까이 가져가기'], ['electric-current', 1, '털가죽으로 접시 문지르기'], ['ohms-law', 1, '+ 1 V'], ['series-parallel', 1, '스위치 S1 닫기'], ['electric-swing', 1, '스위치 누르고 있기'], ['electric-motor', 1, '전류 흘리기'], ['coil-magnetic-field', 1, null]];
+  const LIST = [['friction-electricity', 2, '① 털에 문지르기'], ['electrostatic-induction', 1, '가까이 가져가기'], ['electric-current', 1, '털가죽으로 접시 문지르기'], ['ohms-law', 1, '+ 1 V'], ['series-parallel', 1, '스위치 S1 닫기'], ['electric-swing', 1, '스위치 누르고 있기'], ['electric-motor', 1, '전류 흘리기'], ['coil-magnetic-field', 1, null], ['stellar-parallax', 1, '왼쪽 구멍으로 보기'], ['star-brightness', 1, '빛의 세기 기록하기'], ['star-color', 1, '전원 켜기'], ['milky-way', 1, '위에서 보기'], ['expanding-universe', 1, '공기 조금 넣기']];
   for (const [slug, count, button] of LIST) {
     const page = await browser.newPage();
     await page.addInitScript(() => localStorage.setItem('motor-view', '2d'));

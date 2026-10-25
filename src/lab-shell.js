@@ -20,7 +20,12 @@ function setTextSize(size) {
 }
 
 // 실험 페이지 머리글(실험 목록으로 · 글씨 크기 · 학년). 머리글을 넣은 뒤 setupTextSize()를 불러요.
-export const headerHTML = () => `<header><a class="brand" href="../../grades/middle-school-2/unit-7/">← 실험 목록</a><div class="header-right"><div class="text-size" role="group" aria-label="글씨 크기"><span aria-hidden="true">글씨 크기</span>${TEXT_SIZES.map(([id, label, name]) => `<button type="button" data-text-size="${id}" aria-pressed="false" aria-label="글씨 ${name}" title="글씨 ${name}">${label}</button>`).join('')}</div><span class="grade">중학교 2학년 <i></i> 과학</span></div></header>`;
+// 단원: 실험 페이지 위쪽의 ‘← 실험 목록’과 경로 표시에 써요. 새 단원은 UNITS에 더하고 buildLab({ unit })로 골라요.
+export const UNITS = {
+  7: { href: '../../grades/middle-school-2/unit-7/', label: 'VII. 전기와 자기' },
+  8: { href: '../../grades/middle-school-2/unit-8/', label: 'VIII. 별과 우주' },
+};
+export const headerHTML = (unit = 7) => `<header><a class="brand" href="${UNITS[unit].href}">← 실험 목록</a><div class="header-right"><div class="text-size" role="group" aria-label="글씨 크기"><span aria-hidden="true">글씨 크기</span>${TEXT_SIZES.map(([id, label, name]) => `<button type="button" data-text-size="${id}" aria-pressed="false" aria-label="글씨 ${name}" title="글씨 ${name}">${label}</button>`).join('')}</div><span class="grade">중학교 2학년 <i></i> 과학</span></div></header>`;
 export function setupTextSize() {
   document.body.classList.add('lab-readable');
   let saved = 'm';
@@ -32,8 +37,8 @@ export function setupTextSize() {
 export function buildLab(cfg) {
   const tabs = cfg.tabs.map((t, i) => `<button id="tab-${t.id}" role="tab" aria-selected="${i === 0}">${String(i + 1).padStart(2, '0')} <span>${t.label}</span></button>`).join('');
   $('#app').innerHTML = `
-${headerHTML()}
-<main class="lab-page"><div class="breadcrumb">VII. 전기와 자기 <span>/</span> ${cfg.crumb}</div>
+${headerHTML(cfg.unit)}
+<main class="lab-page"><div class="breadcrumb">${UNITS[cfg.unit ?? 7].label} <span>/</span> ${cfg.crumb}</div>
 <section class="intro"><div><h1>${cfg.title}</h1><p>${cfg.intro}</p></div></section>
 <div class="workspace"><section class="lab"><div class="lab-toolbar"><div class="tabs" role="tablist" aria-label="활동 선택">${tabs}</div><button id="reset" class="reset">↻ <span>처음으로</span></button></div>
 <div class="instruction"><span class="step-icon">↔</span><div><strong id="guide"></strong><p id="subguide"></p></div>${cfg.toggle ? `<label class="toggle"><input type="checkbox" id="show-detail"><span>${cfg.toggle}</span></label>` : ''}</div>
@@ -47,6 +52,7 @@ ${headerHTML()}
 <section class="vocabulary"><div class="vocab-heading"><h2>실험 속 핵심 개념</h2><span>단어를 누르면 뜻을 확인할 수 있어요.</span></div><div class="term-buttons">${cfg.terms.map(([t], i) => `<button data-term="${i}" class="${i === 0 ? 'active' : ''}">${t}</button>`).join('')}</div><p id="term-definition"><strong>${cfg.terms[0][0]}</strong> ${cfg.terms[0][1]}</p></section>
 </main>`;
   setupTextSize();
+  if (cfg.unit === 8) document.body.classList.add('lab-space');
   $$('[data-term]').forEach(b => b.onclick = () => {
     $$('[data-term]').forEach(v => v.classList.toggle('active', v === b));
     const [t, d] = cfg.terms[+b.dataset.term]; $('#term-definition').innerHTML = `<strong>${t}</strong> ${d}`;

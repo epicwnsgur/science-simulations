@@ -44,3 +44,28 @@
   from = "/simulations/electric-motor"
   to = "/simulations/electric-motor/"
   status = 301
+
+[[redirects]]
+  from = "/simulations/stellar-parallax"
+  to = "/simulations/stellar-parallax/"
+  status = 301
+
+[[redirects]]
+  from = "/simulations/star-brightness"
+  to = "/simulations/star-brightness/"
+  status = 301
+
+[[redirects]]
+  from = "/simulations/star-color"
+  to = "/simulations/star-color/"
+  status = 301
+
+[[redirects]]
+  from = "/simulations/milky-way"
+  to = "/simulations/milky-way/"
+  status = 301
+
+[[redirects]]
+  from = "/simulations/expanding-universe"
+  to = "/simulations/expanding-universe/"
+  status = 301

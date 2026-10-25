@@ -19,3 +19,12 @@ test('과학 낱말: 뜻 풀이는 짧고 쉬운 말이며, 교육과정 밖의 
     assert.ok(/요[.)]?$|\)$/.test(text.trim()), `${term}: 해요체로 끝나요`);
   }
 });
+
+test('과학 낱말(별과 우주): 겹치는 낱말을 올바르게 고름', () => {
+  assert.equal(findTerm('밤하늘의 은하수를 봐요').term, '은하수');
+  assert.equal(findTerm('우리은하의 지름').term, '우리은하');
+  assert.equal(findTerm('구상 성단은 공 모양').term, '구상 성단');
+  assert.equal(findTerm('별의 연주 시차를 재요').term, '연주 시차');
+  assert.equal(findTerm('겉보기 등급과 절대 등급').term, '겉보기 등급');
+  assert.equal(findTerm('외부 은하가 멀어져요').term, '외부 은하');
+});

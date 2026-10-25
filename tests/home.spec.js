@@ -4,14 +4,14 @@ import { beginObservation } from './poe-helpers.js';
 test('학년 폴더와 실험 사이를 이동하고 새로고침 후 목록으로 돌아옴', async ({ page }) => {
   const errors=[];page.on('pageerror',error=>errors.push(error.message));
   await page.goto('/');
-  await expect(page.locator('.available')).toHaveText('폴더 1개 · 실험 8개');
+  await expect(page.locator('.available')).toHaveText('폴더 1개 · 실험 13개');
   await expect(page).toHaveTitle(/준혁T의 과학 실험실/);
   await expect(page.getByRole('heading',{name:'나만의 탐구를 시작해요'})).toBeVisible();
   await expect(page.locator('.future-folder')).toHaveCount(0);
   await page.getByRole('link',{name:'중학교 2학년 과학 폴더 열기'}).click();
   await page.reload();
   await expect(page.getByRole('heading',{name:'중학교 2학년 과학',exact:true})).toBeVisible();
-  await expect(page.locator('.available')).toHaveText('폴더 8개 · 실험 8개');
+  await expect(page.locator('.available')).toHaveText('폴더 8개 · 실험 13개');
   await expect(page.locator('.unit-folder')).toHaveCount(8);
   await page.getByRole('link',{name:'VII. 전기와 자기 폴더 열기',exact:true}).click();
   await page.reload();
@@ -39,10 +39,10 @@ test('학년 폴더와 실험 사이를 이동하고 새로고침 후 목록으�
 
 for(const width of [1440,390]) test(`메인과 학년 폴더 화면 ${width}px`, async ({ page })=>{
   await page.setViewportSize({width,height:1000});
-  for(const [name,path] of [['home','/'],['grade','/grades/middle-school-2/'],['unit','/grades/middle-school-2/unit-7/']]){
+  for(const [name,path] of [['home','/'],['grade','/grades/middle-school-2/'],['unit','/grades/middle-school-2/unit-7/'],['unit','/grades/middle-school-2/unit-8/']]){
     await page.goto(path);
     expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
-    if(name==='unit')expect(await page.locator('.experiment-art img').evaluate(img=>img.complete&&img.naturalWidth>0)).toBe(true);
+    if(name==='unit')for(const img of await page.locator('.experiment-art img').all())expect(await img.evaluate(el=>el.complete&&el.naturalWidth>0)).toBe(true);
     await page.screenshot({path:`/tmp/science-${name}-${width}.png`,fullPage:true});
   }
 });
@@ -55,6 +55,6 @@ for(const width of [1440,390]) test(`메인과 학년 폴더 화면 ${width}px`,
   for(let i=1;i<=8;i++){
     await page.goto(`/grades/middle-school-2/unit-${i}/`);await page.reload();
     await expect(page.locator('h1')).toHaveText(names[i-1]);
-    if(i!==7)await expect(page.locator('.empty-unit')).toBeVisible();
+    if(i<7)await expect(page.locator('.empty-unit')).toBeVisible();
   }
  });
