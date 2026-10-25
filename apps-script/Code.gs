@@ -26,6 +26,13 @@ const OTHER_COLOR = '#e6e6e6';
 const MAX_TEXT = 2000;
 const MAX_BODY = 60000;
 const MAX_SECTIONS = 4;
+// 한꺼번에 여러 학생이 낼 때: 차례를 기다리는 최대 시간(밀리초). 넘으면 학생 화면이 잠시 뒤 저절로 다시 보내요.
+const LOCK_WAIT_MS = 20000;
+// 장난 제출 막기(설정 탭에서 바꿀 수 있어요): 같은 학번이 같은 실험에 낼 수 있는 횟수, 다시 내기까지 기다리는 시간(초).
+const DEFAULT_MAX_SUBMITS = 3;
+const DEFAULT_GAP_SECONDS = 60;
+// 뜻 있는 설명의 최소 글자 수(화면은 20자를 요구하고, 여기서는 화면을 우회한 장난 글만 걸러요).
+const MIN_MEANINGFUL = 10;
 
 /** 처음 한 번 실행: 설정·명단 탭을 만들고 6자리 수업 코드를 정합니다. */
 function setup() {
@@ -42,6 +49,13 @@ function setup() {
     sheet.setColumnWidth(1, 110);
     sheet.setColumnWidth(3, 420);
   }
+  // 예전에 만든 설정 탭에도 새 항목(제출 횟수·간격)을 더해요. 이미 있으면 그대로 둬요.
+  const settings = ss.getSheetByName(SETTINGS_SHEET);
+  const have = settings.getDataRange().getDisplayValues().map(row => String(row[0]).trim());
+  [['같은 실험 최대 제출', DEFAULT_MAX_SUBMITS, '한 학생이 같은 실험 보고서를 몇 번까지 낼 수 있는지예요. 다시 내게 하려면 숫자를 늘려요.'],
+    ['다시 제출 간격(초)', DEFAULT_GAP_SECONDS, '같은 학생이 다시 내려면 기다려야 하는 시간이에요. 장난으로 여러 번 내는 것을 막아요.']]
+    .filter(row => have.indexOf(row[0]) === -1)
+    .forEach(row => settings.appendRow(row));
   if (!ss.getSheetByName(ROSTER_SHEET)) {
     const sheet = ss.insertSheet(ROSTER_SHEET, 1);
     sheet.getRange(1, 1, 1, 3).setValues([['학번', '이름', '← 비워 두면 명단 확인 없이 받아요. 채우면 학번·이름이 모두 맞아야 제출돼요.']]);
@@ -58,6 +72,8 @@ function setup() {
 
 /** 시트를 열면 위쪽 메뉴에 ‘보고서 정리’가 생깁니다. */
 function onOpen() {
+  // 학생이 몰려 제출하는 동안 미뤄 둔 정리를 시트를 열 때 마쳐요.
+  try { arrangeDeferred_(); } catch (ignored) { /* 정리는 메뉴로도 할 수 있어요. */ }
   SpreadsheetApp.getUi().createMenu('보고서 정리')
     .addItem('지금 탭을 학번 순서로 보기', 'sortActiveById')
     .addItem('지금 탭을 제출 시각 순서로 보기', 'sortActiveByTime')
@@ -111,6 +127,7 @@ function doPost(e) {
     if (!/^\d{5}$/.test(id) || Number(id.slice(1, 3)) < 1) fail_('학번은 숫자 5자리로 적어 주세요. (예: 2학년 3반 15번 → 20315)');
     if (!name) fail_('이름을 적어 주세요.');
     checkRoster_(ss, id, name);
+    if (hasBadWords_(name) || hasBadWords_(data.feedback)) fail_('바르지 않은 말이 있어요. 바른 말로 고쳐 써 주세요.');
 
     const submissionId = typeof data.submissionId === 'string' && /^[A-Za-z0-9-]{8,64}$/.test(data.submissionId) ? data.submissionId : '';
     const lab = labName_(data.title);
@@ -124,18 +141,29 @@ function doPost(e) {
         const saved = findSubmission_(sheet, idCol, submissionId);
         if (saved) return json_({ ok: true, duplicate: true, submittedAt: saved.toISOString(), message: name + ' 학생의 ‘' + lab + '’ 보고서는 이미 제출되어 있어요.' });
       }
+      checkWriting_(sections);
       const now = new Date();
-      const count = countSubmissions_(sheet, id) + 1;
+      // 같은 학번이 같은 실험을 너무 자주, 너무 많이 내지 못하게 해요(장난 제출로 시트가 가득 차지 않게).
+      const before = submissionsOf_(sheet, id);
+      if (before.count >= settings.maxSubmits) fail_('‘' + lab + '’ 보고서는 이미 ' + before.count + '번 제출했어요. 더 내야 하면 선생님께 말씀드리세요.');
+      const wait = Math.ceil(settings.gapSeconds - (now.getTime() - before.last) / 1000);
+      if (before.last && wait > 0) fail_('방금 제출했어요. ' + wait + '초 뒤에 다시 낼 수 있어요.');
+      const count = before.count + 1;
       const row = [now, cls + '반', "'" + id, name, count];
       sections.forEach(s => SECTION_FIELDS.forEach(f => row.push(s[f[0]])));
       row.push(clean_(data.feedback, MAX_TEXT), submissionId);
       sheet.getRange(Math.max(sheet.getLastRow() + 1, FIRST_ROW), 1, 1, row.length).setValues([row.map(safe_)]);
-      arrange_(sheet);
+      // 반별 정리는 시간이 걸려요. 차례를 기다리는 학생이 있으면 미뤄 두고, 마지막으로 낸 학생 때 한 번에 정리해요.
+      if (waiting_() > 0) defer_(sheet.getName());
+      else { arrange_(sheet); arrangeDeferred_(sheet.getName()); }
       return json_({ ok: true, count: count, submittedAt: now.toISOString(), message: name + ' 학생의 ‘' + lab + '’ 보고서를 제출했어요.' + (count > 1 ? ' (' + count + '번째 제출)' : '') });
     });
   } catch (err) {
+    if (err.busy) return json_({ ok: false, retry: true, message: '제출하는 친구들이 많아요. 잠시 뒤 다시 보내 주세요.' });
     if (!err.forStudent) console.error(err);
-    return json_({ ok: false, message: err.forStudent ? err.message : '제출을 저장하지 못했어요. 잠시 뒤 다시 눌러 주세요.' });
+    // 학생 잘못이 아닌 오류(시트가 잠깐 바쁨 등)는 화면이 저절로 다시 보내 봐요.
+    if (err.forStudent) return json_({ ok: false, message: err.message });
+    return json_({ ok: false, retry: true, message: '제출을 저장하지 못했어요. 잠시 뒤 다시 눌러 주세요.' });
   }
 }
 
@@ -180,7 +208,12 @@ function readSettings_(ss) {
   if (!sheet) fail_('선생님 시트 준비가 아직 끝나지 않았어요. 선생님께 알려 주세요.');
   const values = {};
   sheet.getDataRange().getDisplayValues().forEach(row => { values[String(row[0]).trim()] = String(row[1]).trim(); });
-  return { code: values['수업 코드'] || '', open: String(values['제출 받기']).toUpperCase() === 'TRUE' };
+  const number = (v, fallback) => { const n = Number(v); return v !== undefined && v !== '' && isFinite(n) && n >= 0 ? n : fallback; };
+  return {
+    code: values['수업 코드'] || '', open: String(values['제출 받기']).toUpperCase() === 'TRUE',
+    maxSubmits: number(values['같은 실험 최대 제출'], DEFAULT_MAX_SUBMITS) || DEFAULT_MAX_SUBMITS,
+    gapSeconds: number(values['다시 제출 간격(초)'], DEFAULT_GAP_SECONDS),
+  };
 }
 
 function checkRoster_(ss, id, name) {
@@ -301,22 +334,71 @@ function findSubmission_(sheet, idCol, submissionId) {
   return null;
 }
 
-// 같은 실험에서 이 학번이 몇 번 제출했는지 셉니다. ‘처음부터’ 다시 해서 낸 새 보고서는 새 줄로 남겨요.
-function countSubmissions_(sheet, id) {
+// 같은 실험에서 이 학번이 몇 번 제출했는지와 마지막 제출 시각(밀리초)을 셉니다. ‘처음부터’ 다시 해서 낸 새 보고서는 새 줄로 남겨요.
+function submissionsOf_(sheet, id) {
   const last = sheet.getLastRow();
-  if (last < FIRST_ROW) return 0;
-  return sheet.getRange(FIRST_ROW, 3, last - FIRST_ROW + 1, 1).getDisplayValues().filter(row => row[0] === id).length;
+  if (last < FIRST_ROW) return { count: 0, last: 0 };
+  const rows = sheet.getRange(FIRST_ROW, 1, last - FIRST_ROW + 1, 3).getValues();
+  let count = 0, latest = 0;
+  rows.forEach(row => {
+    if (String(row[2]).replace(/^'/, '') !== id) return;
+    count++;
+    const t = row[0] instanceof Date ? row[0].getTime() : Number(new Date(row[0])) || 0;
+    if (t > latest) latest = t;
+  });
+  return { count: count, last: latest };
 }
 
 // 동시에 여러 학생이 제출하거나 선생님이 정렬하는 중에도 한 번에 하나씩만 시트를 고칩니다.
+// 차례를 오래 기다리면(학생이 아주 많이 몰리면) busy 오류로 끝내고, 학생 화면이 잠시 뒤 다시 보내요.
+// 기다리는 학생 수는 캐시에 어림해 두어, 반별 정리를 미룰지 정해요(정확하지 않아도 마지막에 다시 정리돼요).
 function withLock_(work) {
   const lock = LockService.getScriptLock();
-  lock.waitLock(25000);
+  changeWaiting_(1);
+  let got = false;
+  try { got = lock.tryLock(LOCK_WAIT_MS); } finally { changeWaiting_(-1); }
+  if (!got) { const err = new Error('busy'); err.busy = true; throw err; }
   try {
     return work();
   } finally {
     lock.releaseLock();
   }
+}
+const cache_ = () => CacheService.getScriptCache();
+function waiting_() { return Math.max(0, Number(cache_().get('waiting')) || 0); }
+function changeWaiting_(d) { cache_().put('waiting', String(Math.max(0, waiting_() + d)), 120); }
+function deferred_() { try { return JSON.parse(cache_().get('deferred') || '[]'); } catch (ignored) { return []; } }
+function defer_(name) { const list = deferred_(); if (list.indexOf(name) === -1) list.push(name); cache_().put('deferred', JSON.stringify(list), 21600); }
+// 미뤄 둔 탭을 정리해요(done: 방금 정리한 탭 이름). 잠금 안에서 부르거나, 시트를 열 때 따로 잠가서 불러요.
+function arrangeDeferred_(done) {
+  const list = deferred_();
+  if (!list.length) return;
+  const run = () => {
+    const ss = SpreadsheetApp.getActive();
+    deferred_().filter(name => name !== done).forEach(name => { const sheet = ss.getSheetByName(name); if (sheet && isLabSheet_(sheet)) arrange_(sheet); });
+    cache_().remove('deferred');
+  };
+  if (done === undefined) withLock_(run); else run();
+}
+
+// 학생 글 거르기(src/text-guard.js와 같은 규칙): 바르지 않은 말, 뜻 없는 설명(ㅋㅋㅋ, 같은 말 되풀이).
+const BAD_WORDS_ = /씨발|시발(?!점)|씨팔|시팔|ㅅㅂ|ㅆㅂ|병신|븅신|ㅂㅅ|개새|새끼|좆|존나|지랄|ㅈㄹ|닥쳐|미친놈|미친년|엿\s?먹|fuck|shit|bitch/i;
+function hasBadWords_(text) { return BAD_WORDS_.test(String(text == null ? '' : text)); }
+function meaningfulLength_(text) {
+  return String(text == null ? '' : text).replace(/[\sㄱ-ㅎㅏ-ㅣ.,!?~·…'"()\-_=+*^;:/\\[\]{}<>@#$%&|]/g, '').replace(/(.)\1+/g, '$1').length;
+}
+function repetitive_(text) {
+  const s = String(text == null ? '' : text).replace(/\s/g, '');
+  if (s.length < 12) return false;
+  const pairs = {};
+  for (let i = 0; i < s.length - 1; i++) pairs[s.slice(i, i + 2)] = true;
+  return Object.keys(pairs).length / (s.length - 1) < 0.35;
+}
+function checkWriting_(sections) {
+  sections.forEach(s => {
+    if (SECTION_FIELDS.some(f => hasBadWords_(s[f[0]]))) fail_('바르지 않은 말이 있어요. 바른 말로 고쳐 써 주세요.');
+    if (meaningfulLength_(s.explanation) < MIN_MEANINGFUL || repetitive_(s.explanation)) fail_('설명이 뜻이 통하는 문장이 아니에요. 내 생각을 문장으로 다시 써 주세요.');
+  });
 }
 
 function clean_(value, max) {

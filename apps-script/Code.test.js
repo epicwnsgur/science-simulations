@@ -15,7 +15,9 @@ function ready() {
   });
   // 3행부터가 보고서 줄이에요. 빈 줄은 ''로 보여 줍니다.
   const view = (sheet, cols = [1, 3]) => sheet.rows.slice(2).map(r => r.some(v => v !== '' && v != null) ? cols.map(c => String(r[c]).replace(/^'/, '')).join(' ') : '');
-  return { ...script, code, report, view };
+  // 설정 탭의 값을 바꿔요(예: 같은 실험 최대 제출).
+  const setSetting = (label, value) => { script.ss.getSheetByName('설정').rows.find(r => r[0] === label)[1] = value; };
+  return { ...script, code, report, view, setSetting };
 }
 
 test('setup은 설정·명단 탭과 6자리 수업 코드를 만들고 빈 시트1을 지운다', () => {
@@ -118,7 +120,8 @@ test('정렬 체크박스로 반 안에서 학번 순·제출 시각 순을 바�
 });
 
 test('같은 제출 ID는 한 번만 저장하고 처음 저장한 결과를 돌려주며, 다른 보고서는 막지 않는다', () => {
-  const { ss, post, report } = ready();
+  const { ss, post, report, setSetting } = ready();
+  setSetting('같은 실험 최대 제출', 10);
   const first = post(report({ submissionId: 'abc12345-0001' }));
   const again = post(report({ submissionId: 'abc12345-0001', explanation: '다시 보낸 설명' }));
   assert.equal(first.ok, true);
@@ -135,13 +138,13 @@ test('같은 제출 ID는 한 번만 저장하고 처음 저장한 결과를 돌
 test('실험이 둘인 보고서는 실험마다 예상·관찰·설명 칸을 따로 만든다', () => {
   const { ss, post, report } = ready();
   const sections = [
-    { name: '풍선과 털', prediction: '끌려온다', reason: '까닭1', observation: '관찰1', explanation: '설명1' },
-    { name: '숟가락', prediction: '밀려난다', reason: '까닭2', observation: '관찰2', explanation: '설명2' },
+    { name: '풍선과 털', prediction: '끌려온다', reason: '까닭1', observation: '관찰1', explanation: '설명1: 털의 전자가 풍선으로 옮겨 갔어요.' },
+    { name: '숟가락', prediction: '밀려난다', reason: '까닭2', observation: '관찰2', explanation: '설명2: 같은 전하끼리 서로 밀어내요.' },
   ];
   assert.equal(post(report({ title: '마찰 전기', sections, prediction: '합친 예상' })).ok, true);
   const sheet = ss.getSheetByName('마찰 전기');
   assert.deepEqual(sheet.rows[1].slice(5), ['[풍선과 털] 예상', '[풍선과 털] 예상한 까닭', '[풍선과 털] 관찰', '[풍선과 털] 설명', '[숟가락] 예상', '[숟가락] 예상한 까닭', '[숟가락] 관찰', '[숟가락] 설명', '사용 후기', '제출 ID']);
-  assert.deepEqual(sheet.rows[2].slice(5, 13), ['끌려온다', '까닭1', '관찰1', '설명1', '밀려난다', '까닭2', '관찰2', '설명2']);
+  assert.deepEqual(sheet.rows[2].slice(5, 13), ['끌려온다', '까닭1', '관찰1', '설명1: 털의 전자가 풍선으로 옮겨 갔어요.', '밀려난다', '까닭2', '관찰2', '설명2: 같은 전하끼리 서로 밀어내요.']);
 });
 
 // 지난 버전이 만든 탭: 1행이 바로 머리글이고, 반 사이에 빈 줄이 있어요.
@@ -182,7 +185,8 @@ test('칸 구성이 다른 탭(실험 수가 다르거나 아주 예전 모양)�
   const { ss, post, report, context, view } = ready();
   legacyTab(ss);
   assert.equal(post(report()).ok, true);
-  assert.equal(post(report({ sections: [{ name: 'A' }, { name: 'B' }] })).ok, true);
+  const explanation = '저항이 일정하면 전류는 전압에 비례해요.';
+  assert.equal(post(report({ sections: [{ name: 'A', explanation }, { name: 'B', explanation }] })).ok, true);
   // 예전 학생 데이터는 (이전) 탭에 그대로 남아요.
   assert.deepEqual(view(ss.getSheetByName('옴의 법칙 (이전)'), [3]), ['일반', '', '삼반먼저', '삼반늦게', '홍길동']);
   assert.equal(ss.getSheetByName('옴의 법칙').rows[1][5], '[A] 예상');
@@ -224,4 +228,66 @@ test('수업 모형에 맞는 칸 이름(fieldLabels)을 보내면 새 탭 머�
   // 이상한 값이 오면 원래 이름을 써요.
   assert.equal(post(report({ title: '연주 시차', fieldLabels: { prediction: '', reason: 5 } })).ok, true);
   assert.deepEqual(ss.getSheetByName('연주 시차').rows[1].slice(5, 9), ['예상', '예상한 까닭', '관찰', '설명']);
+});
+
+test('장난 제출 막기: 같은 학번은 같은 실험에 3번까지, 다시 내려면 60초를 기다려요(설정 탭에서 바꿀 수 있어요)', () => {
+  const { ss, post, report, clock, setSetting } = ready();
+  const labels = ss.getSheetByName('설정').rows.map(r => r[0]);
+  assert.ok(labels.includes('같은 실험 최대 제출') && labels.includes('다시 제출 간격(초)'));
+  for (let i = 0; i < 3; i++) assert.equal(post(report()).ok, true);
+  const fourth = post(report());
+  assert.equal(fourth.ok, false);
+  assert.match(fourth.message, /이미 3번 제출했어요/);
+  assert.equal(post(report({ studentId: '20101', name: '다른학생' })).ok, true, '다른 학생은 낼 수 있어요');
+  setSetting('같은 실험 최대 제출', 5);
+  clock.step = 10000;
+  const quick = post(report());
+  assert.equal(quick.ok, true, '앞 제출과 2분 차이라 받아요');
+  const tooSoon = post(report());
+  assert.equal(tooSoon.ok, false);
+  assert.match(tooSoon.message, /초 뒤에 다시 낼 수 있어요/);
+  setSetting('다시 제출 간격(초)', 0);
+  assert.equal(post(report()).ok, true);
+});
+
+test('예전에 만든 설정 탭에도 setup을 다시 실행하면 새 항목만 더해요', () => {
+  const { ss, context, setSetting } = ready();
+  setSetting('같은 실험 최대 제출', 7);
+  context.setup();
+  const rows = ss.getSheetByName('설정').rows.filter(r => r[0] === '같은 실험 최대 제출');
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0][1], 7);
+});
+
+test('뜻 없는 설명·바르지 않은 말은 받지 않고, 과학 낱말(시발점, 불이 꺼져요)은 받아요', () => {
+  const { post, report } = ready();
+  for (const explanation of ['ㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋ', '가나다가나다가나다가나다가나다가나다', '아아아아아아아아아아아아아아아아아아아아', '.....']) {
+    const res = post(report({ explanation }));
+    assert.equal(res.ok, false, explanation);
+    assert.match(res.message, /뜻이 통하는 문장/);
+  }
+  assert.match(post(report({ observation: '존나 신기했음' })).message, /바르지 않은 말/);
+  assert.match(post(report({ name: '병신' })).message, /바르지 않은 말/);
+  assert.match(post(report({ feedback: '씨발 어려워' })).message, /바르지 않은 말/);
+  assert.equal(post(report({ explanation: '전류의 시발점은 전지예요. 스위치를 열면 불이 꺼져요.' })).ok, true);
+});
+
+test('한꺼번에 몰려 차례를 오래 기다리면 다시 보내라고(retry) 답하고, 정리는 마지막 제출 때 한 번에 해요', () => {
+  const { ss, post, report, view } = ready();
+  ss.busy = true;
+  const busy = post(report());
+  assert.deepEqual(busy, { ok: false, retry: true, message: '제출하는 친구들이 많아요. 잠시 뒤 다시 보내 주세요.' });
+  ss.busy = false;
+  // 기다리는 학생이 있는 동안 낸 제출은 정리를 미뤄요(반이 섞인 채 아래에 붙어요).
+  post(report({ studentId: '20301', name: '삼반' }));
+  ss.cache.set('waiting', '2');
+  post(report({ studentId: '20101', name: '일반' }));
+  const sheet = ss.getSheetByName('옴의 법칙');
+  assert.deepEqual(view(sheet), ['3반 삼반', '1반 일반']);
+  assert.ok(JSON.parse(ss.cache.get('deferred')).includes('옴의 법칙'));
+  // 마지막 학생(기다리는 사람 없음)이 내면 미뤄 둔 정리까지 한 번에 해요.
+  ss.cache.set('waiting', '0');
+  post(report({ studentId: '20201', name: '이반' }));
+  assert.deepEqual(view(sheet), ['1반 일반', '', '2반 이반', '', '3반 삼반']);
+  assert.equal(ss.cache.has('deferred'), false);
 });

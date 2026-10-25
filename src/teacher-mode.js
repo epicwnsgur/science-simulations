@@ -3,7 +3,7 @@
 // 이 탭을 닫으면 꺼져요(sessionStorage). 다른 실험으로 옮겨 가도 같은 탭이면 켜진 채로 있어요.
 // 비밀번호는 글자 그대로 두지 않고 SHA-256 값만 두어요. 다만 화면 코드는 누구나 내려받을 수 있어서,
 // 학생이 실수로 켜는 것을 막는 가벼운 잠금이에요(시험지처럼 꼭 지켜야 하는 것을 숨기는 용도로는 쓰지 않아요).
-const PASS_SHA256 = '4be1a191ec62fa1deb76d7c64fc6eaa259207c898a1ea1a621069a3ca4fc99ab';
+const PASS_SHA256 = 'c5cc15b6430ca720613daef384c58149870660959a4ecbb76ba3b55ba02ad77e';
 const KEY = 'poe-teacher';
 
 const read = () => { try { return sessionStorage.getItem(KEY) === 'on'; } catch { return false; } };

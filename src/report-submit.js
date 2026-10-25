@@ -1,4 +1,6 @@
 import { SUBMIT_URL } from './submission-config.js';
+import { draftStore } from './draft-store.js';
+import { blockPaste, PASTE_MESSAGE, hasBadWords } from './text-guard.js';
 
 // 개념 확인 단계 아래의 ‘선생님께 보고서 제출하기’. 예상·관찰·설명과 사용 후기를 선생님 구글 시트(Apps Script 웹 앱)로 보냅니다. 퀴즈 결과는 보내지 않아요.
 // 순서: [보고서 제출하기] → 미리보기 → [최종 제출하기] → 서버가 저장했다고 답하면 제출 완료.
@@ -17,14 +19,20 @@ function newSubmissionId() {
   return [...crypto.getRandomValues(new Uint8Array(16))].map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
+// 응답을 기다리는 시간과, 저절로 다시 보내기 전에 기다리는 시간(밀리초, 조금씩 흩어 보내요).
+export const TIMEOUT_MS = 30000;
+export const RETRIES = [2000, 5000, 9000];
+// 자동 시험(웹드라이버)에서는 기다리는 시간만 줄여요(다시 보내는 횟수와 순서는 같아요).
+const RETRY_SCALE = globalThis.navigator?.webdriver ? 0.02 : 1;
+
 export function mountReportSubmit(container, { slug, report, check, onSubmitted = () => {} }, url = SUBMIT_URL) {
   if (!url) return { reset() {} };
-  // 이 탭이 열려 있는 동안만 기억해요: 수업 코드, 쓰던 후기, 이 보고서의 제출 ID, 제출 완료 여부.
+  // 임시 저장(src/draft-store.js): 수업 코드, 쓰던 후기, 이 보고서의 제출 ID, 제출 완료 여부. 창을 다시 열어도 남아요.
+  // 제출을 마치면 이 컴퓨터에 남긴 것은 지우고 이 탭에만 남겨요(함께 쓰는 컴퓨터의 다음 학생에게 보이지 않게).
   // 학번·이름은 함께 쓰는 컴퓨터에서 앞 학생 이름으로 제출되지 않도록 기억하지 않아요.
-  const key = `report:${slug}`;
-  let store = {};
-  try { store = JSON.parse(sessionStorage.getItem(key)) ?? {}; } catch { /* 처음 상태로 시작해요. */ }
-  const persist = () => { try { sessionStorage.setItem(key, JSON.stringify(store)); } catch { /* 저장하지 못해도 제출에는 지장이 없어요. */ } };
+  const drafts = draftStore(`report:${slug}`);
+  let store = drafts.load()?.data ?? {};
+  const persist = () => drafts.save(store, { keepLocal: !store.submitted });
 
   container.innerHTML = `
     <section class="feedback-box" aria-labelledby="feedback-title">
@@ -92,10 +100,11 @@ export function mountReportSubmit(container, { slug, report, check, onSubmitted 
   for (const [first, again] of Object.values(pairs)) {
     for (const el of [first, again]) el.addEventListener('input', () => { if (status.dataset.state === 'error') show(''); refresh(); });
     // 위 칸을 복사해 붙이면 확인하는 뜻이 없으니 직접 다시 쓰게 해요.
-    again.addEventListener('paste', e => { e.preventDefault(); show('확인 칸에는 붙여 넣지 말고 직접 한 번 더 적어 주세요.', 'error'); });
+    blockPaste(again, { onBlocked: () => show('확인 칸에는 붙여 넣지 말고 직접 한 번 더 적어 주세요.', 'error') });
   }
   input('code').addEventListener('input', () => { store.code = input('code').value.trim(); persist(); });
   feedback.addEventListener('input', () => { store.feedback = feedback.value; persist(); });
+  blockPaste(feedback, { onBlocked: () => show(PASTE_MESSAGE, 'error') });
 
   // 1단계: 확인하고 미리보기 열기. 이때는 서버로 아무것도 보내지 않아요.
   form.onsubmit = e => {
@@ -107,6 +116,7 @@ export function mountReportSubmit(container, { slug, report, check, onSubmitted 
       : who.studentId !== plain(pairs.id[1].value) ? '학번 두 칸이 서로 달라요. 다시 확인해 주세요.'
       : !who.name ? '이름을 적어 주세요.'
       : who.name !== plain(pairs.name[1].value) ? '이름 두 칸이 서로 달라요. 다시 확인해 주세요.'
+      : hasBadWords(who.name) || hasBadWords(feedback.value) ? '바르지 않은 말이 있어요. 바른 말로 고쳐 써 주세요.'
       : check();
     if (problem) return show(problem, 'error');
     show('');
@@ -130,23 +140,38 @@ export function mountReportSubmit(container, { slug, report, check, onSubmitted 
     finalButton.innerHTML = '<span class="spinner" aria-hidden="true"></span> 제출하는 중…';
     showInDialog('선생님 시트에 저장하고 있어요. 잠시만 기다려 주세요.');
     if (!store.submissionId) { store.submissionId = newSubmissionId(); persist(); }
-    const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 25000);
+    // 여러 학생이 한꺼번에 내면 선생님 시트가 차례로 저장하느라 늦거나 ‘잠시 뒤’라고 답할 수 있어요.
+    // 그때는 조금씩 기다렸다가 저절로 다시 보내요(같은 제출 ID라 두 번 저장되지 않아요).
     try {
-      // 글자(text/plain)로 보내면 사전 확인 요청 없이 Apps Script 웹 앱에 바로 전달돼요.
-      const response = await fetch(url, { method: 'POST', body: JSON.stringify({ ...snapshot, submissionId: store.submissionId }), signal: controller.signal });
-      const result = await response.json();
-      if (result.ok !== true) { showInDialog(result.message || '제출하지 못했어요. 다시 눌러 주세요.', 'error'); return; }
+      let result = null;
+      for (let attempt = 0; attempt < RETRIES.length + 1; attempt++) {
+        if (attempt) {
+          showInDialog(`제출하는 친구들이 많아 차례를 기다리고 있어요. 저절로 다시 보내는 중이에요(${attempt}/${RETRIES.length}). 창을 닫지 마세요.`);
+          await new Promise(done => setTimeout(done, RETRIES[attempt - 1] * (0.7 + Math.random() * 0.6) * RETRY_SCALE));
+        }
+        const controller = new AbortController(), timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+        try {
+          // 글자(text/plain)로 보내면 사전 확인 요청 없이 Apps Script 웹 앱에 바로 전달돼요.
+          const response = await fetch(url, { method: 'POST', body: JSON.stringify({ ...snapshot, submissionId: store.submissionId }), signal: controller.signal });
+          result = await response.json();
+        } catch {
+          // 요청은 갔지만 답을 못 받았을 수도 있어요. 다시 보내도 같은 제출 ID라서 두 번 저장되지 않아요.
+          result = { ok: false, retry: true, network: true };
+        } finally { clearTimeout(timer); }
+        if (result.ok === true || !result.retry) break;
+      }
+      if (result.ok !== true) {
+        showInDialog(result.network ? '제출 결과를 확인하지 못했어요. 인터넷 연결을 확인하고 [최종 제출하기]를 다시 눌러 주세요. 다시 눌러도 같은 보고서는 한 번만 저장돼요.' : result.message || '제출하지 못했어요. 다시 눌러 주세요.', 'error');
+        return;
+      }
       store.submitted = { at: result.submittedAt || new Date().toISOString(), message: result.duplicate ? '이 보고서는 이미 제출되어 있어요. 시트에는 한 번만 저장됐어요.' : '보고서가 정상적으로 제출되었습니다.', who: `${snapshot.studentId} ${snapshot.name}` };
       persist();
       closeDialog();
       showDone();
       onSubmitted();
       done.focus({ preventScroll: true }); done.scrollIntoView({ behavior: 'instant', block: 'nearest' });
-    } catch {
-      // 요청은 갔지만 답을 못 받았을 수도 있어요. 다시 눌러도 같은 제출 ID라서 두 번 저장되지 않아요.
-      showInDialog('제출 결과를 확인하지 못했어요. 인터넷 연결을 확인하고 [최종 제출하기]를 다시 눌러 주세요. 다시 눌러도 같은 보고서는 한 번만 저장돼요.', 'error');
     } finally {
-      clearTimeout(timer); sending = false;
+      sending = false;
       if (!store.submitted) { finalButton.disabled = false; editButton.disabled = false; finalButton.textContent = '다시 최종 제출하기'; }
       refresh();
     }
@@ -205,21 +230,21 @@ function printHTML(r, submitted) {
   const id = r.studentId, multi = r.sections.length > 1, today = stamp(new Date().toISOString()).slice(0, 10);
   const blank = '<span class="blank"></span>';
   const info = (label, value) => `<div><dt>${label}</dt><dd>${value || blank}</dd></div>`;
-  const item = (label, value) => `<div class="print-item"><dt>${label}</dt><dd>${value ? escape(value) : '<span class="empty">(쓰지 않음)</span>'}</dd></div>`;
+  const item = (label, value, question) => `<div class="print-item"><dt>${label}${question ? `<span class="print-q">${escape(question)}</span>` : ''}</dt><dd>${value ? escape(value) : '<span class="empty">(쓰지 않음)</span>'}</dd></div>`;
   return `
     <div class="print-head"><p class="print-kicker">과학 탐구 보고서</p><h1>${escape(r.title)}</h1><p class="print-date">작성일 ${today}${submitted ? ` · 선생님께 제출함 ${stamp(submitted.at)}` : ''}</p></div>
     <dl class="print-info">${info('학년', id && `${Number(id[0])}학년`)}${info('반', id && `${Number(id.slice(1, 3))}반`)}${info('번호', id && `${Number(id.slice(3))}번`)}${info('이름', escape(r.name))}</dl>
-    ${r.sections.map((s, i) => `<section class="print-section"><h2>${multi ? `실험 ${i + 1}. ${escape(s.name)}` : '탐구 기록'}</h2><dl>${FIELDS.map(k => item(labelOf(r, k), s[k])).join('')}</dl></section>`).join('')}
+    ${r.sections.map((s, i) => `<section class="print-section"><h2>${multi ? `실험 ${i + 1}. ${escape(s.name)}` : '탐구 기록'}</h2><dl>${FIELDS.map(k => item(labelOf(r, k), s[k], s.questions?.[k])).join('')}</dl></section>`).join('')}
     ${r.feedback ? `<section class="print-section"><h2>시뮬레이션 사용 후기</h2><dl>${item('후기', r.feedback)}</dl></section>` : ''}
     <p class="print-foot">준혁T의 과학 실험실 · ${r.fieldLabels ? FIELDS.map(k => labelOf(r, k)).filter((_, i) => i !== 1).join(' → ') : '예상 → 관찰 → 설명'}</p>`;
 }
 
 function previewHTML(r) {
   const id = r.studentId, multi = r.sections.length > 1;
-  const row = (label, value) => `<div><dt>${label}</dt><dd>${value === '' ? '<span class="empty">(쓰지 않음)</span>' : escape(value)}</dd></div>`;
+  const row = (label, value, question) => `<div><dt>${label}${question ? `<small class="preview-q">${escape(question)}</small>` : ''}</dt><dd>${value === '' ? '<span class="empty">(쓰지 않음)</span>' : escape(value)}</dd></div>`;
   return `
     <section><h3>기본 정보</h3><dl class="preview-grid">${row('학년', `${Number(id[0])}학년`)}${row('반', `${Number(id.slice(1, 3))}반`)}${row('번호', `${Number(id.slice(3))}번`)}${row('이름', r.name)}</dl></section>
-    ${r.sections.map((s, i) => `<section><h3>${multi ? `실험 ${i + 1}. ${escape(s.name)}` : '탐구 기록'}</h3><dl>${FIELDS.map(k => row(labelOf(r, k), s[k])).join('')}</dl></section>`).join('')}
+    ${r.sections.map((s, i) => `<section><h3>${multi ? `실험 ${i + 1}. ${escape(s.name)}` : '탐구 기록'}</h3><dl>${FIELDS.map(k => row(labelOf(r, k), s[k], s.questions?.[k])).join('')}</dl></section>`).join('')}
     <section><h3>퀴즈 결과</h3><p class="poe-hint">퀴즈는 스스로 확인하는 활동이라 보고서에 넣지 않아요.</p></section>
     <section><h3>시뮬레이션 사용 후기</h3><dl>${row('후기', r.feedback)}</dl></section>`;
 }

@@ -223,6 +223,16 @@ body[data-poe=observe] main{max-width:1640px}
 .review-choices{display:flex;flex-wrap:wrap;gap:8px}
 .review-choice{padding:10px 14px;border-radius:8px;border:1px solid var(--line-2);background:#0d1430;color:#cfe6ff;font:inherit}
 .review-choice.chosen{border-color:var(--current);background:#0d2a4d}
+.review-choice:disabled{cursor:default;opacity:.75}
+.review-choice.chosen:disabled{opacity:1}
+.review-choice.correct{border-color:var(--ok);box-shadow:inset 0 0 0 1px var(--ok)}
+.review-choice.correct::after{content:' ✓';color:var(--ok)}
+#check-review[hidden],#finish-review[hidden]{display:none}
+.autosave-note{margin:2px 0 0;font-size:12px;color:var(--muted)}
+.autosave-note:empty{display:none}
+.draft-banner{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin:0 0 16px;padding:12px 16px;border-radius:10px;background:#0d2a4d;border:1px solid var(--current)}
+.draft-banner p{margin:0;color:var(--ink);line-height:1.6}
+.draft-banner small{display:block;color:var(--muted)}
 .review-feedback[data-state=right]{color:var(--ok)!important}
 .review-feedback[data-state=wrong]{color:#ffb4bd!important}
 .glossary{margin:14px 0;padding:10px 14px;border-radius:8px;background:#0a1029;border:1px solid var(--line)}
@@ -268,6 +278,7 @@ body:has(.report-preview[open]){overflow:hidden}
 .preview-body dl{margin:0;display:grid;gap:8px}
 .preview-body dl>div{padding:10px 12px;border-radius:8px;background:#0a1029;border:1px solid var(--line)}
 .preview-body dt{font-size:13px;font-weight:700;color:var(--muted)}
+.preview-q{display:block;margin-top:2px;font-weight:400;color:var(--faint);line-height:1.5}
 .preview-body dd{margin:4px 0 0;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--ink)}
 .preview-body .empty{color:var(--faint)}
 .preview-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
@@ -314,6 +325,8 @@ body:has(.report-preview[open]){overflow:hidden}
   .print-section dl{margin:0}
   .print-item{padding:5pt 2pt 7pt;border-bottom:.75pt solid #dde2ec;break-inside:avoid}
   .print-item dt{font-size:9.5pt;font-weight:700;color:#1f3b6f}
+  .print-q{display:block;margin-top:1pt;font-size:8.5pt;font-weight:400;color:#4a5568}
+  .print-q::before{content:'질문: '}
   .print-item dd{margin:2pt 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
   .print-item .empty{color:#888}
   .print-foot{margin-top:16pt;font-size:8.5pt;color:#888;text-align:right}

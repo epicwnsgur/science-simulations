@@ -5,7 +5,7 @@ import { beginObservation } from './poe-helpers.js';
 const SERIES = '/simulations/series-parallel/';
 const LABS = ['friction-electricity', 'electrostatic-induction', 'electric-current', 'ohms-law', 'series-parallel', 'coil-magnetic-field', 'electric-swing', 'electric-motor', 'stellar-parallax', 'star-brightness', 'star-color', 'milky-way', 'expanding-universe'];
 
-async function turnOnTeacher(page, password = '04210421') {
+async function turnOnTeacher(page, password = '0421') {
   await page.locator('#teacher-btn').click();
   await expect(page.locator('#teacher-dialog')).toBeVisible();
   await page.locator('#teacher-pass').fill(password);
@@ -73,6 +73,7 @@ test('순서 안내: 실험 단계를 끝내지 않고 넘어가려 하면 실�
   await page.goto('/simulations/ohms-law/');
   await page.locator('.review-item').first().waitFor();
   for (const item of await page.locator('.review-item').all()) await item.locator('.review-choice').first().click();
+  await page.locator('#check-review').click();
   await page.locator('#finish-review').click();
   await page.locator('[data-goto="observe"]').click({ force: true });
   await expect(page.locator('.flow-toast')).toContainText('예상 저장하고 실험하기');
@@ -96,6 +97,7 @@ test('과학 낱말: 주요 낱말을 누르면 쉬운 뜻이 나오고, 바깥�
 });
 
 test('과학 낱말: 모든 실험의 예상하기·실험 안내·개념 정리에 뜻 풀이 낱말이 있음', async ({ page }) => {
+  test.setTimeout(90000); // 여러 실험을 차례로 열어 보는 시험이에요.
   for (const slug of LABS) {
     await page.goto(`/simulations/${slug}/`);
     const n = await page.evaluate(() => document.querySelectorAll('[data-experiment]').length || 1);
@@ -109,6 +111,7 @@ test('과학 낱말: 모든 실험의 예상하기·실험 안내·개념 정리
 });
 
 test('설명하기: 개념 정리·퀴즈·안내 상자의 글씨가 바탕과 충분히 구별됨(명암비 4.5 이상)', async ({ page }) => {
+  test.setTimeout(90000); // 여러 실험을 차례로 열어 보는 시험이에요.
   for (const slug of LABS) {
     await page.goto(`/simulations/${slug}/`);
     const n = await page.evaluate(() => document.querySelectorAll('[data-experiment]').length || 1);
@@ -132,6 +135,7 @@ test('설명하기: 개념 정리·퀴즈·안내 상자의 글씨가 바탕과 
 });
 
 test('순서 안내: 단계를 누르면 그 단계를 하는 방법과 눌러야 할 단추(‘👆 여기를 눌러요’)를 알려 줌', async ({ browser }) => {
+  test.setTimeout(90000); // 여러 실험을 차례로 열어 보는 시험이에요.
   const LIST = [['friction-electricity', 2, '① 털에 문지르기'], ['electrostatic-induction', 1, '가까이 가져가기'], ['electric-current', 1, '털가죽으로 접시 문지르기'], ['ohms-law', 1, '+ 1 V'], ['series-parallel', 1, '스위치 S1 닫기'], ['electric-swing', 1, '스위치 누르고 있기'], ['electric-motor', 1, '전류 흘리기'], ['coil-magnetic-field', 1, null], ['stellar-parallax', 1, '왼쪽 구멍으로 보기'], ['star-brightness', 1, '빛의 세기 기록하기'], ['star-color', 1, '전원 켜기'], ['milky-way', 1, '위에서 보기'], ['expanding-universe', 1, '공기 조금 넣기']];
   for (const [slug, count, button] of LIST) {
     const page = await browser.newPage();
