@@ -138,7 +138,7 @@ body.lab-space .stage:not([data-tab="objects"]) #objects-view{display:none}
 body.lab-space .stage.three-on.galaxy3d #scene>:not(defs):not(#shape-view){display:none}
 body.lab-space .stage.three-on.galaxy3d #shape2d{display:none}
 body.lab-space #scene .sky-label.strong{fill:#ffcf6e;font-size:14px}
-body.lab-space #scene .strip-label{font-size:11px;font-weight:700;fill:#dfe6ff}
+body.lab-space #scene .strip-label{font-size:10.5px;font-weight:700;fill:#dfe6ff}
 body.lab-space #scene .strip-item{cursor:pointer;pointer-events:all}
 body.lab-space #scene .strip-item:focus-visible rect{stroke:var(--volt);stroke-width:3}
 body.lab-space .stage[data-tab="objects"] #scene,body.lab-space .stage[data-tab="sky"] #scene{touch-action:manipulation}
@@ -170,3 +170,17 @@ body.lab-space #scene .ox-btn.wrong rect{fill:#3a1420;stroke:#ff8a9a}
 body.lab-space #scene .ox-why{font-size:12px;fill:#9dffb0}
 body.lab-space #scene .ox-why.wrong{fill:#ff9aa6}
 body.lab-space .stage[data-tab="analogy"] #scene{touch-action:manipulation}
+/* 실제 별 사진 관측 창 */
+body.lab-space #scene .obs-hit{cursor:grab;pointer-events:all;touch-action:none}
+body.lab-space #scene .obs-hit.grabbing{cursor:grabbing}
+body.lab-space #scene .obs-zoom{font-size:12px;font-weight:700;fill:#ffcf6e}
+body.lab-space #scene .card-tiny{font-size:10.5px;fill:#8f9bc4}
+body.lab-space #scene .measure-card{animation:measure-in .6s cubic-bezier(.2,.7,.3,1)}
+@keyframes measure-in{from{opacity:0;transform:translateX(18px)}}
+body.lab-space #scene .pin-pulse{transform-box:fill-box;transform-origin:center;animation:pin-pulse 1.8s ease-out infinite}
+@keyframes pin-pulse{from{opacity:.9;transform:scale(1)}99%{opacity:0;transform:scale(2.4)}}
+body.lab-space .obs-tools{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
+body.lab-space .obs-tools button{border:1px solid var(--line-2);border-radius:8px;background:#0a1029;color:#cfe6ff;padding:8px 12px;font-size:calc(14px * var(--fs, 1))}
+body.lab-space .obs-tools button[aria-pressed=true]{border-color:var(--volt);color:#fff}
+body.lab-space .obs-tools button:disabled{opacity:.35}
+@media(prefers-reduced-motion:reduce){body.lab-space #scene .measure-card,body.lab-space #scene .pin-pulse{animation:none}}

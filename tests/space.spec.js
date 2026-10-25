@@ -31,6 +31,7 @@ const LABS = [
     await setRange(page, '#temp', 0); await setRange(page, '#temp', 1000);
     await page.locator('#tab-stars').click();
     for (const s of ['rigel', 'spica', 'vega', 'aldebaran', 'betelgeuse', 'antares']) await page.locator(`[data-star="${s}"]`).click();
+    for (const s of ['rigel', 'aldebaran', 'betelgeuse']) { await page.locator(`[data-star="${s}"]`).click(); await page.locator('#measure-color').click(); await expect(page.locator('#readout')).toContainText(/빛/); await expect(page.locator('#star-info')).toContainText('사진 속 별빛:'); }
     await page.locator('#tab-sky').click();
     await page.locator('[data-sky-star="antares"]').click(); await page.locator('[data-sky-star="dschubba"]').click();
     await page.locator('[data-photo-pick="jewel"]').click();
@@ -156,10 +157,37 @@ test('별의 색: 낮은 온도는 적색, 높은 온도는 청색이고 빛의 
   await expect(page.locator('#star-info')).toContainText('황색');
 });
 
+test('별의 색: 실제 별 사진을 관측하고 별빛 색을 재며, 베텔게우스·안타레스는 표면까지 확대', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await openObserveUnlocked(page, '/simulations/star-color/');
+  await page.locator('#tab-stars').click();
+  const tint = async star => { await page.locator(`[data-star="${star}"]`).click(); await page.locator('#measure-color').click(); await expect(page.locator('#star-info')).toContainText('사진 속 별빛:'); return page.locator('#star-info').textContent(); };
+  for (const s of ['rigel', 'spica', 'vega']) expect(await tint(s)).toContain('푸른빛');
+  for (const s of ['betelgeuse', 'aldebaran', 'arcturus', 'antares']) expect(await tint(s)).toContain('붉은빛');
+  // 실제 사진은 파일이 있고 화면에 나와요.
+  const href = await page.locator('#obs image').first().getAttribute('href');
+  expect((await page.request.get(href)).status()).toBe(200);
+  await expect(page.locator('#close-title')).toHaveText('실제 사진 · 안타레스');
+  await page.locator('#surface-btn').click();
+  await expect(page.locator('#close-title')).toHaveText('안타레스의 표면(초대형 망원경)');
+  await expect(page.locator('#star-info')).toContainText('ESO/K. Ohnaka');
+  // 실제 사진이 없는 별은 관측 자료로 그려요. 태양 사진은 색을 입힌 사진이라 색을 재지 않아요.
+  await page.locator('[data-star="naos"]').click();
+  await expect(page.locator('#close-title')).toHaveText('관측 자료로 그린 나오스');
+  await page.locator('[data-star="sun"]').click();
+  await expect(page.locator('#measure-color')).toBeDisabled();
+  // 별자리 사진: 오리온자리를 크게 보면 베텔게우스와 리겔 이름표가 붙어요.
+  await page.locator('#tab-sky').click();
+  await page.locator('[data-photo-pick="orionWide"]').click();
+  await expect(page.locator('#photos')).toContainText('베텔게우스');
+  await expect(page.locator('#photos')).toContainText('리겔');
+});
+
 test('우리은하: 사진을 잘못 분류하면 힌트를 주고, 성단·성운의 특징을 알려 줌', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await openObserveUnlocked(page, '/simulations/milky-way/');
   await page.locator('#tab-objects').click();
+  await expect(page.locator('#obj-card')).toContainText('플레이아데스 성단');
   await page.locator('[data-kind="globular"]').click();
   await expect(page.locator('#obj-card')).toContainText('다시 생각해 봐요');
   await page.locator('[data-kind="open"]').click();

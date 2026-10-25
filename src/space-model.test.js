@@ -6,7 +6,7 @@ import { STARS, BIG_DIPPER_LY } from './space-stars.js';
 import { BOARD, sightOnScale, scaleNumber, boardParallax, annualParallaxDeg, STAR_X, STAR_Y, earthAt, hitSky } from './parallax-model.js';
 import { RADIUS, SUN_R, SUN_POS, KINDS, CLASSIFY, galaxyPoints } from './galaxy-model.js';
 import { RADII, STICKERS, PAIRS, surfaceCm, galaxyField, seenFrom } from './expansion-model.js';
-import { PHOTOS } from './space-photos.js';
+import { PHOTOS, STAR_PHOTOS } from './space-photos.js';
 import { MODELS } from './teaching-models.js';
 
 test('연주 시차: 1 pc이면 1″, 거리가 멀수록 작고, 100 pc보다 먼 별은 재기 어려움(교과서 279쪽)', () => {
@@ -90,6 +90,15 @@ test('성단과 성운: 다섯 종류를 모두 분류하고, 사진 파일과 �
     assert.ok(p.credit && p.url.startsWith('http'), `${key} 출처`);
   }
   for (let i = 1; i <= 14; i++) assert.ok(existsSync(new URL(`../public/space/galaxies/g${String(i).padStart(2, '0')}.png`, import.meta.url)));
+  // 별 하나하나의 실제 사진과 표면 사진, 그리고 교과서에 나온 천체(플레이아데스·오리온 대성운·M78·말머리 성운)
+  for (const [key, p] of Object.entries(STAR_PHOTOS)) {
+    for (const ph of [p, p.surface].filter(Boolean)) {
+      assert.ok(existsSync(new URL(`../public/space/stars/${ph.src}`, import.meta.url)), key);
+      assert.ok(ph.credit && ph.url.startsWith('https://'), `${key} 출처`);
+    }
+    assert.ok(STARS[key], `${key}는 별 목록에 있어요`);
+  }
+  for (const k of ['m45', 'm42', 'm78', 'horsehead']) assert.ok(CLASSIFY.some(c => c[0] === k), `교과서 천체 ${k}`);
 });
 
 test('풍선 모형: 풍선이 커지면 모든 붙임딱지 사이가 같은 비율로 멀어지고, 어느 은하에서 보아도 멀어짐(교과서 294–295쪽)', () => {
