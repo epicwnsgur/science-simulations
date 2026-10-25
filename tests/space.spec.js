@@ -27,7 +27,7 @@ const LABS = [
     await page.locator('#tab-abs').click(); await page.locator('#to-10pc').click();
   }],
   ['star-color', '표면 온도', 'poe', async page => {
-    await page.locator('#heater-btn').click(); await expect(page.locator('#readout')).toContainText('붉은색 → 노란색');
+    await page.locator('#heater-btn').click(); await expect(page.locator('#readout')).toContainText('붉은색 → 주황·노란색');
     await setRange(page, '#temp', 0); await setRange(page, '#temp', 1000);
     await page.locator('#tab-stars').click();
     for (const s of ['rigel', 'spica', 'vega', 'aldebaran', 'betelgeuse', 'antares']) await page.locator(`[data-star="${s}"]`).click();

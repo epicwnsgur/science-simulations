@@ -89,7 +89,7 @@ const lab = buildLab({
   title: '별의 밝기는 어떻게 나타낼까?',
   intro: '',
   tabs: [{ id: 'light', label: '거리와 빛의 세기' }, { id: 'mag', label: '별의 등급' }, { id: 'abs', label: '겉보기 등급과 절대 등급' }],
-  toggle: '빛 알갱이 보기',
+  toggle: '빛이 퍼지는 모습 보기',
   sceneLabel: '손전등과 밝기 측정 기기, 별의 등급, 10 pc로 옮긴 별',
   scene,
   terms,
@@ -234,7 +234,7 @@ function absState(key) {
 function renderAbs(dt) {
   if (moveDir) {
     moveU = Math.max(0, Math.min(1, moveU + moveDir * dt / (instantLessons.matches ? .01 : 3.6)));
-    if (moveU === 1 && moveDir > 0) { moveDir = 0; if (!absDone) { absDone = true; toast('🔭 모든 별이 10 pc에 있어요! 이제 별의 밝기가 곧 절대 등급이에요. 미르잠이 시리우스보다 밝아졌어요'); } renderControls(); }
+    if (moveU === 1 && moveDir > 0) { moveDir = 0; if (!absDone) { absDone = true; toast('🔭 모든 별이 10 pc에 있어요! 이제 별의 밝기가 곧 절대 등급이에요. 이제 미르잠이 시리우스보다 밝게 보여요'); } renderControls(); }
     if (moveU === 0 && moveDir < 0) { moveDir = 0; renderControls(); }
   }
   const { x, y, R } = TEN;
@@ -297,7 +297,7 @@ function renderText() {
   setHTML('#readout', `<table class="data-table"><tr><th>거리(cm)</th>${DISTANCES.map(v => `<th>${v}</th>`).join('')}</tr><tr><td>빛의 세기(lx)</td>${DISTANCES.map(v => `<td>${readings[v] ?? ''}</td>`).join('')}</tr><tr><td>빛이 비친 넓이</td>${DISTANCES.map(v => `<td>${paperSeen.has(v) ? `${(v / 20) ** 2}배` : ''}</td>`).join('')}</tr></table>
     <table class="data-table"><tr><th>별</th><th>겉보기 등급</th><th>절대 등급</th><th>10 pc보다</th></tr>${ABS.map(([k]) => { const s = STARS[k], c = compareTo10pc(s.m, s.M); return `<tr><td>${s.name}</td><td>${fmtMag(s.m)}</td><td>${absDone ? fmtMag(s.M) : ''}</td><td>${absDone ? (c === 'nearer' ? '가깝다' : c === 'farther' ? '멀다' : '같다') : ''}</td></tr>`; }).join('')}</table>`);
   setText('#model-note', '빛의 세기는 손전등의 밝기와 거리에 따라 달라지므로, 실제로 재면 숫자는 조금씩 달라요. 화면의 별 크기는 밝기를 나타낸 것이고, 실제 별의 크기가 아니에요. 등급은 교과서 값을 썼어요(태양 −26.7/4.8, 시리우스 −1.5/1.4, 미르잠 2.0/−4.1, 북극성 2.1/−3.7).');
-  setText('#discovery', '고대 그리스의 천문학자 히파르코스는 맨눈으로 가장 밝게 보이는 별을 1등급, 가장 어둡게 보이는 별을 6등급으로 나누었어요. 19세기에 조도계가 개발되면서 1등급 별이 6등급 별보다 100배 밝다는 것을 알게 되었어요.');
+  setText('#discovery', '고대 그리스의 천문학자 히파르코스는 맨눈으로 가장 밝게 보이는 별을 1등급, 가장 어둡게 보이는 별을 6등급으로 나누었어요. 19세기에 별빛의 밝기를 정밀하게 재게 되면서 1등급 별이 6등급 별보다 약 100배 밝다는 것을 알게 되었고, 1856년 포그슨이 ‘5등급 차이 = 100배’로 등급을 정했어요.');
 }
 $('#tab-light').onclick = () => setTab('light');
 $('#tab-mag').onclick = () => setTab('mag');

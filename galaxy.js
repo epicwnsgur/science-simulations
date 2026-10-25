@@ -196,7 +196,7 @@ function renderText() {
   const kindRows = Object.entries(KINDS).map(([id, k]) => `<tr><td>${k.name}</td><td>${rightKinds.has(id) ? '✓' : ''}</td></tr>`).join('');
   setHTML('#readout', `<table class="data-table"><tr><th>관찰</th><th>확인</th></tr><tr><td>위에서 본 모습</td><td>${seenViews.has('top') ? '막대·나선팔' : ''}</td></tr><tr><td>옆에서 본 모습</td><td>${seenViews.has('side') ? '볼록한 원반' : ''}</td></tr><tr><td>태양계 위치</td><td>${seenViews.has('sun') ? '약 8500 pc' : ''}</td></tr><tr><td>중심 방향 은하수</td><td>${seenBands.has('center') ? '밝고 두꺼움' : ''}</td></tr><tr><td>반대 방향 은하수</td><td>${seenBands.has('anti') ? '희미함' : ''}</td></tr></table><table class="data-table"><tr><th>천체 종류</th><th>찾음</th></tr>${kindRows}</table>`);
   setText('#model-note', '3D 우리은하는 교과서의 구조와 크기에 맞춰 만든 모형이에요(실제 별은 훨씬 더 많아요). 별의 색과 밝기, 두께는 보기 쉽게 나타냈어요. 은하수는 실제 밤하늘의 은하수 윤곽과 별 자료로 그렸어요.');
-  setText('#discovery', '조선 시대의 천문도인 천상열차분야지도에도 은하수가 그려져 있어요. 1923년 허블은 우리은하 바깥에도 수많은 은하가 있다는 것을 밝혀냈어요.');
+  setText('#discovery', '조선 시대의 천문도인 천상열차분야지도에도 은하수가 그려져 있어요. 1920년대에 허블은 우리은하 바깥에도 수많은 은하가 있다는 것을 밝혀냈어요(1924년 발표).');
 }
 
 /* ---------- 3D ---------- */

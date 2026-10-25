@@ -168,7 +168,7 @@ function toggleSwitch() {
   if (closed && mode === 'material') {
     const isNew = !tested.has(material);
     tested.add(material); paintClassify();
-    if (isNew) { burst($('#fx'), MATERIALS[material].conductor ? 570 : 700, 140, MATERIALS[material].conductor ? '#ffd166' : '#9fb3ff'); toast(MATERIALS[material].conductor ? `💡 ${MATERIALS[material].label}: 전류가 잘 흘러요` : `🚫 ${MATERIALS[material].label}: 전류가 흐르지 않아요`); }
+    if (isNew) { burst($('#fx'), MATERIALS[material].conductor ? 570 : 700, 140, MATERIALS[material].conductor ? '#ffd166' : '#9fb3ff'); toast(MATERIALS[material].conductor ? `💡 ${MATERIALS[material].label}: 전류가 잘 흘러요` : `🚫 ${MATERIALS[material].label}: 전류가 거의 흐르지 않아요`); }
   }
   renderControls();
 }
