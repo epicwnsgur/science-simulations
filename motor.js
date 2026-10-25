@@ -4,7 +4,7 @@ import './lab.css';
 import './theme-electric.css';
 import './readable.css';
 import { setupPOEFlow } from './src/poe-flow.js';
-import { $, $$, setText, setHTML, buildLab, checklist, toast, burst, reducedMotion } from './src/lab-shell.js';
+import { $, $$, setText, setHTML, buildLab, checklist, toast, burst, reducedMotion, instantLessons } from './src/lab-shell.js';
 import { motorTorque, simpleMotorContact, simpleMotorTorque } from './src/force-model.js';
 import { setupViewToggle } from './src/view-toggle.js';
 
@@ -192,14 +192,14 @@ $('#show-detail').onchange = e => { show = e.target.checked; };
 /* ---------- 3D로 보기 ---------- */
 const view3d = setupViewToggle({
   stage: $('.stage'), key: 'motor-view', cams: [['oblique', '비스듬히'], ['axis', '축을 따라'], ['top', '위에서']],
-  load: () => import('./src/motor-3d.js').then(({ createMotor3D }) => { const v = createMotor3D({ stage: $('.stage'), svg: $('#scene'), reducedMotion }); v.setMode(mode); return v; }),
+  load: () => import('./src/motor-3d.js').then(({ createMotor3D }) => { const v = createMotor3D({ stage: $('.stage'), svg: $('#scene'), reducedMotion: instantLessons }); v.setMode(mode); return v; }),
   onChange: active => { use3d = active; if (!active) paintMotor(); renderText(); },
 });
 
 function frame(now) {
   const dt = Math.min(.05, (now - (lastFrame || now)) / 1000); lastFrame = now;
   if (!flow || flow.stage === 'observe') {
-    const steps = reducedMotion.matches ? 1 : 4;
+    const steps = instantLessons.matches ? 1 : 4;
     for (let i = 0; i < steps; i++) { if (mode === 'motor') stepMotor(dt / steps); else stepSimple(dt / steps); }
     if (mode === 'motor') { if (!use3d) paintMotor(); } else { paintSimple(); renderText(); }
     paintSpeed();

@@ -5,7 +5,7 @@ import './theme-electric.css';
 import './readable.css';
 import { setupPOEFlow } from './src/poe-flow.js';
 import { createAutoplay } from './src/autoplay.js';
-import { $, $$, setText, setHTML, buildLab, checklist, toast, burst, reducedMotion, josa, smoothDrag } from './src/lab-shell.js';
+import { $, $$, setText, setHTML, buildLab, checklist, toast, burst, reducedMotion, josa, smoothDrag, instantLessons } from './src/lab-shell.js';
 import { charges, MAX_TRANSFER, chargeLabel, interaction, SPOON_TOOLS, SPOON_A_SIGN } from './src/friction-model.js';
 import { closeness, segmentDistance, clamp } from './src/induction-model.js';
 
@@ -122,7 +122,7 @@ const strandEls = STRANDS.map(st => {
 function paintStrands(dt, t) {
   const q = net(balloonCharge());
   const base = { x: pos.x, y: pos.y + 50 };
-  const g = reducedMotion.matches ? 1 : 1 - Math.exp(-dt * 10);
+  const g = instantLessons.matches ? 1 : 1 - Math.exp(-dt * 10);
   STRANDS.forEach((s, i) => {
     let tx = 0, ty = 0;
     const rest = { x: s.x + Math.sin(s.lean) * s.len, y: s.y - Math.cos(s.lean) * s.len };
@@ -172,7 +172,7 @@ function transfer() {
   if (transfers >= MAX_TRANSFER) return;
   const site = furSites[furCharge().minus - 1];
   transfers++;
-  flights.push({ from: { x: site.x + 9, y: site.y }, to: { x: -36 + ((transfers - 1) % 4) * 24, y: 26 + Math.floor((transfers - 1) / 4) * 13 }, start: clock(), duration: reducedMotion.matches ? 1 : 900 });
+  flights.push({ from: { x: site.x + 9, y: site.y }, to: { x: -36 + ((transfers - 1) % 4) * 24, y: 26 + Math.floor((transfers - 1) / 4) * 13 }, start: clock(), duration: instantLessons.matches ? 1 : 900 });
   burst($('#rub-fx'), pos.x, pos.y + 46, '#8fd3ff', 10);
   if (!seen.rubbed) { seen.rubbed = true; toast('⚡ 털의 전자 일부가 풍선으로 옮겨 갔어요!'); }
   if (transfers === MAX_TRANSFER) toast('🎈 충분히 문질렀어요. 이제 풍선을 들어 올려 보세요');
@@ -198,7 +198,7 @@ function stepSpoon(dt) {
   const qA = rubbedSpoons ? SPOON_A_SIGN : 0, qT = toolCharge();
   if (!qA || !qT) return;
   const kind = interaction(qA, qT), sign = kind === 'attract' ? 1 : -1;
-  const steps = reducedMotion.matches ? 60 : 1, h = reducedMotion.matches ? .02 : dt;
+  const steps = instantLessons.matches ? 60 : 1, h = instantLessons.matches ? .02 : dt;
   for (let i = 0; i < steps; i++) {
     const { a, b } = spoonSeg();
     const dx = b.x - a.x, dy = b.y - a.y, len2 = dx * dx + dy * dy;
@@ -273,7 +273,7 @@ function placeTool(x, y) {
 function rubSpoons() {
   if (rubbedSpoons) return;
   rubbedSpoons = true;
-  const now = clock(), duration = reducedMotion.matches ? 1 : 1100;
+  const now = clock(), duration = instantLessons.matches ? 1 : 1100;
   $('#rub-glove').innerHTML = `<g transform="translate(${RUB_GLOVE.x} ${RUB_GLOVE.y}) scale(.8)"><path d="${GLOVE_PATH}" fill="#cfeef0" stroke="#8fbcc0" stroke-width="1.5"/></g>`;
   spoonFlights = [0, 1, 2, 3].map(k => ({ k: `a${k}`, from: { x: RUB_GLOVE.x + 30, y: RUB_GLOVE.y + 10 }, to: () => handleSite(k), start: now + k * 160, duration }));
   if (tool === 'spoon') spoonFlights.push(...[0, 1, 2, 3].map(k => ({ k: `b${k}`, from: { x: RUB_GLOVE.x + 60, y: RUB_GLOVE.y + 10 }, to: () => toolSite(k), start: now + (k + 2) * 160, duration })));
@@ -299,7 +299,7 @@ const balloonDrag = smoothDrag($('#balloon'), { ...dragOptions, get: () => pos, 
 const toolDrag = smoothDrag($('#tool'), { ...dragOptions, get: () => toolPos, set: placeTool, onStart: () => { toolAnim = null; } });
 function followDrag(dt) { balloonDrag.follow(dt); toolDrag.follow(dt); }
 
-function animate(path, duration, done) { motion = { path, start: clock(), duration: reducedMotion.matches ? 1 : duration, done }; }
+function animate(path, duration, done) { motion = { path, start: clock(), duration: instantLessons.matches ? 1 : duration, done }; }
 function rubOnce() {
   if (motion || transfers >= MAX_TRANSFER) return;
   const x0 = 360 + (transfers % 3) * 40;
@@ -342,7 +342,7 @@ function renderControls() {
   renderText();
 }
 let toolAnim = null;
-function toolMotion(target) { toolAnim = { from: { ...toolPos }, to: target, start: clock(), duration: reducedMotion.matches ? 1 : 900 }; }
+function toolMotion(target) { toolAnim = { from: { ...toolPos }, to: target, start: clock(), duration: instantLessons.matches ? 1 : 900 }; }
 function followTool(now) {
   if (!toolAnim) return;
   const k = clamp((now - toolAnim.start) / toolAnim.duration, 0, 1), e = ease(k);
@@ -406,7 +406,7 @@ const PLAYS = {
 function resetBalloon() { pos = { ...START }; balloonDrag.cancel(); transfers = 0; flights = []; rubDistance = 0; motion = null; }
 function resetSpoons() { rubbedSpoons = false; angle = 0; toolPos = { ...TOOL_START }; toolDrag.cancel(); toolAnim = null; spoonFlights = []; }
 const player = createAutoplay({
-  mount: $('#autoplay'), plays: PLAYS, getMode: () => mode, reducedMotion,
+  mount: $('#autoplay'), plays: PLAYS, getMode: () => mode, reducedMotion: instantLessons,
   isIdle: () => !motion && !toolAnim,
   onChange: running => { if (running) { show = true; $('#show-detail').checked = true; } renderControls(); },
 });

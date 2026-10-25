@@ -5,7 +5,7 @@ import './theme-electric.css';
 import './readable.css';
 import './theme-space.css';
 import { setupPOEFlow } from './src/poe-flow.js';
-import { $, $$, setText, setHTML, buildLab, checklist, toast, reducedMotion } from './src/lab-shell.js';
+import { $, $$, setText, setHTML, buildLab, checklist, toast, reducedMotion, instantLessons } from './src/lab-shell.js';
 import { STARS } from './src/space-stars.js';
 import { intensityAt, compareTo10pc, MAG_STEP } from './src/space-model.js';
 import { setSky } from './src/sky-image.js';
@@ -137,7 +137,7 @@ function graphSVG() {
 }
 let luxTimer = 0, luxText = '';
 function renderLight(dt) {
-  const k = reducedMotion.matches ? 1 : 1 - Math.exp(-dt * 5);
+  const k = instantLessons.matches ? 1 : 1 - Math.exp(-dt * 5);
   dShown += (d - dShown) * k;
   if (Math.abs(d - dShown) < .02) dShown = d;
   const xd = LENS.x + dShown * PX_PER_CM, r = beamR(dShown);
@@ -150,7 +150,7 @@ function renderLight(dt) {
   }
   setHTML('#meter', meterSVG(xd.toFixed(1), luxShown));
   // 빛 알갱이: 손전등에서 나와 사방으로 퍼지며 나아가요. 멀어질수록 알갱이 사이가 벌어져요.
-  const g = show && !reducedMotion.matches && tab === 'light' ? fx.begin() : (fx.clear(), null);
+  const g = show && !instantLessons.matches && tab === 'light' ? fx.begin() : (fx.clear(), null);
   if (g) {
     const len = dShown * PX_PER_CM;
     g.fillStyle = '#fff6c8';
@@ -233,7 +233,7 @@ function absState(key) {
 }
 function renderAbs(dt) {
   if (moveDir) {
-    moveU = Math.max(0, Math.min(1, moveU + moveDir * dt / (reducedMotion.matches ? .01 : 3.6)));
+    moveU = Math.max(0, Math.min(1, moveU + moveDir * dt / (instantLessons.matches ? .01 : 3.6)));
     if (moveU === 1 && moveDir > 0) { moveDir = 0; if (!absDone) { absDone = true; toast('🔭 모든 별이 10 pc에 있어요! 이제 별의 밝기가 곧 절대 등급이에요. 미르잠이 시리우스보다 밝아졌어요'); } renderControls(); }
     if (moveU === 0 && moveDir < 0) { moveDir = 0; renderControls(); }
   }

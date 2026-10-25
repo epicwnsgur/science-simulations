@@ -4,7 +4,7 @@ import './lab.css';
 import './theme-electric.css';
 import './readable.css';
 import { setupPOEFlow } from './src/poe-flow.js';
-import { $, $$, setText, setHTML, buildLab, checklist, toast, burst, PathFlow, ELECTRON_GLYPH, reducedMotion } from './src/lab-shell.js';
+import { $, $$, setText, setHTML, buildLab, checklist, toast, burst, PathFlow, ELECTRON_GLYPH, reducedMotion, instantLessons } from './src/lab-shell.js';
 import { CIRCUITS, solve } from './src/circuit-model.js';
 
 // 교과서 248–249쪽, 지도서 566–569쪽(7차시).
@@ -75,7 +75,7 @@ function state() {
 }
 function paint(dt) {
   const r = solve(mode, closed[mode]);
-  const g = reducedMotion.matches ? 1 : 1 - Math.exp(-dt * 5);
+  const g = instantLessons.matches ? 1 : 1 - Math.exp(-dt * 5);
   for (const b of BULBS[mode]) {
     const key = `${mode}${b.id}`; shown[key] = (shown[key] ?? 0) + ((r.brightness[b.id] ?? 0) - (shown[key] ?? 0)) * g;
     const node = document.querySelector(`#circuit-${mode} #bulb-${b.id}`);

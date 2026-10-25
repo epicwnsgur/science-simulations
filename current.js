@@ -4,7 +4,7 @@ import './lab.css';
 import './theme-electric.css';
 import './readable.css';
 import { setupPOEFlow } from './src/poe-flow.js';
-import { $, $$, setText, setHTML, buildLab, checklist, toast, burst, arc, PathFlow, ELECTRON_GLYPH, reducedMotion } from './src/lab-shell.js';
+import { $, $$, setText, setHTML, buildLab, checklist, toast, burst, arc, PathFlow, ELECTRON_GLYPH, reducedMotion, instantLessons } from './src/lab-shell.js';
 
 // 교과서 242–243쪽, 지도서 552–557쪽(4차시).
 // 마찰 전기로 네온전구를 순간적으로 켜고, 전지를 연결한 회로와 수로 모형을 비교합니다.
@@ -210,7 +210,7 @@ function stepNeon(now, dt) {
 }
 function rub() {
   if (placed || motion || rubs >= MAX_RUBS) return;
-  motion = { kind: 'rub', start: performance.now(), duration: reducedMotion.matches ? 1 : 700, done: () => { rubs++; charge = rubs * PER_RUB; discharged = false; renderControls(); } };
+  motion = { kind: 'rub', start: performance.now(), duration: instantLessons.matches ? 1 : 700, done: () => { rubs++; charge = rubs * PER_RUB; discharged = false; renderControls(); } };
   renderControls();
 }
 function togglePlates() {
@@ -223,7 +223,7 @@ function touch() {
   if (touching) {
     if (charge > 0) {
       const count = charge, lights = rubs >= MIN_RUBS_TO_LIGHT;
-      flight = { start: performance.now(), duration: reducedMotion.matches ? 1 : 650, count };
+      flight = { start: performance.now(), duration: instantLessons.matches ? 1 : 650, count };
       const firstLight = lights && !seen.lit;
       if (lights) seen.lit = true;
       setTimeout(() => {
@@ -231,7 +231,7 @@ function touch() {
           flash = 1; burst($('#neon-fx'), BULB.x, BULB.y, '#ffb36b', 18); arc($('#neon-fx'), BULB.x - 6, BULB.y, BULB.x + 6, BULB.y, '#ffb36b');
           if (firstLight) toast('✨ 네온전구에 불이 켜졌어요!');
         } else toast('불빛이 보이지 않아요. 더 여러 번 문질러 볼까요?');
-      }, reducedMotion.matches ? 0 : 420);
+      }, instantLessons.matches ? 0 : 420);
       charge = 0; discharged = true;
     } else if (discharged) {
       if (!seen.noLight && seen.lit) { seen.noLight = true; toast('🔍 다시 대니 불이 켜지지 않아요'); }
@@ -243,7 +243,7 @@ function touch() {
 /* ---------- 전기 회로와 수로 모형 ---------- */
 function stepCircuit(now, dt) {
   const before = electrons.offset;
-  bulbLevel += ((battery ? 1 : 0) - bulbLevel) * (reducedMotion.matches ? 1 : 1 - Math.exp(-dt * 5));
+  bulbLevel += ((battery ? 1 : 0) - bulbLevel) * (instantLessons.matches ? 1 : 1 - Math.exp(-dt * 5));
   electrons.step(dt, battery ? .045 : 0, battery ? 1.2 : 2.6);
   // 전구로 들어간 전자와 나온 전자를 셉니다. 전구를 지나도 전자는 사라지지 않아요.
   if (battery) {

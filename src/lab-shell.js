@@ -112,7 +112,7 @@ export function smoothDrag(el, { scene, get, set, canStart = () => true, onStart
   return {
     follow(dt) {
       if (!target) { delta = { x: 0, y: 0 }; return; }
-      const q = get(), k = reducedMotion.matches ? 1 : 1 - Math.exp(-Math.max(0, dt) * smoothing);
+      const q = get(), k = instantLessons.matches ? 1 : 1 - Math.exp(-Math.max(0, dt) * smoothing);
       set(q.x + (target.x - q.x) * k, q.y + (target.y - q.y) * k);
       const now = get();
       delta = { x: now.x - q.x, y: now.y - q.y };
@@ -139,6 +139,10 @@ export const FX_DEFS = `<defs>
 </defs>`;
 
 export const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+// 학습 움직임(지구의 공전, 풍선이 부푸는 모습, 그네·나침반 바늘의 움직임, 전류의 흐름, 시점 옮기기 등)은
+// 현상을 이해하는 데 꼭 필요해서, 컴퓨터의 ‘애니메이션 효과 끄기(동작 줄이기)’ 설정과 상관없이 천천히 보여 줘요.
+// 반짝임·불꽃 같은 꾸밈 효과만 그 설정을 따라요. 자동 시험(웹드라이버)에서 동작 줄이기를 켠 경우에만 바로 끝내요.
+export const instantLessons = { get matches() { return reducedMotion.matches && navigator.webdriver === true; } };
 
 // 짧은 알림. 관찰 하나를 마칠 때 등에 사용합니다.
 let toastTimer = null;

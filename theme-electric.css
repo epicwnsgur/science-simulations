@@ -410,7 +410,6 @@ button[data-gated]::before{content:'🔒 '}
 #crossings .crossing>circle{fill:#1b2340;stroke:#ffd166;stroke-width:2.5}
 #crossings .mark circle{fill:#ffd166}
 #crossings .mark path{stroke:#ffd166;stroke-width:2.5}
-@media(prefers-reduced-motion:reduce){#leads.on .lead-flow{animation:none}}
 
 /* ---------- 아직 열리지 않은 단계(눌러도 넘어가지 않고 할 일을 알려 줘요) ---------- */
 #to-explanation[aria-disabled=true]{opacity:.45;cursor:help;box-shadow:none}

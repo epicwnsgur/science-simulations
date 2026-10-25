@@ -4,7 +4,7 @@ import './lab.css';
 import './theme-electric.css';
 import './readable.css';
 import { setupPOEFlow } from './src/poe-flow.js';
-import { $, $$, setText, setHTML, buildLab, checklist, toast, reducedMotion, smoothDrag } from './src/lab-shell.js';
+import { $, $$, setText, setHTML, buildLab, checklist, toast, reducedMotion, smoothDrag, instantLessons } from './src/lab-shell.js';
 import { EARTH, add, needleDeg, toPath } from './src/magnet-model.js';
 import { PX, boardField, coilField3, magnetField3, fieldLines } from './src/field3d.js';
 import { setupViewToggle } from './src/view-toggle.js';
@@ -71,7 +71,7 @@ function field(p) {
 // 나침반 바늘은 용수철처럼 흔들리다 자기장 방향에 멈춰요.
 function stepNeedle(id, target, dt) {
   const n = needles.get(id) ?? { a: 0, v: 0 };
-  if (reducedMotion.matches) { n.a = target; n.v = 0; }
+  if (instantLessons.matches) { n.a = target; n.v = 0; }
   else {
     let d = ((target - n.a + 540) % 360) - 180;
     n.v += (d * 60 - n.v * 7) * dt; n.a += n.v * dt;
@@ -220,7 +220,7 @@ const view3d = setupViewToggle({
   stage: $('.stage'), key: 'coil-view', cams: [['oblique', '비스듬히'], ['side', '옆에서'], ['top', '위에서']],
   tip: '화면을 끌면 돌려 볼 수 있어요 · 노란 나침반은 끌어서 옮겨요',
   load: () => import('./src/coil-3d.js').then(({ createCoil3D }) => {
-    const v = createCoil3D({ stage: $('.stage'), svg: $('#scene'), reducedMotion, ring: RING, moveProbe, probeStart: PROBE_START });
+    const v = createCoil3D({ stage: $('.stage'), svg: $('#scene'), reducedMotion: instantLessons, ring: RING, moveProbe, probeStart: PROBE_START });
     v.setMode(mode);
     return v;
   }),

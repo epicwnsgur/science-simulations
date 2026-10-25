@@ -4,7 +4,7 @@ import './lab.css';
 import './theme-electric.css';
 import './readable.css';
 import { setupPOEFlow } from './src/poe-flow.js';
-import { $, $$, setText, setHTML, buildLab, checklist, toast, burst, reducedMotion } from './src/lab-shell.js';
+import { $, $$, setText, setHTML, buildLab, checklist, toast, burst, reducedMotion, instantLessons } from './src/lab-shell.js';
 import { VOLTAGES, swingAngle, swingDirection } from './src/force-model.js';
 import { setupViewToggle } from './src/view-toggle.js';
 
@@ -90,7 +90,7 @@ function arrowsSVG() {
 function paint(dt) {
   // 바깥쪽(㉮)은 화면 왼쪽이에요.
   const target = -swingAngle(current, magnet, VOLTAGES[vIndex], on);
-  if (reducedMotion.matches) { angle = target; vel = 0; }
+  if (instantLessons.matches) { angle = target; vel = 0; }
   else { vel += ((target - angle) * 40 - vel * 2.6) * dt; angle += vel * dt; }
   if (use3d) view3d.view.update({ angle, on, show, current, magnet, vIndex, volts: on ? VOLTAGES[vIndex].toFixed(1) : '0.0' }, dt);
   else {
@@ -157,7 +157,7 @@ $('#tab-swing').onclick = () => {};
    WebGL을 쓸 수 없는 기기에서는 2D 그림으로 실험해요. */
 const view3d = setupViewToggle({
   stage: $('.stage'), key: 'swing-view', cams: [['oblique', '비스듬히'], ['front', '앞에서'], ['side', '옆에서']],
-  load: () => import('./src/swing-3d.js').then(({ createSwing3D }) => createSwing3D({ stage: $('.stage'), svg: $('#scene'), reducedMotion })),
+  load: () => import('./src/swing-3d.js').then(({ createSwing3D }) => createSwing3D({ stage: $('.stage'), svg: $('#scene'), reducedMotion: instantLessons })),
   onChange: active => { use3d = active; renderText(); },
 });
 $('#reset').onclick = () => { press(false); current = 1; magnet = 1; vIndex = 0; angle = 0; vel = 0; renderControls(); };

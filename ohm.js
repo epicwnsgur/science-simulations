@@ -4,7 +4,7 @@ import './lab.css';
 import './theme-electric.css';
 import './readable.css';
 import { setupPOEFlow } from './src/poe-flow.js';
-import { $, $$, setText, setHTML, buildLab, checklist, toast, burst, PathFlow, ELECTRON_GLYPH, reducedMotion } from './src/lab-shell.js';
+import { $, $$, setText, setHTML, buildLab, checklist, toast, burst, PathFlow, ELECTRON_GLYPH, reducedMotion, instantLessons } from './src/lab-shell.js';
 import { WIRES, VOLTAGES, MAX_VOLTAGE, currentMA, MATERIALS, MATERIAL_VOLTAGE, materialCurrentMA, needleAngle } from './src/ohm-model.js';
 
 // 교과서 244–247쪽, 지도서 558–565쪽(5–6차시).
@@ -95,7 +95,7 @@ function paint(dt) {
   const [left, right] = wire === 'long' ? [170, 390] : [240, 320];
   $('#voltmeter-leads').setAttribute('d', `M${left} 380 C${left} 340 230 320 240 300 M${right} 380 C${right} 340 330 320 320 300`);
   const target = current();
-  const g = reducedMotion.matches ? 1 : 1 - Math.exp(-dt * 6);
+  const g = instantLessons.matches ? 1 : 1 - Math.exp(-dt * 6);
   shownA += (target - shownA) * g;
   shownV += ((closed ? voltageShown() : 0) - shownV) * g;
   $('#ammeter .needle').setAttribute('transform', `translate(0 14) rotate(${needleAngle(shownA, 500).toFixed(1)}) translate(0 -14)`);

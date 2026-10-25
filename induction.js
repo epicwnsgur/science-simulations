@@ -4,7 +4,7 @@ import './lab.css';
 import './induction.css';
 import './theme-electric.css';
 import './readable.css';
-import { FX_DEFS, toast, burst, checklist, headerHTML, setupTextSize, smoothDrag } from './src/lab-shell.js';
+import { FX_DEFS, toast, burst, checklist, headerHTML, setupTextSize, smoothDrag, instantLessons } from './src/lab-shell.js';
 import { setupPOEFlow } from './src/poe-flow.js';
 import {
   SPOON_OBJECTS, SCOPE_OBJECTS, RUB_LEVELS, scopeCharge, closeness, segmentDistance, clamp,
@@ -15,7 +15,6 @@ import {
 const $ = s => document.querySelector(s);
 // 받침 유무에 따라 조사를 고릅니다. 예: josa('빨대', '을', '를') → '빨대를'
 const josa = (word, withFinal, without) => { const code = word.charCodeAt(word.length - 1) - 0xac00; return word + (code >= 0 && code % 28 ? withFinal : without); };
-const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 const spriteUrl = new URL('../../images/balloon-fur.png', document.baseURI).href;
 const terms = [
   ['정전기 유도', '전기를 띠지 않은 금속 물체에 대전체를 가까이 할 때, 대전체와 가까운 쪽은 대전체와 다른 종류의 전하, 먼 쪽은 같은 종류의 전하가 유도되는 현상이에요.'],
@@ -175,12 +174,12 @@ function spoonNear() {
 function stepSpoon(dt) {
   const o = currentObject();
   const target = spoonShift(o.charge, spoonNear());
-  const gain = reducedMotion.matches ? 1 : 1 - Math.exp(-dt * 6);
+  const gain = instantLessons.matches ? 1 : 1 - Math.exp(-dt * 6);
   shownShift += (target - shownShift) * gain;
   if (!o.charge) return;
   // 동작 줄이기 설정에서는 작은 단계를 여러 번 계산해 곧바로 멈출 자리까지 돌립니다.
   // 단계마다 돌림힘을 다시 계산하므로 대전체를 지나쳐 돌아가지 않습니다.
-  const steps = reducedMotion.matches ? 60 : 1, h = reducedMotion.matches ? .02 : dt;
+  const steps = instantLessons.matches ? 60 : 1, h = instantLessons.matches ? .02 : dt;
   for (let i = 0; i < steps; i++) {
     const torque = spoonTorque();
     const strength = Math.abs(shownShift) * spoonNear() * Math.abs(torque);
@@ -255,14 +254,14 @@ function stepScope(now, dt) {
       e.origin = e.from ? e.origin : e.part;
       e.part = target.part; e.slot = target.slot; e.from = from; e.start = now;
       const d = Math.hypot(from.x - ROD_TOP.x, from.y - ROD_TOP.y) + (LEAF_PIVOT.y - ROD_TOP.y);
-      e.duration = reducedMotion.matches ? 1 : 300 + d * 3.2;
+      e.duration = instantLessons.matches ? 1 : 300 + d * 3.2;
     }
   }
   // 도착한 전자만으로 금속박의 전하를 셉니다. 두 금속박이 같은 종류의 전하를 띨수록 척력으로 벌어져요.
   const counts = arrivedCounts(now);
   const net = (Math.abs(counts.left.minus - LEAF_SITES) + Math.abs(counts.right.minus - LEAF_SITES)) / 2;
   const target = leafAngle(net);
-  const gain = reducedMotion.matches ? 1 : 1 - Math.exp(-dt * 4);
+  const gain = instantLessons.matches ? 1 : 1 - Math.exp(-dt * 4);
   leafShown += (target - leafShown) * gain;
 }
 function arrivedCounts(now) {
@@ -352,7 +351,7 @@ function approachTarget() {
   return { x: tip.x + 18, y: tip.y - o.gap - 78 };
 }
 function animateObject(target, duration) {
-  motion = { from: { ...obj }, to: target, start: performance.now(), duration: reducedMotion.matches ? 1 : duration };
+  motion = { from: { ...obj }, to: target, start: performance.now(), duration: instantLessons.matches ? 1 : duration };
 }
 
 /* ---------- 상태 문구 ---------- */
