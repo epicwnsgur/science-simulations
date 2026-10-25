@@ -257,7 +257,7 @@ function chooseStar(key) {
   const opts = { ra: s.ra, dec: s.dec, fov: 34, width: 800, height: 440, milkyWay: .85, lines: [IAU[key]], maxMag: 6.2, skip: (r, d) => Math.abs(r - s.ra) < .25 && Math.abs(d - s.dec) < .25, skipKey: key };
   setSky($('#star-sky'), opts).then(() => renderStars(0));
   const far = !parallaxMeasurable(s.dist);
-  toast(far ? `🔭 ${s.name}: 100 pc보다 멀어서 연주 시차가 너무 작아요. 위치가 거의 달라지지 않아요` : `🔭 ${s.name}: 연주 시차 약 ${fmtArcsec(parallaxArcsec(s.dist))}`);
+  toast(far ? `🔭 ${s.name}: 100 pc보다 멀어서 지구에서 재기에는 연주 시차가 너무 작아요. 위치가 거의 달라지지 않아요` : `🔭 ${s.name}: 연주 시차 약 ${fmtArcsec(parallaxArcsec(s.dist))}`);
   renderControls();
 }
 const IAU = { proxima: 'Cen', sirius: 'CMa', vega: 'Lyr', megrez: 'UMa', polaris: 'UMi', betelgeuse: 'Ori' };
@@ -271,7 +271,7 @@ function renderStars(dt) {
   }
   const s = STARS[starKey], p = parallaxArcsec(s.dist), far = !parallaxMeasurable(s.dist);
   wobbleT += dt;
-  // 1″를 40 px로(실제보다 약 1만 배 크게) 나타내고, 1년 주기를 4초로 줄였어요.
+  // 1″를 40 px로(하늘 사진 34°가 800 px라서 실제보다 약 6000배 크게) 나타내고, 1년 주기를 4초로 줄였어요.
   const amp = p * 40, off = Math.sin(wobbleT * Math.PI / 2) * amp, cx = 400, cy = 210;
   const [r, g, b] = starColor(s.bv);
   const col = `rgb(${r},${g},${b})`, size = Math.max(5, Math.min(14, (6 - s.m) * 2.2));
@@ -336,14 +336,14 @@ function renderText() {
   setText('#guide', T[0]); setText('#subguide', T[1]);
   setText('#stage-state', tab === 'board' ? `별 모형 ${BOARD.models[modelId].name} · ${hole ? (hole === 'left' ? '왼쪽' : '오른쪽') + ' 구멍으로 보는 중' : '구멍을 골라요'}` : tab === 'orbit' ? (noOrbit ? '지구가 공전하지 않는 경우' : '지구의 공전 모형 · 거리와 각도는 크게 과장했어요') : '실제 밤하늘 · HYG 별 목록');
   setText('#note-title', { board: '두 구멍으로 볼 때 별 모형의 위치가 달라 보이나요?', orbit: '6개월 뒤 별 X와 별 Y가 보이는 위치는?', stars: '가까운 별과 먼 별의 연주 시차는?' }[tab]);
-  setText('#note-text', { board: '관측자의 위치(구멍)에 따라 물체가 멀리 있는 배경(눈금)에 대해 서로 다른 곳에 있는 것처럼 보여요. 이렇게 보이는 방향이 달라지는 정도를 시차라고 해요.', orbit: '지구가 공전하면 6개월 간격으로 관측하는 위치(A, B)가 달라져요. 별 X는 A에서 X1에, B에서 X2에 있는 것처럼 보여요.', stars: '실제 별은 아주 멀리 있어서 연주 시차가 1″(1/3600°)보다 작아요. 화면에서는 흔들림을 약 1만 배 크게 나타냈어요.' }[tab]);
+  setText('#note-text', { board: '관측자의 위치(구멍)에 따라 물체가 멀리 있는 배경(눈금)에 대해 서로 다른 곳에 있는 것처럼 보여요. 이렇게 보이는 방향이 달라지는 정도를 시차라고 해요.', orbit: '지구가 공전하면 6개월 간격으로 관측하는 위치(A, B)가 달라져요. 별 X는 A에서 X1에, B에서 X2에 있는 것처럼 보여요.', stars: '실제 별은 아주 멀리 있어서 연주 시차가 1″(1/3600°)보다 작아요. 화면에서는 흔들림을 약 6000배 크게 나타냈어요.' }[tab]);
   const rows = ['a', 'b'].map(id => `<tr><td>${BOARD.models[id].name}</td><td>${views[id].left ? circled(views[id].left) : ''}</td><td>${views[id].right ? circled(views[id].right) : ''}</td><td>${measured[id] !== undefined ? `약 ${measured[id]}°` : ''}</td></tr>`).join('');
   const real = [...viewedStars].map(k => `<tr><td>${STARS[k].name}</td><td>${fmtLy(STARS[k].dist)}</td><td>${parallaxMeasurable(STARS[k].dist) ? fmtArcsec(parallaxArcsec(STARS[k].dist)) : '너무 작음'}</td></tr>`).join('');
   setHTML('#readout', `<table class="data-table"><tr><th>별 모형</th><th>왼쪽</th><th>오른쪽</th><th>시차</th></tr>${rows}</table>
     <table class="data-table"><tr><th>공전 모형</th><th>보이는 위치 변화</th></tr><tr><td>별 X</td><td>${recorded.B ? '크다' : ''}</td></tr><tr><td>별 Y</td><td>${recorded.B ? '작다' : ''}</td></tr></table>
     ${real ? `<table class="data-table"><tr><th>별</th><th>거리</th><th>연주 시차</th></tr>${real}</table>` : ''}`);
   setText('#model-note', `시차 측정 판은 교과서 277쪽 탐구 활동을 그대로 옮겼어요. 지구의 공전 모형은 보기 쉽게 별 X와 별 Y를 아주 가깝게 두고 각도를 크게 과장했어요(실제 연주 시차는 1″보다 작아요).${use3d ? ' 3D 화면을 끌어 돌려 보고, ‘위에서’를 누르면 교과서 그림처럼 볼 수 있어요.' : ''} 배경의 별은 실제 밤하늘(여름철 은하수 부근)의 별 위치·밝기·색으로 그렸어요. 지구의 공전 궤도는 원처럼 그렸지만, 실제로는 원에 아주 가까운 타원이에요.`);
-  setText('#discovery', '2013년에 발사된 가이아 우주 망원경은 지구와 함께 태양 둘레를 돌며 수많은 별의 위치를 6개월 간격으로 정밀하게 재어, 연주 시차로 별까지의 거리를 알아내고 있어요.');
+  setText('#discovery', '2013년에 발사된 가이아 우주 망원경은 지구와 함께 태양 둘레를 돌며 수많은 별의 위치를 아주 정밀하게 되풀이해 재어, 연주 시차로 별까지의 거리를 알아내고 있어요. 공기의 방해가 없는 우주에서 재기 때문에 100 pc보다 훨씬 먼 별의 연주 시차도 잴 수 있어요.');
 }
 
 /* ---------- 3D ---------- */

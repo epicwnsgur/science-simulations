@@ -19,8 +19,8 @@ import { setAttr } from './src/space-fx.js';
 
 const terms = [
   ['표면 온도', '별 겉면의 온도예요. 별의 색을 보고 표면 온도를 비교할 수 있어요.'],
-  ['별의 색', '표면 온도가 높은 별은 파란색 빛을 많이 내어 파란색을, 낮은 별은 붉은색 빛을 많이 내어 붉은색을 띠어요.'],
-  ['빛을 내는 물체의 색', '빛을 방출하는 물체는 온도에 따라 내는 빛의 색이 달라져요. 전기난로의 열선도 온도가 높아지면 붉은색에서 노란색으로 바뀌어요.'],
+  ['별의 색', '표면 온도가 높은 별은 파란색 빛을 상대적으로 많이 내어 파란색을, 낮은 별은 붉은색 빛을 상대적으로 많이 내어 붉은색을 띠어요.'],
+  ['빛을 내는 물체의 색', '빛을 방출하는 물체는 온도에 따라 내는 빛의 색이 달라져요. 전기난로의 열선도 온도가 높아지면 어두운 붉은색에서 밝은 주황색·노란색 쪽으로 바뀌어요.'],
 ];
 const K = c => c + 273.15;
 const rgbStr = (rgb, a = 1) => `rgba(${rgb.map(v => Math.round(v * 255)).join(',')},${a})`;
@@ -80,7 +80,7 @@ const scene = `
   <text id="ball-temp" x="618" y="270" text-anchor="middle" class="ball-temp"></text>
   <text id="ball-class" x="618" y="294" text-anchor="middle" class="ball-class"></text>
   <rect x="${SPEC.x - 10}" y="${SPEC.y - 26}" width="${SPEC.w + 20}" height="${SPEC.h + 54}" rx="10" fill="#070914ee" stroke="#2d3566"/>
-  <text x="${SPEC.x}" y="${SPEC.y - 10}" class="panel-title">이 공이 내는 빛의 양(색깔별)</text>
+  <text x="${SPEC.x}" y="${SPEC.y - 10}" class="panel-title">이 공이 내는 빛의 색깔별 비율</text>
   <rect x="${SPEC.x}" y="${SPEC.y}" width="${SPEC.w}" height="${SPEC.h}" fill="url(#spectrum)" opacity=".18"/>
   <rect x="${SPEC.x}" y="${SPEC.y}" width="${SPEC.w}" height="${SPEC.h}" fill="url(#spectrum)" clip-path="url(#spec-clip)"/>
   <path id="spec-line" fill="none" stroke="#fff" stroke-width="2"/>
@@ -142,7 +142,7 @@ function renderHeat(dt) {
   // 전원을 켜면 열선의 온도가 점점 올라가 약 1100 ℃에 가까워져요. 끄면 식어요.
   const target = heaterOn ? 1100 : 25;
   heaterT += (target - heaterT) * (instantLessons.matches ? 1 : 1 - Math.exp(-dt * (heaterOn ? .38 : .6)));
-  if (heaterOn && heaterT > 1000 && !heaterDone) { heaterDone = true; toast('🔥 열선이 처음에는 붉은색이었다가 온도가 높아지면서 노란색에 가까워졌어요'); renderText(); }
+  if (heaterOn && heaterT > 1000 && !heaterDone) { heaterDone = true; toast('🔥 열선이 처음에는 어두운 붉은색이었다가 온도가 높아지면서 밝은 주황색(노란빛)이 되었어요'); renderText(); }
   const b = Math.max(0, Math.min(1, (heaterT - 480) / 560)), bb = blackbodyRGB(K(heaterT));
   const metal = [.42, .44, .48];
   const core = bb.map((v, i) => metal[i] * (1 - b) + Math.min(1, v + b * .45) * b);
@@ -163,7 +163,8 @@ function renderHeat(dt) {
   setAttr($('#spec-line'), 'd', `M${pts.join(' L')}`);
   setAttr($('#spec-area'), 'd', `M${SPEC.x} ${SPEC.y + SPEC.h} L${pts.join(' L')} L${SPEC.x + SPEC.w} ${SPEC.y + SPEC.h}Z`);
   const blue = I[5] / max, red = I[28] / max;
-  setText('#spec-read', blue > red * 1.15 ? '파란색 빛을 더 많이 내요' : red > blue * 1.15 ? '붉은색 빛을 더 많이 내요' : '여러 색의 빛을 고르게 내요');
+  // 태양(약 6000 ℃)처럼 여러 색의 빛을 비슷하게 섞어 내는 별은 ‘고르게’로 읽어요(교과서의 황색·황백색 별).
+  setText('#spec-read', blue > red * 1.6 ? '파란색 빛을 더 많이 내요' : red > blue * 1.25 ? '붉은색 빛을 더 많이 내요' : '여러 색의 빛을 비슷하게 내요');
 }
 
 /* ---------- 실제 별의 표면 온도 ---------- */
@@ -298,9 +299,9 @@ function renderText() {
   setText('#guide', T[0]); setText('#subguide', T[1]);
   setText('#stage-state', tab === 'heat' ? (heaterOn ? '전기난로 켜짐' : '전기난로 꺼짐') : tab === 'stars' ? `조사한 별 ${placed.size}개` : '실제 밤하늘과 성단 사진');
   setText('#note-title', { heat: '온도가 높아질수록 색은?', stars: '파란 별과 붉은 별, 더 뜨거운 별은?', sky: '안타레스와 드슈바 중 표면 온도가 높은 별은?' }[tab]);
-  setText('#note-text', { heat: '빛을 방출하는 물체는 온도에 따라 내는 빛의 색이 달라져요. 아래 그래프는 공이 색깔별로 내는 빛의 양이에요.', stars: '별은 스스로 빛을 내는 천체예요. 별의 색은 표면 온도에 따라 달라요.', sky: '밝기가 비슷해도 별의 색은 조금씩 달라요. 같은 별자리나 성단 안에서도 색이 다른 별들이 있어요.' }[tab]);
+  setText('#note-text', { heat: '빛을 방출하는 물체는 온도에 따라 내는 빛의 색이 달라져요. 아래 그래프는 공이 내는 빛의 색깔별 비율이에요(가장 많이 내는 색을 꼭대기로 맞췄어요). 온도가 높은 공은 모든 색의 빛을 더 많이 내지만, 그중 파란색 쪽 빛의 비율이 커져요.', stars: '별은 스스로 빛을 내는 천체예요. 별의 색은 표면 온도에 따라 달라요.', sky: '밝기가 비슷해도 별의 색은 조금씩 달라요. 같은 별자리나 성단 안에서도 색이 다른 별들이 있어요.' }[tab]);
   const rows = [...placed].sort((a, b) => STARS[b].temp - STARS[a].temp).map(k => `<tr><td>${STARS[k].name}</td><td>${STARS[k].color}</td><td>약 ${roundTemp(STARS[k].temp)} ℃</td><td>${measuredStars.has(k) ? tintWord(measuredStars.get(k)) : ''}</td></tr>`).join('');
-  setHTML('#readout', `<table class="data-table"><tr><th>관찰</th><th>결과</th></tr><tr><td>열선</td><td>${heaterDone ? '붉은색 → 노란색' : ''}</td></tr><tr><td>공(낮은 온도)</td><td>${lowSeen ? '붉은색' : ''}</td></tr><tr><td>공(높은 온도)</td><td>${highSeen ? '파란색' : ''}</td></tr></table>${rows ? `<table class="data-table"><tr><th>별</th><th>색</th><th>표면 온도</th><th>사진 속 별빛</th></tr>${rows}</table>` : ''}`);
+  setHTML('#readout', `<table class="data-table"><tr><th>관찰</th><th>결과</th></tr><tr><td>열선</td><td>${heaterDone ? '붉은색 → 주황·노란색' : ''}</td></tr><tr><td>공(낮은 온도)</td><td>${lowSeen ? '붉은색' : ''}</td></tr><tr><td>공(높은 온도)</td><td>${highSeen ? '파란색' : ''}</td></tr></table>${rows ? `<table class="data-table"><tr><th>별</th><th>색</th><th>표면 온도</th><th>사진 속 별빛</th></tr>${rows}</table>` : ''}`);
   setText('#model-note', '별 사진은 실제로 찍은 사진이에요(출처는 아래 ‘사진과 자료 출처’). 사진 속 별의 가운데는 너무 밝아 하얗게 보이므로, ‘별빛 색 재기’는 별 둘레의 빛을 모아 색을 재고 잘 보이도록 조금 진하게 나타내요. 사진마다 찍은 방법이 달라 색의 진하기는 조금씩 달라요. 표면 온도는 어림한 값이에요(태양은 교과서처럼 약 6000 ℃).');
   setText('#discovery', '전갈자리의 안타레스는 ‘화성의 경쟁자’라는 뜻의 이름처럼 붉은색으로 보여요. 같은 별자리의 드슈바는 청백색이고, 안타레스보다 표면 온도가 훨씬 높아요.');
 }
@@ -330,7 +331,7 @@ function frame(now) {
 flow = setupPOEFlow({
   predict: {
     title: '붉은색 별과 파란색 별,<br>표면 온도가 더 높은 별은?',
-    lead: '전기난로를 켜면 안쪽 열선이 처음에는 붉은색이었다가 온도가 높아지면서 노란색으로 바뀌어요.<br>밤하늘의 별도 밝기가 비슷해도 색은 조금씩 달라요. 전갈자리의 안타레스는 붉은색, 드슈바는 청백색으로 보여요.',
+    lead: '전기난로를 켜면 안쪽 열선이 처음에는 어두운 붉은색이었다가 온도가 높아지면서 밝은 주황색·노란색 쪽으로 바뀌어요.<br>밤하늘의 별도 밝기가 비슷해도 색은 조금씩 달라요. 전갈자리의 안타레스는 붉은색, 드슈바는 청백색으로 보여요.',
     illustration: `<svg viewBox="0 0 520 250" role="img" aria-label="붉은색 별 안타레스와 청백색 별 드슈바"><rect width="520" height="250" rx="12" fill="#050716"/>${Array.from({ length: 40 }, (_, i) => `<circle cx="${(i * 131) % 520}" cy="${(i * 71) % 250}" r="${.6 + (i % 3) * .4}" fill="#fff" opacity=".6"/>`).join('')}<circle cx="170" cy="135" r="60" fill="#ff8a5c" opacity=".2"/><circle cx="170" cy="135" r="26" fill="#ff8a5c"/><circle cx="170" cy="135" r="10" fill="#fff"/><text x="170" y="210" text-anchor="middle" font-size="16" font-weight="700" fill="#ffb59c">안타레스(붉은색)</text><circle cx="360" cy="120" r="50" fill="#a9c4ff" opacity=".2"/><circle cx="360" cy="120" r="20" fill="#bcd2ff"/><circle cx="360" cy="120" r="8" fill="#fff"/><text x="360" y="210" text-anchor="middle" font-size="16" font-weight="700" fill="#cfe0ff">드슈바(청백색)</text></svg>`,
     question: '붉은색으로 보이는 안타레스와 청백색으로 보이는 드슈바 중 표면 온도가 더 높은 별은 어느 것일까요?',
     choices: ['붉은색인 안타레스의 표면 온도가 더 높을 것 같아요.', '청백색인 드슈바의 표면 온도가 더 높을 것 같아요.', '두 별의 표면 온도는 같을 것 같아요.', '아직 잘 모르겠어요.'],
@@ -344,10 +345,10 @@ flow = setupPOEFlow({
   explain: {
     question: '별의 색과 표면 온도 사이에는 어떤 관계가 있나요? 관찰 결과를 근거로 설명해 보세요.',
     concepts: [
-      ['빛을 내는 물체의 온도와 색', '빛을 방출하는 물체는 온도에 따라 색이 달라져요. 전기난로의 열선은 처음에는 붉은색이었다가 온도가 높아지면서 노란색으로 바뀌어요.'],
+      ['빛을 내는 물체의 온도와 색', '빛을 방출하는 물체는 온도에 따라 색이 달라져요. 전기난로의 열선은 처음에는 어두운 붉은색이었다가 온도가 높아지면서 밝은 주황색·노란색 쪽으로 바뀌어요.'],
       ['별의 표면 온도와 색', '표면 온도가 높은 별은 파란색 빛을 많이 방출하여 파란색을 띠고, 표면 온도가 낮은 별은 붉은색 빛을 많이 방출하여 붉은색을 띠어요. 따라서 별의 색을 이용해 표면 온도를 비교할 수 있어요.'],
-      ['별의 색 순서', '표면 온도가 높은 별부터 청색(나오스) → 청백색(스피카, 리겔) → 백색(알타이르, 베가) → 황백색(프로키온, 북극성) → 황색(태양, 카펠라) → 주황색(아크투루스, 알데바란) → 적색(베텔게우스, 안타레스)이에요.'],
-      ['안타레스와 드슈바', '전갈자리에서 청백색의 드슈바가 붉은색의 안타레스보다 표면 온도가 높아요. 태양은 표면 온도가 약 6000 ℃로 노란색으로 보여요.'],
+      ['별의 색 순서', '표면 온도가 높은 별부터 청색(나오스) → 청백색(스피카, 리겔) → 백색(알타이르, 베가) → 황백색(프로키온) → 황색(태양, 카펠라) → 주황색(아크투루스, 알데바란) → 적색(베텔게우스, 안타레스)이에요.'],
+      ['안타레스와 드슈바', '전갈자리에서 청백색의 드슈바가 붉은색의 안타레스보다 표면 온도가 높아요. 태양은 표면 온도가 약 6000 ℃로 노란색으로 보여요(우주에서 보면 거의 흰색에 가까워요).'],
     ],
     note: '생활 속에서는 붉은색을 ‘뜨겁다’, 파란색을 ‘차갑다’로 나타내곤 하지만, 빛을 내는 별에서는 파란색 별의 표면 온도가 더 높아요.',
   },
