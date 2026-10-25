@@ -168,6 +168,16 @@ export const instantLessons = { get matches() { return reducedMotion.matches && 
 
 // 짧은 알림. 관찰 하나를 마칠 때 등에 사용합니다.
 let toastTimer = null;
+// 무대 위에 크게 띄우는 경고(안전·실험 주의). 토스트보다 오래(기본 5초) 보여 줘서 학생이 끝까지 읽을 수 있어요.
+let alertTimer = null;
+export function stageAlert(html, ms = 5000) {
+  const stage = $('.stage'); if (!stage) return;
+  let el = stage.querySelector('.stage-alert');
+  if (!el) { el = document.createElement('div'); el.className = 'stage-alert'; el.setAttribute('role', 'alert'); stage.append(el); }
+  el.innerHTML = `${html}<span class="stage-alert-bar" style="animation-duration:${ms}ms"></span>`;
+  el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+  clearTimeout(alertTimer); alertTimer = setTimeout(() => el.classList.remove('show'), ms);
+}
 export function toast(text) {
   const el = $('#toast'); if (!el) return;
   el.textContent = text; el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');

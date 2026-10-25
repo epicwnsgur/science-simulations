@@ -1,3 +1,4 @@
+import { expect } from '@playwright/test';
 // 실험 전 1분 복습: 모든 질문에 하나씩 답하고 ‘정답 확인하기’를 눌러야 ‘복습 마치고 실험 시작하기’가 나와요.
 export async function finishReview(page) {
   const items = page.locator('.review-item');
@@ -8,7 +9,13 @@ export async function finishReview(page) {
 }
 // 개념 정리의 포스트잇을 모두 떼요(모두 떼야 보고서를 제출할 수 있어요).
 export async function peelAll(page) {
-  for (const s of await page.locator('.concept-sequence .sticky').all()) if (!(await s.getAttribute('class')).includes('peeled')) await s.click();
+  for (const s of await page.locator('.concept-sequence .sticky').all()) {
+    if ((await s.getAttribute('class')).includes('peeled')) continue;
+    // 하나를 뗀 뒤에는 잠깐 기다려야 다음 포스트잇을 뗄 수 있어요.
+    await page.locator('.concept-sequence.sticky-wait').waitFor({ state: 'detached' });
+    await s.click();
+    await expect(s).toHaveClass(/peeled/);
+  }
 }
 // 예상 저장: ‘예상 저장하고 실험하기’를 누르면 확인 창이 뜨고, 확인해야 저장돼요.
 export async function savePrediction(page) {

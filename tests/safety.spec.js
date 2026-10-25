@@ -132,6 +132,11 @@ test('개념 정리: 주요 개념은 포스트잇으로 가려져 있고, 모�
   await notes.first().click();
   await expect(notes.first().locator('.sticky-word')).toBeVisible();
   await expect(notes.first()).toHaveClass(/peeled/);
+  // 연달아 빠르게 누르면 다음 포스트잇은 바로 떨어지지 않아요(읽을 시간).
+  await notes.nth(1).click();
+  await expect(notes.nth(1)).not.toHaveClass(/peeled/);
+  await expect(page.locator('.flow-toast')).toContainText('먼저 읽어 보세요');
+  await expect(notes.first().locator('.sticky-note')).toHaveText('📌');
   await page.reload();
   await expect(page.locator('.concept-sequence .sticky.peeled')).toHaveCount(1);
   await peelAll(page);
@@ -155,4 +160,19 @@ test('화면 크기: 작게·크게 단추로 페이지 전체를 줄이고 키�
   for (let i = 0; i < 8; i++) if (await page.locator('[data-zoom="+"]').isEnabled()) await page.locator('[data-zoom="+"]').click();
   await expect(page.locator('.zoom-value')).toHaveText('125%');
   await expect(page.locator('[data-zoom="+"]')).toBeDisabled();
+});
+
+test('옴의 법칙: 스위치를 오래 닫아 두면 니크롬선 과열 경고가 무대에 5초 동안 떠 있어요', async ({ page }) => {
+  test.setTimeout(60000);
+  const prediction = { index: 0, choice: '예상', reason: REASON };
+  await page.addInitScript(v => sessionStorage.setItem('poe:ohms-law', v), JSON.stringify({ current: 0, reviewed: true, onReview: false, reviewAnswers: [], quiz: null, locked: false, exps: [{ stage: 'observe', reached: 1, prediction, choice: null, reason: '', observation: '', saved: '', observed: true, explanation: '', explained: false }] }));
+  await page.goto(URL_);
+  await page.locator('#v-up').click(); await page.locator('#switch-btn').click();
+  const alert = page.locator('.stage-alert');
+  await expect(alert).toHaveClass(/show/, { timeout: 12000 });
+  await expect(alert).toContainText('니크롬선이 뜨거워지고 있어요');
+  await expect(alert).toContainText('스위치를 열어요');
+  await page.waitForTimeout(3500);
+  await expect(alert).toHaveClass(/show/);
+  await expect(alert).not.toHaveClass(/show/, { timeout: 3000 });
 });
