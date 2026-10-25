@@ -8,6 +8,7 @@ import { modelOf } from './teaching-models.js';
 import { draftStore, pruneDrafts, KEEP_HOURS } from './draft-store.js';
 import { blockPaste, PASTE_MESSAGE, writingProblem } from './text-guard.js';
 import { previewOf } from './previews.js';
+import { sceneOf, playStep } from './preview-scenes.js';
 const $ = selector => document.querySelector(selector);
 export const MIN_CHARS = 20;
 const STAGES = ['predict', 'observe', 'explain'];
@@ -147,15 +148,25 @@ export function setupPOEFlow(config) {
   const stickies = [...document.querySelectorAll('#concept-review .concept-sequence b')].map((b, i) => {
     const btn = document.createElement('button');
     btn.type = 'button'; btn.className = 'sticky'; btn.dataset.sticky = i;
-    btn.innerHTML = `<span class="sticky-word">${b.innerHTML}</span><span class="sticky-note" aria-hidden="true">📌 눌러서 떼기</span>`;
+    btn.innerHTML = `<span class="sticky-word">${b.innerHTML}</span><span class="sticky-note" aria-hidden="true"><i class="pin">📌</i></span>`;
     b.replaceWith(btn);
     btn.onclick = () => peel(i);
     return btn;
   });
   $('#concept-title').insertAdjacentHTML('afterend', stickies.length ? '<p class="sticky-progress" role="status" aria-live="polite"></p>' : '');
   const peeled = () => (state.peeled ??= []);
+  // 하나를 떼면 1초 동안 떨어지며 개념이 나타나고, 1초를 더 기다려야 다음 포스트잇을 뗄 수 있어요(읽지 않고 연달아 누르지 않도록).
+  // 자동 시험(웹드라이버)에서는 기다리는 시간만 줄여요.
+  const PEEL_WAIT = 2000 * (navigator.webdriver ? .1 : 1);
+  let peelReady = 0, peelTimer = null;
   function peel(i) {
     if (peeled().includes(i)) return;
+    const now = performance.now();
+    if (now < peelReady) { toast('📌 방금 나온 개념을 먼저 읽어 보세요. 잠시 뒤에 다음 포스트잇을 뗄 수 있어요.'); return; }
+    peelReady = now + PEEL_WAIT;
+    const list = $('#concept-review .concept-sequence');
+    list.classList.add('sticky-wait'); clearTimeout(peelTimer);
+    peelTimer = setTimeout(() => list.classList.remove('sticky-wait'), PEEL_WAIT);
     peeled().push(i); save(); renderStickies();
     if (peeled().length === stickies.length) toast('📌 주요 개념을 모두 확인했어요! 이제 보고서를 제출할 수 있어요.');
   }
@@ -248,26 +259,31 @@ export function setupPOEFlow(config) {
     renderSwitch();
     applyLock();
   }
-  // 예상 단계의 ‘실험 미리 보기’(src/previews.js): 어떤 실험인지 한 단계씩 움직이며 보여 주고, 마지막에 모두 펼쳐 둬요.
-  // 단계를 누르면 그 단계부터 다시 볼 수 있어요. 결과(답)는 알려 주지 않아요.
+  // 예상 단계의 ‘실험 미리 보기’(src/previews.js 설명 + src/preview-scenes.js 움직이는 그림).
+  // 처음 열면 단계를 차례로 한 번 보여 주고, 단계를 누르면 그 단계의 움직임만 다시 보여 줘요. 결과(답)는 알려 주지 않아요.
   let previewTimer = null, previewKey = '';
   function renderPreview() {
-    const box = $('.prediction-preview'), pv = previewOf(slug, info().id), key = `${slug}:${info().id}`;
+    const box = $('.prediction-preview'), id = info().id, pv = previewOf(slug, id), scene = sceneOf(slug, id), key = `${slug}:${id}`;
     if (key === previewKey) return;
-    previewKey = key; clearInterval(previewTimer);
+    previewKey = key; clearTimeout(previewTimer);
     if (!pv) { box.innerHTML = ''; return; }
     box.innerHTML = `<section class="preview" aria-label="어떤 실험인지 미리 보기">
-      <div class="preview-head"><b>🎬 어떤 실험을 할까요? 미리 보기</b><button type="button" class="preview-replay">▶ 처음부터 다시 보기</button></div>
-      <ol class="preview-steps">${pv.steps.map(([icon, motion, text], n) => `<li data-step="${n}"><button type="button" class="preview-step" aria-label="${n + 1}단계: ${text}"><span class="preview-icon m-${motion}" aria-hidden="true">${icon}</span><span class="preview-num">${n + 1}</span><span class="preview-text">${text}</span></button></li>`).join('')}</ol>
-      <p class="preview-watch">👀 <b>잘 지켜볼 것:</b> ${pv.watch}</p></section>`;
-    const items = [...box.querySelectorAll('.preview-steps li')];
-    let at = -1;
-    const show = () => items.forEach((li, n) => { li.classList.toggle('on', n === at); li.classList.toggle('seen', n < at || at >= items.length); });
-    const next = () => { at++; show(); if (at >= items.length) clearInterval(previewTimer); };
-    const play = from => { clearInterval(previewTimer); at = from - 1; next(); previewTimer = setInterval(next, 2600); };
-    box.querySelector('.preview-replay').onclick = () => play(0);
-    items.forEach((li, n) => { li.querySelector('button').onclick = () => play(n); });
-    play(0);
+      <div class="preview-head"><b>어떤 실험을 할까요? 미리 보기</b><button type="button" class="preview-replay">▶ 처음부터 다시 보기</button></div>
+      ${scene ? `<svg class="pv-scene" viewBox="0 0 320 150" role="img" aria-label="실험 과정을 보여 주는 움직이는 그림">${scene.svg}</svg>` : ''}
+      <ol class="preview-steps">${pv.steps.map((text, n) => `<li data-step="${n}"><button type="button" class="preview-step" aria-label="${n + 1}단계 움직임 보기: ${text}"><span class="preview-num">${n + 1}</span><span class="preview-text">${text}</span><span class="preview-play" aria-hidden="true">▶</span></button></li>`).join('')}</ol>
+      <p class="preview-watch"><b>잘 지켜볼 것:</b> ${pv.watch}</p></section>`;
+    const items = [...box.querySelectorAll('.preview-steps li')], svg = box.querySelector('.pv-scene');
+    const STEP_MS = 3400;
+    const mark = at => items.forEach((li, n) => { li.classList.toggle('on', n === at); li.classList.toggle('seen', n < at); });
+    const playOne = n => { mark(n); playStep(svg, slug, id, n); };
+    const playAll = (n = 0) => {
+      clearTimeout(previewTimer);
+      if (n >= items.length) { items.forEach(li => { li.classList.remove('on'); li.classList.add('seen'); }); return; }
+      playOne(n); previewTimer = setTimeout(() => playAll(n + 1), STEP_MS);
+    };
+    box.querySelector('.preview-replay').onclick = () => playAll(0);
+    items.forEach((li, n) => { li.querySelector('button').onclick = () => { clearTimeout(previewTimer); playOne(n); }; });
+    playAll(0);
   }
   const allExplained = (except = -1) => state.exps.every((e, i) => i === except || e.explained);
   function showWrapUp() {

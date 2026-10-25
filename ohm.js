@@ -4,7 +4,7 @@ import './lab.css';
 import './theme-electric.css';
 import './readable.css';
 import { setupPOEFlow } from './src/poe-flow.js';
-import { $, $$, setText, setHTML, buildLab, checklist, toast, burst, PathFlow, ELECTRON_GLYPH, reducedMotion, instantLessons } from './src/lab-shell.js';
+import { $, $$, setText, setHTML, buildLab, checklist, toast, burst, PathFlow, ELECTRON_GLYPH, reducedMotion, instantLessons, stageAlert } from './src/lab-shell.js';
 import { WIRES, VOLTAGES, MAX_VOLTAGE, currentMA, MATERIALS, MATERIAL_VOLTAGE, materialCurrentMA, needleAngle } from './src/ohm-model.js';
 
 // 교과서 244–247쪽, 지도서 558–565쪽(5–6차시).
@@ -114,7 +114,11 @@ function paint(dt) {
   $('#filament').setAttribute('filter', lit > .3 ? 'url(#glow)' : '');
   if (closed) {
     closedTime += dt;
-    if (mode === 'measure' && closedTime > HEAT_SECONDS && !warned) { warned = true; toast('🔥 니크롬선이 뜨거워져요! 값을 읽은 뒤 스위치를 열어요'); }
+    if (mode === 'measure' && closedTime > HEAT_SECONDS && !warned) {
+      // 스위치를 오래 닫아 두면 니크롬선이 뜨거워져요. 까닭까지 5초 동안 크게 보여 줘요(스위치를 열었다 다시 닫으면 또 알려 줘요).
+      warned = true;
+      stageAlert('<b>🔥 니크롬선이 뜨거워지고 있어요!</b><p>전류가 오래 흐르면 니크롬선이 뜨거워져요. 뜨거워지면 저항이 달라져서 측정값이 바뀌고, 손을 데일 수도 있어요.</p><p class="stage-alert-do">👉 값을 읽었으면 바로 <b>스위치를 열어요.</b> 꼭 필요할 때만 스위치를 닫아요.</p>');
+    }
   }
 }
 function paintGraph() {
