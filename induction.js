@@ -45,7 +45,8 @@ let spoonKey = 'straw', scopeKey = 'straw', rubLevel = 1;
 let obj = { ...SPOON_START }, angle = 0, shownShift = 0, motion = null, lastFrame = 0;
 let leafShown = leafAngle(0);
 const scopeState = new Map();
-const seen = { spoonMinus: false, spoonPlus: false, levels: new Set() };
+// viewSpoon·viewScope: ‘전하 보기’를 켜고 전자가 이동한 모습을 직접 본 적이 있는지(꼭 봐야 다음으로 넘어가요).
+const seen = { spoonMinus: false, spoonPlus: false, levels: new Set(), viewSpoon: false, viewScope: false };
 let flow = null;
 
 $('#app').innerHTML = `
@@ -359,10 +360,14 @@ function animateObject(target, duration) {
 function setText(selector, text) { const el = $(selector); if (el.textContent !== text) el.textContent = text; }
 function setHTML(selector, html) { const el = $(selector); if (el.dataset.html !== html) { el.innerHTML = html; el.dataset.html = html; } }
 function progress() {
+  if (show && mode === 'spoon' && currentObject().charge && spoonNear() > .5) seen.viewSpoon = true;
+  if (show && mode === 'scope' && rubLevel && leafShown - leafAngle(0) > 6) seen.viewScope = true;
   const steps = [
     ['(−)전하를 띤 빨대로 숟가락 움직이기', seen.spoonMinus, '‘쇠숟가락 움직이기’ 탭 → ‘(−)전하를 띤 빨대’ → ‘가까이 가져가기’'],
+    ['‘전하 보기’를 켜고 숟가락 속 전자의 이동 살펴보기', seen.viewSpoon, '위쪽 ‘전하 보기’를 켠 채로 대전체를 숟가락에 가까이 가져가, 전자가 어느 쪽으로 모이는지 봐요', '', '#show-charges'],
     ['(+)전하를 띤 장갑으로 숟가락 움직이기', seen.spoonPlus, '‘(+)전하를 띤 장갑’을 고르고 ‘가까이 가져가기’', '[data-spoon="glove"]'],
     ['검전기: 2~3번 문지른 물체 가까이 하기', seen.levels.has(1), '‘검전기 관찰하기’ 탭 → ‘2~3번 문지름’ → ‘가까이 가져가기’', '#scope-tab'],
+    ['‘전하 보기’를 켜고 금속판과 금속박의 전하 살펴보기', seen.viewScope, '‘전하 보기’를 켠 채로 대전체를 금속판에 가까이 가져가, 금속박으로 옮겨 간 전하를 봐요', '', '#show-charges'],
     ['검전기: 10번 이상 문지른 물체 가까이 하기', seen.levels.has(2), '‘10번 이상 문지름’으로 바꾸고 ‘가까이 가져가기’', '[data-rub="2"]'],
   ];
   return checklist(steps);
@@ -524,7 +529,7 @@ flow = setupPOEFlow({
   onStageChange: () => { motion = null; objectDrag.cancel(); },
   onRestart: () => {
     show = false; $('#show-charges').checked = false;
-    seen.spoonMinus = false; seen.spoonPlus = false; seen.levels.clear();
+    seen.spoonMinus = false; seen.spoonPlus = false; seen.levels.clear(); seen.viewSpoon = false; seen.viewScope = false;
     spoonKey = 'straw'; scopeKey = 'straw'; rubLevel = 1;
     $('[data-term="0"]').click(); setMode('spoon');
   },

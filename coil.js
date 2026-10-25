@@ -58,7 +58,8 @@ const lab = buildLab({
 let mode = 'magnet', show = false, on = false, direction = 1, level = 1, onTime = 0, warned = false, lastFrame = 0;
 let probe = { ...PROBE_START }, linesKey = '', magnetTime = 0, use3d = false;
 const needles = new Map();
-const seen = { magnet: false, current: false, reversed: false, stronger: false, probe: false };
+// view: ‘자기장 모습 보기’를 켜고 전류가 흐르는 코일 둘레의 자기장을 직접 본 적이 있는지(꼭 봐야 다음으로 넘어가요).
+const seen = { magnet: false, current: false, reversed: false, stronger: false, probe: false, view: false };
 const levelsTried = new Set();
 let flow = null;
 
@@ -234,9 +235,11 @@ function frame(now) {
     probeDrag.follow(dt);
     paint(dt);
     if (mode === 'magnet' && !seen.magnet && (magnetTime += dt) > 1.5) { seen.magnet = true; toast('🧲 막대자석 주위 나침반을 관찰했어요'); }
+    if (show && mode === 'coil' && on) seen.view = true;
     flow?.update(checklist([
       ['막대자석 주위 나침반 관찰하기', seen.magnet, '‘막대자석 주위’ 탭에서 바늘의 N극(빨강)을 살펴요'],
       ['코일에 전류를 흘려 나침반 관찰하기', seen.current, '‘코일 주위’ 탭 → ‘스위치 누르고 있기’를 누르고 있어요', '#tab-coil'],
+      ['‘자기장 모습 보기’를 켜고 코일 둘레의 자기장 살펴보기', seen.view, '‘자기장 모습 보기’를 켠 채로 ‘스위치 누르고 있기’를 눌러, 자기장 모습과 나침반 바늘의 방향을 비교해요', '', '#show-detail'],
       ['전류의 방향을 바꾸어 관찰하기', seen.reversed, '‘전류 방향 바꾸기’를 누른 뒤 다시 ‘스위치 누르고 있기’', '#flip-btn'],
       ['전류의 세기를 바꾸어 관찰하기', seen.stronger, '‘세게 (5 V)’처럼 전류의 세기를 바꾸고 다시 ‘스위치 누르고 있기’', '[data-level]'],
     ]));

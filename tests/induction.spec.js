@@ -21,7 +21,7 @@ test('예상 화면에서는 실험을 숨기고 예상과 이유를 먼저 받�
   await begin(page);
   await expect(page.locator('#observe-panel')).toBeVisible();
   await expect(page.locator('#to-explanation')).toBeDisabled();
-  await expect(page.locator('#observation-progress')).toContainText('0/4');
+  await expect(page.locator('#observation-progress')).toContainText('0/6');
 });
 
 test('쇠숟가락: 대전되지 않은 빨대는 그대로, (−)빨대와 (+)장갑은 모두 끌어당기고 닿지 않음', async ({ page }) => {
@@ -38,11 +38,11 @@ test('쇠숟가락: 대전되지 않은 빨대는 그대로, (−)빨대와 (+)�
   await expect(page.locator('#charge-cards .charge-card').nth(1)).toContainText('− 6');
   await expect(page.locator('#spoon-particles [data-sign="1"]')).toHaveCount(8);
   await expect(page.locator('#spoon-particles [data-sign="-1"]')).toHaveCount(8);
-  await expect(page.locator('#observation-progress')).toContainText('1/4');
+  await expect(page.locator('#observation-progress')).toContainText('2/6');
   await page.locator('[data-spoon="glove"]').click(); await page.locator('#approach-button').click();
   await expect.poll(() => angleOf(page)).toBeLessThan(-4);
   await expect(page.locator('#charge-cards .charge-card').first()).toContainText('− 6');
-  await expect(page.locator('#observation-progress')).toContainText('2/4');
+  await expect(page.locator('#observation-progress')).toContainText('3/6');
   // 대전체와 숟가락 손잡이가 닿지 않음: 손잡이 끝과 장갑 끝 사이가 떨어져 있음
   const [gx, gy] = (await page.locator('#charged-object').getAttribute('transform')).match(/-?[\d.]+/g).map(Number);
   const a = await angleOf(page) * Math.PI / 180;
@@ -86,6 +86,8 @@ test('검전기: 문지른 횟수가 많을수록 더 벌어지고, (+)대전체
 test('네 가지 관찰 후 기록→설명→개념 확인과 스스로 평가', async ({ page }) => {
   const errors = []; page.on('pageerror', e => errors.push(e.message));
   await page.emulateMedia({ reducedMotion: 'reduce' }); await page.goto(url); await begin(page);
+  // 전하를 꼭 보고 넘어가요: ‘전하 보기’를 켜야 관찰 단계가 채워져요.
+  await page.locator('#show-charges').check();
   for (const key of ['straw', 'glove']) { await page.locator(`[data-spoon="${key}"]`).click(); await page.locator('#approach-button').click(); await expect.poll(() => angleOf(page)).toBeLessThan(-4); }
   await page.locator('#scope-tab').click(); await page.locator('#approach-button').click();
   await expect.poll(() => leafAngleOf(page)).toBeGreaterThan(14);
@@ -117,7 +119,7 @@ test('네 가지 관찰 후 기록→설명→개념 확인과 스스로 평가'
   await expect(page.locator('#predict-panel')).toBeVisible();
   await expect(page.locator('#prediction-reason')).toHaveValue('');
   await begin(page);
-  await expect(page.locator('#observation-progress')).toContainText('0/4');
+  await expect(page.locator('#observation-progress')).toContainText('0/6');
   await expect(page.locator('#spoon-tab')).toHaveAttribute('aria-selected', 'true');
   expect(errors).toEqual([]);
 });

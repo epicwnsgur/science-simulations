@@ -19,19 +19,41 @@ function setTextSize(size) {
   try { localStorage.setItem('text-size', size); } catch { /* 기억하지 못해도 지금 화면에는 적용돼요. */ }
 }
 
-// 실험 페이지 머리글(실험 목록으로 · 글씨 크기 · 학년). 머리글을 넣은 뒤 setupTextSize()를 불러요.
+// 화면 크기(확대·축소): 화면이 작은 컴퓨터에서 단추가 한 화면에 다 보이도록 페이지 전체를 줄이거나 키워요(Ctrl −/+ 와 같아요).
+// 고른 크기는 이 브라우저에 기억해서 다른 실험에서도 그대로 써요.
+export const ZOOM_STEPS = [0.67, 0.75, 0.8, 0.9, 1, 1.1, 1.25];
+function setPageZoom(z) {
+  const zoom = ZOOM_STEPS.includes(z) ? z : 1;
+  document.documentElement.style.zoom = zoom === 1 ? '' : String(zoom);
+  $$('.zoom-value').forEach(o => { o.textContent = `${Math.round(zoom * 100)}%`; });
+  $$('[data-zoom="-"]').forEach(b => { b.disabled = zoom === ZOOM_STEPS[0]; });
+  $$('[data-zoom="+"]').forEach(b => { b.disabled = zoom === ZOOM_STEPS.at(-1); });
+  try { localStorage.setItem('page-zoom', String(zoom)); } catch { /* 기억하지 못해도 지금 화면에는 적용돼요. */ }
+  // 화면 크기가 바뀌면 그림·3D 화면이 새 크기에 맞게 다시 그려지도록 알려요.
+  dispatchEvent(new Event('resize'));
+}
+const zoomNow = () => Number(document.documentElement.style.zoom) || 1;
+
+// 실험 페이지 머리글(실험 목록으로 · 화면 크기 · 글씨 크기 · 학년). 머리글을 넣은 뒤 setupTextSize()를 불러요.
 // 단원: 실험 페이지 위쪽의 ‘← 실험 목록’과 경로 표시에 써요. 새 단원은 UNITS에 더하고 buildLab({ unit })로 골라요.
 export const UNITS = {
   7: { href: '../../grades/middle-school-2/unit-7/', label: 'VII. 전기와 자기' },
   8: { href: '../../grades/middle-school-2/unit-8/', label: 'VIII. 별과 우주' },
 };
-export const headerHTML = (unit = 7) => `<header><a class="brand" href="${UNITS[unit].href}">← 실험 목록</a><div class="header-right"><div class="text-size" role="group" aria-label="글씨 크기"><span aria-hidden="true">글씨 크기</span>${TEXT_SIZES.map(([id, label, name]) => `<button type="button" data-text-size="${id}" aria-pressed="false" aria-label="글씨 ${name}" title="글씨 ${name}">${label}</button>`).join('')}</div><span class="grade">중학교 2학년 <i></i> 과학</span></div></header>`;
+export const headerHTML = (unit = 7) => `<header><a class="brand" href="${UNITS[unit].href}">← 실험 목록</a><div class="header-right"><div class="page-zoom" role="group" aria-label="화면 크기"><span aria-hidden="true">화면 크기</span><button type="button" data-zoom="-" aria-label="화면 작게" title="화면 작게 (Ctrl −)">－<span class="zoom-word"> 작게</span></button><output class="zoom-value" aria-live="polite">100%</output><button type="button" data-zoom="+" aria-label="화면 크게" title="화면 크게 (Ctrl +)">＋<span class="zoom-word"> 크게</span></button></div><div class="text-size" role="group" aria-label="글씨 크기"><span aria-hidden="true">글씨 크기</span>${TEXT_SIZES.map(([id, label, name]) => `<button type="button" data-text-size="${id}" aria-pressed="false" aria-label="글씨 ${name}" title="글씨 ${name}">${label}</button>`).join('')}</div><span class="grade">중학교 2학년 <i></i> 과학</span></div></header>`;
 export function setupTextSize() {
   document.body.classList.add('lab-readable');
   let saved = 'm';
   try { saved = localStorage.getItem('text-size') || 'm'; } catch { /* 처음 크기(중)로 시작해요. */ }
   setTextSize(TEXT_SIZES.some(([id]) => id === saved) ? saved : 'm');
   $$('[data-text-size]').forEach(b => b.onclick = () => setTextSize(b.dataset.textSize));
+  let zoom = 1;
+  try { zoom = Number(localStorage.getItem('page-zoom')) || 1; } catch { /* 처음 크기(100%)로 시작해요. */ }
+  setPageZoom(zoom);
+  $$('[data-zoom]').forEach(b => b.onclick = () => {
+    const i = ZOOM_STEPS.indexOf(zoomNow());
+    setPageZoom(ZOOM_STEPS[Math.max(0, Math.min(ZOOM_STEPS.length - 1, (i < 0 ? 4 : i) + (b.dataset.zoom === '+' ? 1 : -1)))]);
+  });
 }
 
 export function buildLab(cfg) {

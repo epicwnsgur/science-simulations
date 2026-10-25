@@ -59,7 +59,8 @@ const lab = buildLab({
 /* ---------- 상태 ---------- */
 let mode = 'motor', show = false, on = false, current = 1, magnet = 1, vIndex = 0, lastFrame = 0;
 let angle = .5, omega = 0, phase = .3, phaseOmega = 0, stripping = 'half', turns = 0;
-const seen = { spin: false, reversed: false, simpleSpin: false, fullStuck: false };
+// view: ‘자기장·전류·힘 보기’를 켜고 코일 양쪽이 받는 힘을 직접 본 적이 있는지(꼭 봐야 다음으로 넘어가요).
+const seen = { spin: false, reversed: false, simpleSpin: false, fullStuck: false, view: false };
 let lastSign = 0, fullTime = 0;
 let flow = null;
 let use3d = false;
@@ -204,8 +205,10 @@ function frame(now) {
     if (mode === 'motor') { if (!use3d) paintMotor(); } else { paintSimple(); renderText(); }
     paintSpeed();
     if (use3d) view3d.view.update({ mode, on, show, current, magnet, vIndex, angle, phase, stripping, contact: simpleMotorContact(phase, stripping) }, dt);
+    if (show && on && mode === 'motor') seen.view = true;
     flow?.update(checklist([
       ['전동기에 전류를 흘려 회전 관찰하기', seen.spin, '‘전동기의 원리’ 탭 → ‘전류 흘리기’'],
+      ['‘자기장·전류·힘 보기’를 켜고 코일 양쪽이 받는 힘 비교하기', seen.view, '‘자기장·전류·힘 보기’를 켜고, 코일의 왼쪽과 오른쪽이 받는 힘의 방향을 비교해요', '', '#show-detail'],
       ['전류의 방향이나 자석의 극을 바꾸어 회전 방향 비교하기', seen.reversed, '돌고 있을 때 ‘전류의 방향 바꾸기’나 ‘자석의 극 바꾸기’', '#flip-current, #flip-magnet'],
       ['간이 전동기: 반만 벗긴 코일 회전시키기', seen.simpleSpin, '‘간이 전동기 만들기’ 탭 → ‘전류 흘리기’ → ‘코일 살짝 밀기’', '#tab-simple'],
       ['간이 전동기: 양쪽 모두 벗긴 코일과 비교하기', seen.fullStuck, '‘양쪽 모두 완전히 벗김’으로 바꾸고 ‘코일 살짝 밀기’', '[data-strip="full"]'],
@@ -232,9 +235,9 @@ flow = setupPOEFlow({
     question: '전동기의 코일이 한 방향으로 계속 회전하는 까닭을 자기장, 전류, 힘과 관련지어 설명해 보세요.',
     concepts: [
       ['코일이 받는 힘', '자석이 만든 자기장 안에 놓인 코일에 전류가 흐르면 코일이 힘을 받아요. 전동기는 이 힘을 이용한 대표적인 장치이고, <b>코일과 자석</b>으로 이루어져 있어요.'],
-      ['코일이 회전하는 까닭', '코일의 왼쪽 부분과 오른쪽 부분에 흐르는 전류의 방향은 반대예요. 따라서 자기장 안에 놓인 코일의 왼쪽과 오른쪽이 받는 힘의 방향이 서로 반대가 되어 코일이 회전해요.'],
-      ['계속 회전하려면', '코일이 반 바퀴 돌 때마다 전류의 방향이 알맞게 바뀌거나(전동기의 금색 고리), 반 바퀴 동안만 전류가 흐르면(간이 전동기의 반만 벗긴 에나멜) 코일이 같은 방향으로 계속 돌아요.'],
-      ['회전 방향과 빠르기', '전류의 방향이나 자석의 극을 바꾸면 회전 방향이 바뀌어요. 전류가 셀수록 코일이 받는 힘이 커져 빨리 돌아요.'],
+      ['코일이 회전하는 까닭', '코일의 왼쪽 부분과 오른쪽 부분에 흐르는 전류의 방향은 반대예요. 따라서 자기장 안에 놓인 코일의 왼쪽과 오른쪽이 <b>받는 힘의 방향이 서로 반대</b>가 되어 코일이 회전해요.'],
+      ['계속 회전하려면', '코일이 반 바퀴 돌 때마다 전류의 방향이 알맞게 바뀌거나(전동기의 금색 고리), 반 바퀴 동안만 전류가 흐르면(간이 전동기의 반만 벗긴 에나멜) 코일이 <b>같은 방향으로 계속 돌아요</b>.'],
+      ['회전 방향과 빠르기', '전류의 방향이나 자석의 극을 바꾸면 <b>회전 방향이 바뀌어요</b>. 전류가 셀수록 코일이 받는 힘이 커져 빨리 돌아요.'],
       ['일상생활 속 전동기', '스마트폰의 진동, 드론, 청소기, 선풍기, 전기 자동차처럼 전기로 움직이는 대부분의 기구에 전동기가 이용돼요.'],
     ],
     note: '263쪽처럼 우리 주변에서 전동기를 활용한 전기 기구를 더 찾아보세요.',

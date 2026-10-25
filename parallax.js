@@ -131,6 +131,8 @@ const recorded = { A: true, B: false };
 const trail = { X: [], Y: [] };
 const annualSeen = { X: false, Y: false };
 let orbited = false;
+// ‘시선 모두 보기’를 켜고 두 별 모형의 시선을 함께 본 적이 있는지(꼭 봐야 다음으로 넘어가요).
+let sightsSeen = false;
 // 실제 별
 let starKey = null, wobbleT = 0;
 const viewedStars = new Set();
@@ -369,9 +371,11 @@ function frame(now) {
     else if (tab === 'orbit') stepOrbit(dt);
     else renderStars(dt);
     const farSeen = [...viewedStars].some(k => !parallaxMeasurable(STARS[k].dist));
+    if (show && tab === 'board' && views.a.left && views.a.right && views.b.left && views.b.right) sightsSeen = true;
     flow?.update(checklist([
       ['별 모형 (가)를 두 구멍으로 번갈아 보기', views.a.left && views.a.right, '‘별 모형 (가)’를 고른 뒤 ‘왼쪽 구멍으로 보기’와 ‘오른쪽 구멍으로 보기’를 차례로 눌러요'],
       ['별 모형 (나)를 두 구멍으로 번갈아 보기', views.b.left && views.b.right, '‘별 모형 (나)’를 고른 뒤 ‘왼쪽 구멍으로 보기’와 ‘오른쪽 구멍으로 보기’를 차례로 눌러요', '[data-model="b"]'],
+      ['‘시선 모두 보기’를 켜고 (가)와 (나)의 시선 비교하기', sightsSeen, '‘시선 모두 보기’를 켜고, 가까운 (가)와 먼 (나)에서 두 구멍으로 이어지는 시선이 벌어진 정도를 비교해요', '', '#show-detail'],
       ['각도기로 (가)와 (나)의 시차 재기', measured.a !== undefined && measured.b !== undefined, '별 모형을 하나씩 골라 ‘각도기로 시차 재기’를 눌러요', '#measure'],
       ['지구를 6개월 공전시키며 별 X와 별 Y 보기', orbited, '‘지구의 공전과 연주 시차’ 탭에서 ‘6개월 공전시키기’를 눌러요', '#tab-orbit'],
       ['별 X와 별 Y의 연주 시차 비교하기', annualSeen.X && annualSeen.Y, '‘별 X의 연주 시차 보기’와 ‘별 Y의 연주 시차 보기’를 차례로 눌러요', '[data-annual]'],
@@ -398,15 +402,15 @@ flow = setupPOEFlow({
   explain: {
     question: '관측하는 곳에서 별까지의 거리와 시차(연주 시차) 사이에는 어떤 관계가 있나요? 관찰 결과를 근거로 설명해 보세요.',
     concepts: [
-      ['시차', '관측자의 위치에 따라 물체가 보이는 방향이 달라지는 정도를 시차라고 해요. 시차의 크기는 두 관측 지점과 물체가 이루는 각도로 나타내요.'],
-      ['거리와 시차', '관측자와 물체 사이의 거리가 멀수록 시차는 작아지고, 가까울수록 시차는 커져요. 가까운 별 모형 (가)의 시차가 먼 별 모형 (나)보다 컸어요.'],
-      ['연주 시차', '지구가 공전하면 6개월 간격으로 관측하는 위치가 달라져 별이 보이는 방향이 달라져요. 이때 측정한 시차의 1/2을 연주 시차라고 해요. 지구와 가까이 있는 별일수록 연주 시차가 커요.'],
-      ['연주 시차와 별까지의 거리', '별은 아주 멀리 있어서 연주 시차가 매우 작으므로 단위로 ″(초)를 써요(1° = 3600″). 연주 시차가 1″인 별까지의 거리를 1 pc(파섹)이라고 하고, 1 pc은 약 3.26 광년이에요. 100 pc보다 먼 별은 연주 시차가 너무 작아 연주 시차로 거리를 알기 어려워요.'],
+      ['시차', '관측자의 위치에 따라 물체가 보이는 방향이 달라지는 정도를 <b>시차</b>라고 해요. 시차의 크기는 두 관측 지점과 물체가 이루는 각도로 나타내요.'],
+      ['거리와 시차', '관측자와 물체 사이의 <b>거리가 멀수록 시차는 작아지고</b>, 가까울수록 시차는 커져요. 가까운 별 모형 (가)의 시차가 먼 별 모형 (나)보다 컸어요.'],
+      ['연주 시차', '지구가 공전하면 6개월 간격으로 관측하는 위치가 달라져 별이 보이는 방향이 달라져요. 이때 <b>측정한 시차의 1/2을 연주 시차</b>라고 해요. 지구와 가까이 있는 별일수록 연주 시차가 커요.'],
+      ['연주 시차와 별까지의 거리', '별은 아주 멀리 있어서 연주 시차가 매우 작으므로 단위로 ″(초)를 써요(1° = 3600″). <b>연주 시차가 1″인 별까지의 거리를 1 pc(파섹)</b>이라고 하고, 1 pc은 약 3.26 광년이에요. 100 pc보다 먼 별은 연주 시차가 너무 작아 <b>연주 시차로 거리를 알기 어려워요</b>.'],
     ],
     note: '지구가 공전하지 않는다면 6개월이 지나도 관측 위치가 같아서 별이 보이는 방향이 달라지지 않으므로 연주 시차가 생기지 않아요.',
   },
   onRestart: () => {
-    show = false; $('#show-detail').checked = false; modelId = 'a';
+    show = false; $('#show-detail').checked = false; modelId = 'a'; sightsSeen = false;
     for (const id of ['a', 'b']) { views[id] = {}; delete measured[id]; }
     orbited = false; annualSeen.X = annualSeen.Y = false; viewedStars.clear(); starKey = null;
     lab.resetQuiz(); $('#reset').click(); setTab('board');
