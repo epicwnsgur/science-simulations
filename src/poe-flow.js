@@ -4,6 +4,7 @@ import { mountReportSubmit } from './report-submit.js';
 import { REVIEWS } from './reviews.js';
 import { enableGlossary } from './glossary.js';
 import { teacherMode, mountTeacherMode } from './teacher-mode.js';
+import { modelOf } from './teaching-models.js';
 const $ = selector => document.querySelector(selector);
 export const MIN_CHARS = 20;
 const STAGES = ['predict', 'observe', 'explain'];
@@ -20,7 +21,9 @@ const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 // 아직 할 단계가 남았는데 다음으로 넘어가려 하면, 실험 순서 안내를 반짝이며 가리키고 지금 쓸 조작에 표시를 해 줘요.
 // 교사 모드(src/teacher-mode.js, 비밀번호): 단계를 자유롭게 오가고 순서 잠금이 모두 풀려요. 학생 기록 검사도 건너뛰어요.
 // 주요 과학 낱말은 눌러서 뜻을 볼 수 있어요(src/glossary.js).
+// config.model: 교수·학습 모형('poe' 기본, 'generative' 발생 학습, 'far' 비유 활용). 단계 이름과 안내 문구가 바뀌어요(src/teaching-models.js).
 export function setupPOEFlow(config) {
+  const L = modelOf(config.model);
   const experiments = config.experiments ?? [{ id: 'main', name: '', predict: config.predict, observe: config.observe, explain: config.explain }];
   const multi = experiments.length > 1;
   const workspace = $('.workspace');
@@ -39,7 +42,8 @@ export function setupPOEFlow(config) {
   const explainOf = i => ({ ...config.explain, ...experiments[i].explain });
 
   const intro = $('.intro');
-  intro.querySelector('p').textContent = multi ? `실험 ${experiments.length}가지를 차례로 해요. 실험마다 먼저 예상하고, 직접 실험한 뒤, 본 것을 설명해 보세요.` : '먼저 예상하고, 직접 실험한 뒤, 관찰한 까닭을 설명해 보세요.';
+  intro.querySelector('p').textContent = multi ? L.introMulti(experiments.length) : L.intro;
+  if (L.id !== 'poe') intro.insertAdjacentHTML('beforeend', `<p class="model-badge">🧭 수업 모형: <b>${L.name}</b> · ${L.flow}</p>`);
   const glossary = config.glossary ? `<details class="glossary"><summary>📖 어려운 낱말 뜻 보기</summary><dl>${config.glossary.map(([t, d]) => `<div><dt>${t}</dt><dd>${d}</dd></div>`).join('')}</dl></details>` : '';
   intro.insertAdjacentHTML('afterend', `
     <div class="teacher-bar" id="teacher-bar"></div>
@@ -52,28 +56,28 @@ export function setupPOEFlow(config) {
     <p class="experiment-now" role="status" aria-live="polite"></p>` : ''}
     <div class="flow-nav"><button type="button" class="secondary flow-back" id="flow-back">← 뒤로 가기</button>
     <ol class="poe-steps" aria-label="탐구 순서">
-      ${STAGES.map((s, i) => `<li data-step="${s}"><button type="button" data-goto="${s}"><span>${i + 1}</span> ${['예상하기', '관찰하기', '설명하기'][i]}</button></li>`).join('')}
+      ${STAGES.map((s, i) => `<li data-step="${s}"><button type="button" data-goto="${s}"><span>${i + 1}</span> ${L.steps[i]}</button></li>`).join('')}
     </ol></div>
     <section id="predict-panel" class="poe-panel" aria-labelledby="predict-title">
       <div class="prediction-scene">
-        <p class="poe-kicker">먼저 생각해 봐요</p>
+        <p class="poe-kicker">${L.predictKicker}</p>
         <h2 id="predict-title" tabindex="-1"></h2>
         <p id="predict-lead"></p>
         <div class="prediction-illustration"></div>
-        <p class="poe-hint" id="predict-hint">아직 실험하지 않고, 내 생각을 먼저 남겨 보세요.</p>
+        <p class="poe-hint" id="predict-hint">${L.predictHint}</p>
         ${glossary}
       </div>
       <form id="prediction-form" class="poe-form">
         <fieldset><legend></legend><div id="prediction-choices"></div></fieldset>
-        <label class="writing-label" for="prediction-reason">2. 그렇게 생각한 까닭은 무엇인가요?</label>
+        <label class="writing-label" for="prediction-reason">${L.reasonLabel}</label>
         <textarea id="prediction-reason" rows="3" maxlength="1200" required></textarea><p class="char-count" data-for="prediction-reason" aria-live="polite"></p>
-        <p class="poe-hint">예상은 맞고 틀림을 채점하지 않아요. 실험한 뒤 내 생각과 비교해 볼 거예요.</p>
-        <div class="poe-actions"><button type="button" class="secondary flow-back">← 뒤로 가기</button><button class="primary big" id="start-observation" type="submit">예상 저장하고 실험하기 →</button></div>
+        <p class="poe-hint">${L.predictNote}</p>
+        <div class="poe-actions"><button type="button" class="secondary flow-back">← 뒤로 가기</button><button class="primary big" id="start-observation" type="submit">${L.savePredict}</button></div>
       </form>
     </section>
     <section id="observe-panel" aria-labelledby="observe-title" hidden>
-      <div class="poe-section-heading"><div><p class="poe-kicker">직접 확인해 봐요</p><h2 id="observe-title" tabindex="-1"></h2></div></div>
-      <details class="prediction-reminder"><summary>내가 남긴 예상</summary><p data-prediction></p><p data-reason></p></details>
+      <div class="poe-section-heading"><div><p class="poe-kicker">${L.observeKicker}</p><h2 id="observe-title" tabindex="-1"></h2></div></div>
+      <details class="prediction-reminder"><summary>${L.reminder}</summary><p data-prediction></p><p data-reason></p></details>
       <div class="observe-body">
       <aside id="step-guide" class="step-guide" aria-labelledby="step-guide-title">
         <p class="guide-kicker" id="step-guide-title">🧭 실험 순서 안내</p>
@@ -83,18 +87,18 @@ export function setupPOEFlow(config) {
       <div class="observe-main">
       <div id="simulation-mount"></div>
       <form id="observation-form" class="poe-record">
-        <h3>실제로 무엇을 보았나요?</h3>
+        <h3>${L.recordTitle}</h3>
         <p id="observation-progress" role="status"></p>
         <label class="writing-label" for="observation-record"></label>
         <textarea id="observation-record" rows="3" maxlength="1500" required></textarea><p class="char-count" data-for="observation-record" aria-live="polite"></p>
-        <div class="poe-actions"><button type="button" class="secondary flow-back">← 뒤로 가기</button><button class="primary big" id="to-explanation" aria-disabled="true">관찰 저장하고 설명하기 →</button></div>
+        <div class="poe-actions"><button type="button" class="secondary flow-back">← 뒤로 가기</button><button class="primary big" id="to-explanation" aria-disabled="true">${L.saveObserve}</button></div>
       </form>
       </div>
       </div>
     </section>
     <section id="explain-panel" class="poe-panel explanation-panel" aria-labelledby="explain-title" hidden>
-      <p class="poe-kicker">예상과 관찰을 연결해 봐요</p><h2 id="explain-title" tabindex="-1">내 예상과 실제 관찰은 같았나요?</h2>
-      <div class="poe-comparison"><article><h3>나의 처음 예상</h3><p data-prediction></p><p data-reason></p></article><article><h3>내가 관찰한 결과</h3><p id="saved-observation"></p></article></div>
+      <p class="poe-kicker">${L.explainKicker}</p><h2 id="explain-title" tabindex="-1">${L.explainTitle}</h2>
+      <div class="poe-comparison"><article><h3>${L.compareFirst}</h3><p data-prediction></p><p data-reason></p></article><article><h3>${L.compareSecond}</h3><p id="saved-observation"></p></article></div>
       <form id="explanation-form" class="poe-form">
         <label class="writing-label" for="explanation-record"></label>
         <textarea id="explanation-record" rows="4" maxlength="1800" required placeholder="직접 본 움직임과 전하 표시의 변화를 근거로 내 말로 설명해 보세요."></textarea><p class="char-count" data-for="explanation-record" aria-live="polite"></p>
@@ -103,7 +107,7 @@ export function setupPOEFlow(config) {
       </form>
       ${multi ? `<section id="next-experiment" class="next-experiment" hidden aria-live="polite"><p></p><button class="primary" type="button" id="go-next-experiment"></button></section>` : ''}
       <section id="concept-review" hidden aria-labelledby="concept-title">
-        <h2 id="concept-title" tabindex="-1">관찰한 현상을 과학으로 설명해요</h2>
+        <h2 id="concept-title" tabindex="-1">${L.conceptTitle}</h2>
         <ol class="concept-sequence">
           ${config.explain.concepts.map(([title, text]) => `<li><strong>${title}</strong><p>${text}</p></li>`).join('')}
         </ol>
@@ -116,11 +120,11 @@ export function setupPOEFlow(config) {
     </section>
     <dialog id="prediction-confirm" class="flow-dialog" aria-labelledby="confirm-title">
       <div class="flow-dialog-body">
-        <h2 id="confirm-title">내 예상을 한 번 더 확인해 주세요</h2>
-        <p class="confirm-warning">⚠️ 예상은 저장하면 <b>다시 고칠 수 없어요.</b> 오타나 잘못 쓴 곳이 없는지 천천히 읽어 보세요.</p>
-        <dl><div><dt>내가 고른 예상</dt><dd id="confirm-choice"></dd></div><div><dt>그렇게 생각한 까닭</dt><dd id="confirm-reason"></dd></div></dl>
+        <h2 id="confirm-title">${L.confirmTitle}</h2>
+        <p class="confirm-warning">${L.confirmWarning}</p>
+        <dl><div><dt>${L.confirmChoice}</dt><dd id="confirm-choice"></dd></div><div><dt>그렇게 생각한 까닭</dt><dd id="confirm-reason"></dd></div></dl>
       </div>
-      <div class="flow-dialog-actions"><button type="button" class="secondary big" id="confirm-edit">← 다시 고치기</button><button type="button" class="primary big" id="confirm-prediction">확인했어요, 저장하고 실험하기 →</button></div>
+      <div class="flow-dialog-actions"><button type="button" class="secondary big" id="confirm-edit">← 다시 고치기</button><button type="button" class="primary big" id="confirm-prediction">${L.confirmOk}</button></div>
     </dialog>
     <div class="flow-toast" role="status" aria-live="assertive"></div>
   `);
@@ -136,7 +140,8 @@ export function setupPOEFlow(config) {
       const sections = experiments.map((e, i) => ({ name: e.name, prediction: state.exps[i].prediction?.choice ?? '', reason: state.exps[i].prediction?.reason ?? '', observation: state.exps[i].saved, explanation: state.exps[i].explanation.trim() }));
       // 예전 Apps Script도 읽을 수 있도록 실험별 답을 한 묶음으로도 함께 보내요.
       const joined = key => multi ? sections.map(s => `[${s.name}] ${s[key]}`).join('\n') : sections[0][key];
-      return { lab: slug, title: labTitle, sections, prediction: joined('prediction'), reason: joined('reason'), observation: joined('observation'), explanation: joined('explanation') };
+      // fieldLabels: 모형에 맞는 칸 이름(새 Apps Script는 시트 머리글에 써요. 예전 Apps Script는 무시하고 ‘예상·관찰·설명’으로 저장해요).
+      return { lab: slug, title: labTitle, model: L.id, fieldLabels: L.fields, sections, prediction: joined('prediction'), reason: joined('reason'), observation: joined('observation'), explanation: joined('explanation') };
     },
     check: () => {
       const short = experiments.findIndex((e, i) => plain(state.exps[i].explanation).length < MIN_CHARS);
@@ -173,9 +178,9 @@ export function setupPOEFlow(config) {
     $('#saved-observation').textContent = e.saved;
     const locked = !!e.prediction;
     $('#prediction-form fieldset').disabled = locked; $('#prediction-reason').readOnly = locked;
-    $('#start-observation').textContent = locked ? '실험 이어 하기 →' : '예상 저장하고 실험하기 →';
-    $('#predict-hint').textContent = locked ? '처음의 예상은 그대로 남겨 두었어요. 관찰한 결과와 비교해 보세요.' : '아직 실험하지 않고, 내 생각을 먼저 남겨 보세요.';
-    $('#reveal-concepts').textContent = e.explained ? '내 설명 저장하기' : multi && !allExplained(state.current) ? '내 설명 저장하기 →' : '내 설명 저장하고 개념 확인하기 →';
+    $('#start-observation').textContent = locked ? L.resume : L.savePredict;
+    $('#predict-hint').textContent = locked ? L.predictLocked : L.predictHint;
+    $('#reveal-concepts').textContent = e.explained ? '내 설명 저장하기' : multi && !allExplained(state.current) ? '내 설명 저장하기 →' : L.saveExplain;
     document.querySelectorAll('[data-prediction]').forEach(el => el.textContent = e.prediction?.choice || '');
     document.querySelectorAll('[data-reason]').forEach(el => el.textContent = e.prediction?.reason || '');
     document.querySelectorAll('.poe-form textarea, .poe-record textarea').forEach(showCount);
@@ -372,7 +377,7 @@ export function setupPOEFlow(config) {
     const item = ev.target.closest('[data-guide-step]');
     if (!item) return;
     if (item.dataset.guideStep === 'final') {
-      toast('✎ 아래 ‘실제로 무엇을 보았나요?’에 본 것을 적고 ‘관찰 저장하고 설명하기’를 눌러요.');
+      toast(`✎ 아래 ‘${L.recordTitle}’에 적고 ‘${L.saveObserve.replace(' →', '')}’를 눌러요.`);
       $('#observation-record').scrollIntoView({ behavior: reducedMotion.matches ? 'instant' : 'smooth', block: 'center' });
       $('#observation-record').focus({ preventScroll: true });
       return;
@@ -402,7 +407,7 @@ export function setupPOEFlow(config) {
       return `<li class="${state}${lockedStep ? ' locked' : ''}"${state === 'current' ? ' aria-current="step"' : ''}><button type="button" class="guide-item" data-guide-step="${i}" aria-label="${v.label}: 어떻게 하는지 보기"><span class="guide-num">${v.done ? '✓' : lockedStep ? '🔒' : i + 1}</span><div><b>${v.label}</b>${state === 'current' ? `<small class="guide-now">지금 할 일</small>` : ''}${v.hint && state === 'current' ? `<small>${v.hint}</small>` : ''}${lockedStep ? '<small>앞 단계를 마치면 열려요</small>' : ''}<small class="guide-how">👆 눌러서 할 일 보기</small></div></button></li>`;
     });
     const allDone = current === -1;
-    items.push(`<li class="${allDone ? 'current final' : 'todo final'}"${allDone ? ' aria-current="step"' : ''}><button type="button" class="guide-item" data-guide-step="final"><span class="guide-num">✎</span><div><b>관찰 결과 기록하기</b>${allDone ? '<small class="guide-now">지금 할 일</small>' : ''}<small>아래에 본 것을 적고 ‘관찰 저장하고 설명하기’를 눌러요</small></div></button></li>`);
+    items.push(`<li class="${allDone ? 'current final' : 'todo final'}"${allDone ? ' aria-current="step"' : ''}><button type="button" class="guide-item" data-guide-step="final"><span class="guide-num">✎</span><div><b>${L.guideFinal}</b>${allDone ? '<small class="guide-now">지금 할 일</small>' : ''}<small>${L.guideFinalHint}</small></div></button></li>`);
     guide.querySelector('.guide-steps').innerHTML = items.join('');
     guide.querySelector('.guide-bar span').style.width = `${done / steps.length * 100}%`;
     guide.querySelector('.guide-count').textContent = `${done} / ${steps.length}`;
@@ -500,11 +505,11 @@ export function setupPOEFlow(config) {
   function explainClosedStep(target) {
     if (isReviewing()) return toast('📝 먼저 ‘실험 전 1분 복습’ 질문에 모두 답하고 ‘복습 마치고 실험 시작하기’를 눌러요.');
     const now = exp().stage;
-    if (now === 'predict') { toast('✏️ 먼저 예상을 고르고 까닭을 쓴 뒤 ‘예상 저장하고 실험하기’를 눌러요.'); $('#start-observation').dataset.targetLabel = '👆 여기부터!'; $('#start-observation').classList.add('step-target'); setTimeout(() => $('#start-observation').classList.remove('step-target'), 4500); return; }
+    if (now === 'predict') { toast(`✏️ 먼저 ${L.id === 'poe' ? '예상' : '내 생각'}을 고르고 까닭을 쓴 뒤 ‘${L.savePredict.replace(' →', '')}’를 눌러요.`); $('#start-observation').dataset.targetLabel = '👆 여기부터!'; $('#start-observation').classList.add('step-target'); setTimeout(() => $('#start-observation').classList.remove('step-target'), 4500); return; }
     if (now === 'observe' && target === 'explain') {
       const label = nextStepLabel();
       if (label) return pointToGuide(`🧭 아직 해 보지 않은 실험 단계가 있어요. ‘실험 순서 안내’를 보고 ‘${label}’부터 해 보세요.`);
-      toast('✎ 본 것을 아래 ‘실제로 무엇을 보았나요?’에 쓰고 ‘관찰 저장하고 설명하기’를 눌러요.');
+      toast(`✎ 아래 ‘${L.recordTitle}’에 적고 ‘${L.saveObserve.replace(' →', '')}’를 눌러요.`);
       $('#observation-record').focus();
     }
   }

@@ -31,7 +31,7 @@ export function mountReportSubmit(container, { slug, report, check, onSubmitted 
       <h3 id="feedback-title">시뮬레이션 사용 후기 <span class="optional-tag">선택</span></h3>
       <label class="writing-label" for="report-feedback">시뮬레이션을 사용하면서 좋았던 점이나 불편했던 점이 있었나요? 더 편리하게 고쳤으면 하는 부분이 있다면 자유롭게 적어 주세요.</label>
       <textarea id="report-feedback" rows="3" maxlength="1000" placeholder="예: 버튼이 찾기 쉬웠어요. 글씨가 더 컸으면 좋겠어요."></textarea>
-      <p class="poe-hint">쓰지 않아도 제출할 수 있어요. 과학 설명은 위의 ‘설명하기’ 칸에 써 주세요.</p>
+      <p class="poe-hint">쓰지 않아도 제출할 수 있어요. 과학 설명은 위의 마지막 단계 칸에 써 주세요.</p>
     </section>
     <form class="submit-report" novalidate aria-labelledby="submit-title">
       <h3 id="submit-title">선생님께 보고서 제출하기</h3>
@@ -195,6 +195,11 @@ export function mountReportSubmit(container, { slug, report, check, onSubmitted 
   };
 }
 
+// 보고서의 네 칸. 수업 모형에 따라 이름만 달라요(src/teaching-models.js의 fields). 이름이 없으면 예상·관찰·설명이에요.
+const FIELDS = ['prediction', 'reason', 'observation', 'explanation'];
+const DEFAULT_LABELS = { prediction: '예상', reason: '예상한 까닭', observation: '관찰', explanation: '설명' };
+const labelOf = (r, key) => escape(r.fieldLabels?.[key] ?? DEFAULT_LABELS[key]);
+
 // 인쇄용 보고서: 흰 바탕에 검은 글씨, A4에 맞춘 깔끔한 모양(스타일은 theme-electric.css의 @media print).
 function printHTML(r, submitted) {
   const id = r.studentId, multi = r.sections.length > 1, today = stamp(new Date().toISOString()).slice(0, 10);
@@ -204,9 +209,9 @@ function printHTML(r, submitted) {
   return `
     <div class="print-head"><p class="print-kicker">과학 탐구 보고서</p><h1>${escape(r.title)}</h1><p class="print-date">작성일 ${today}${submitted ? ` · 선생님께 제출함 ${stamp(submitted.at)}` : ''}</p></div>
     <dl class="print-info">${info('학년', id && `${Number(id[0])}학년`)}${info('반', id && `${Number(id.slice(1, 3))}반`)}${info('번호', id && `${Number(id.slice(3))}번`)}${info('이름', escape(r.name))}</dl>
-    ${r.sections.map((s, i) => `<section class="print-section"><h2>${multi ? `실험 ${i + 1}. ${escape(s.name)}` : '탐구 기록'}</h2><dl>${item('예상', s.prediction)}${item('예상한 까닭', s.reason)}${item('관찰', s.observation)}${item('설명', s.explanation)}</dl></section>`).join('')}
+    ${r.sections.map((s, i) => `<section class="print-section"><h2>${multi ? `실험 ${i + 1}. ${escape(s.name)}` : '탐구 기록'}</h2><dl>${FIELDS.map(k => item(labelOf(r, k), s[k])).join('')}</dl></section>`).join('')}
     ${r.feedback ? `<section class="print-section"><h2>시뮬레이션 사용 후기</h2><dl>${item('후기', r.feedback)}</dl></section>` : ''}
-    <p class="print-foot">준혁T의 과학 실험실 · 예상 → 관찰 → 설명</p>`;
+    <p class="print-foot">준혁T의 과학 실험실 · ${r.fieldLabels ? FIELDS.map(k => labelOf(r, k)).filter((_, i) => i !== 1).join(' → ') : '예상 → 관찰 → 설명'}</p>`;
 }
 
 function previewHTML(r) {
@@ -214,7 +219,7 @@ function previewHTML(r) {
   const row = (label, value) => `<div><dt>${label}</dt><dd>${value === '' ? '<span class="empty">(쓰지 않음)</span>' : escape(value)}</dd></div>`;
   return `
     <section><h3>기본 정보</h3><dl class="preview-grid">${row('학년', `${Number(id[0])}학년`)}${row('반', `${Number(id.slice(1, 3))}반`)}${row('번호', `${Number(id.slice(3))}번`)}${row('이름', r.name)}</dl></section>
-    ${r.sections.map((s, i) => `<section><h3>${multi ? `실험 ${i + 1}. ${escape(s.name)}` : '탐구 기록'}</h3><dl>${row('예상', s.prediction)}${row('예상한 까닭', s.reason)}${row('관찰', s.observation)}${row('설명', s.explanation)}</dl></section>`).join('')}
+    ${r.sections.map((s, i) => `<section><h3>${multi ? `실험 ${i + 1}. ${escape(s.name)}` : '탐구 기록'}</h3><dl>${FIELDS.map(k => row(labelOf(r, k), s[k])).join('')}</dl></section>`).join('')}
     <section><h3>퀴즈 결과</h3><p class="poe-hint">퀴즈는 스스로 확인하는 활동이라 보고서에 넣지 않아요.</p></section>
     <section><h3>시뮬레이션 사용 후기</h3><dl>${row('후기', r.feedback)}</dl></section>`;
 }

@@ -1,0 +1,186 @@
+/* 별과 우주 단원 공통 테마: 전기와 자기 테마(theme-electric.css) 위에, 깊은 밤하늘·은하수·성운의 빛을 덮어씌워요.
+   모든 규칙은 body.lab-space 아래에만 걸려서 다른 단원에는 영향이 없어요(버튼·대화 상자 등 공통 부품은 그대로 써요). */
+body.lab-space{
+  --bg:#03040c;--panel:#0a0d1f;--panel-2:#0f1430;--line:#1f2547;--line-2:#2d3566;
+  --current:#8fd3ff;--current-2:#6a8cff;--volt:#ffcf6e;--volt-2:#ff9f6e;
+  --nebula:#c77dff;--glow-c:0 0 12px #8fd3ff55,0 0 28px #6a8cff33;--glow-v:0 0 12px #ffcf6e66,0 0 28px #ff9f6e33;
+  background:
+    radial-gradient(1200px 520px at 78% -12%,#3b2a7a40,transparent 62%),
+    radial-gradient(900px 480px at -8% 22%,#0e5a8a2e,transparent 60%),
+    radial-gradient(800px 500px at 50% 112%,#7a2a5a30,transparent 62%),
+    radial-gradient(1px 1px at 12% 18%,#fff 95%,transparent),radial-gradient(1px 1px at 33% 72%,#cfe0ff 95%,transparent),
+    radial-gradient(1.4px 1.4px at 58% 12%,#ffe9c4 95%,transparent),radial-gradient(1px 1px at 81% 48%,#fff 95%,transparent),
+    radial-gradient(1px 1px at 92% 86%,#cfe0ff 95%,transparent),radial-gradient(1.2px 1.2px at 6% 64%,#fff 95%,transparent),
+    radial-gradient(1px 1px at 44% 38%,#ffd9d9 95%,transparent),radial-gradient(1px 1px at 70% 92%,#fff 95%,transparent),
+    #03040c;
+  background-attachment:fixed;
+}
+body.lab-space header::after{background:linear-gradient(90deg,transparent,#8fd3ff,#c77dff,#ffcf6e,transparent);background-size:200% 100%}
+body.lab-space .brand::before{content:'✦';color:var(--volt)}
+body.lab-space .intro h1,body.lab-space h1{background:linear-gradient(100deg,#ffffff 0%,#e6dcff 35%,#a9c8ff 65%,#ffcf6e 100%);-webkit-background-clip:text;background-clip:text}
+body.lab-space .stage,body.lab-space .stage.night{border-color:#232a55;background:radial-gradient(ellipse at 50% 120%,#1a1440 0%,#070917 55%,#020309 100%)}
+body.lab-space .stage::before{background-image:none}
+body.lab-space .stage::after{box-shadow:inset 0 0 80px #000c,inset 0 0 0 1px #8fd3ff14}
+body.lab-space .stage .stage-label{color:#cbd8ff}
+body.lab-space .discovery{color:#e6dcff;border-left-color:var(--nebula)}
+body.lab-space .model-badge{margin:10px 0 0;font-size:calc(14px * var(--fs, 1));color:#d8ccff}
+body.lab-space .model-badge b{color:#fff}
+
+/* 사진 카드(실제 천체 사진)와 출처 */
+body.lab-space .photo-card{margin:0;border-radius:12px;overflow:hidden;background:#05060f;border:1px solid var(--line-2);box-shadow:0 10px 30px #0008}
+body.lab-space .photo-card img{display:block;width:100%;aspect-ratio:1/1;object-fit:cover;transition:transform .6s cubic-bezier(.2,.7,.3,1)}
+body.lab-space .photo-card:hover img{transform:scale(1.04)}
+body.lab-space .photo-card figcaption{padding:10px 12px;font-size:calc(14px * var(--fs, 1));line-height:1.55;color:var(--ink)}
+body.lab-space .photo-card figcaption small{display:block;margin-top:4px;color:var(--faint);font-size:calc(11.5px * var(--fs, 1))}
+body.lab-space .photo-card figcaption small a{color:var(--current)}
+body.lab-space .credits{margin:18px 0 0;padding:12px 14px;border-radius:10px;border:1px solid var(--line);background:#070a1a;color:var(--faint);font-size:12.5px;line-height:1.7}
+body.lab-space .credits summary{cursor:pointer;color:var(--muted);font-weight:600}
+body.lab-space .credits a{color:var(--current)}
+body.lab-space .scale-note{color:var(--faint);font-size:calc(12.5px * var(--fs, 1))}
+
+/* 우주 실험 공통: 무대 위에 겹치는 정보 칩 */
+body.lab-space .space-chip{position:absolute;z-index:2;padding:6px 12px;border-radius:999px;background:#0a0d22cc;border:1px solid #8fd3ff44;color:#e8eeff;font-size:13px;backdrop-filter:blur(4px);pointer-events:none}
+@media(prefers-reduced-motion:reduce){body.lab-space .photo-card img{transition:none}}
+
+/* 우주 실험 공통: 탭에 따라 무대의 그림 묶음을 바꿔 보여 줘요(data-tab). 3D 보기 단추는 3D가 있는 탭에서만 보여요. */
+body.lab-space .view-bar[data-off]{display:none!important}
+body.lab-space .stage .lab3d{background:transparent}
+body.lab-space #controls{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center}
+body.lab-space #controls [role=group]{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+body.lab-space #controls button{margin-right:0}
+body.lab-space .space-toggle{display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+body.lab-space .credits ul{margin:6px 0 0;padding-left:18px}
+
+/* ---------- 연주 시차 ---------- */
+body.lab-space .stage:not([data-tab="board"]) #board-view,body.lab-space .stage:not([data-tab="board"]) #peek-view{display:none}
+body.lab-space .stage:not([data-tab="orbit"]) #orbit-view{display:none}
+body.lab-space .stage:not([data-tab="stars"]) #stars-view{display:none}
+body.lab-space .stage.three-on.parallax3d #scene>:not(defs):not(#orbit-view){display:none}
+body.lab-space .stage.three-on.parallax3d #orbit2d{display:none}
+body.lab-space #scene .board-num{font-size:17px;font-weight:700;fill:#5a4a2a}
+body.lab-space #scene .board-small{font-size:12px;fill:#7d6f55}
+body.lab-space #scene .board-label{font-size:16px;font-weight:800;fill:#5a3c00}
+body.lab-space #scene .sight{fill:none;stroke-width:2.6;stroke-dasharray:1;stroke-dashoffset:1;opacity:0;transition:stroke-dashoffset .8s cubic-bezier(.2,.7,.3,1),opacity .3s}
+body.lab-space #scene .sight-mark{opacity:0;transition:opacity .4s .5s}
+body.lab-space #scene [data-sight].on .sight{stroke-dashoffset:0;opacity:.95}
+body.lab-space #scene [data-sight].on .sight-mark{opacity:1}
+body.lab-space #scene [data-sight].ghost .sight{stroke-dashoffset:0;opacity:.3;stroke-dasharray:.02 .015}
+body.lab-space #scene .hole .eye{font-size:15px;opacity:0;transition:opacity .3s}
+body.lab-space #scene .hole.looking .eye{opacity:1}
+body.lab-space #scene .hole.looking circle{stroke:#e8590c;stroke-width:3}
+body.lab-space #scene .board-model path{transition:filter .3s}
+body.lab-space #scene .board-model.chosen path{filter:drop-shadow(0 0 6px #ff9f1c)}
+body.lab-space #scene .peek-title{font-size:14px;font-weight:700;fill:#e8eeff}
+body.lab-space #scene .peek-num{font-size:19px;font-weight:800;fill:#4a3a1a}
+body.lab-space #scene .peek-read{font-size:15px;font-weight:700;fill:#ffe9a8}
+body.lab-space #scene .angle-read{font-size:17px;font-weight:800;fill:#ffcf6e}
+body.lab-space #scene #peek-star{transition:opacity .3s}
+body.lab-space #scene .board-table{width:100%;font-size:13px;border-collapse:collapse;text-align:center}
+body.lab-space #scene .board-table th,body.lab-space #scene .board-table td{padding:5px 4px;border:1px solid var(--line-2)}
+body.lab-space #scene .orbit-small{font-size:12px;fill:#aab4d6}
+body.lab-space #scene .orbit-label{font-size:15px;font-weight:800;fill:#ffcf6e}
+body.lab-space #scene .orbit-read{font-size:14px;font-weight:700;fill:#e8eeff}
+body.lab-space #scene .inset-title{font-size:13px;font-weight:700;fill:#e8eeff}
+body.lab-space #scene .inset-label{font-size:12px;font-weight:800;fill:#ffe9c4;paint-order:stroke;stroke:#000a;stroke-width:3px}
+body.lab-space #scene .card-big{font-size:18px;font-weight:800;fill:#fff;paint-order:stroke;stroke:#000a;stroke-width:3px}
+body.lab-space #scene .card-small{font-size:13px;font-weight:500;fill:#aab4d6}
+body.lab-space #scene .card-text{font-size:14px;fill:#dfe6ff}
+body.lab-space #scene .ruler-label{font-size:11px;font-weight:700;fill:#e8eeff;paint-order:stroke;stroke:#000c;stroke-width:3px}
+body.lab-space #scene .ruler-tick{font-size:11px;fill:#aab4d6}
+
+/* ---------- 별의 밝기와 등급 ---------- */
+body.lab-space .stage:not([data-tab="light"]) #light-view{display:none}
+body.lab-space .stage:not([data-tab="mag"]) #mag-view{display:none}
+body.lab-space .stage:not([data-tab="abs"]) #abs-view{display:none}
+body.lab-space #scene .tape-num{font-size:12px;font-weight:700;fill:#3a2c00}
+body.lab-space #scene .tape-unit{font-size:12px;fill:#aab4d6}
+body.lab-space #scene .obj-name{font-size:13px;font-weight:700;fill:#dfe6ff}
+body.lab-space #scene .app-small{font-size:10px;fill:#9fc4ff}
+body.lab-space #scene .app-big{font-size:21px;font-weight:800;fill:#ffd166;font-family:ui-monospace,monospace}
+body.lab-space #scene .panel-title{font-size:13px;font-weight:800;fill:#e8eeff}
+body.lab-space #scene .panel-text{font-size:13px;fill:#dfe6ff}
+body.lab-space #scene .panel-strong{font-size:15px;font-weight:800;fill:#ffcf6e}
+body.lab-space #scene .panel-small{font-size:12px;fill:#aab4d6}
+body.lab-space #scene .axis{font-size:11px;fill:#aab4d6}
+body.lab-space #scene .ladder-num{font-size:14px;font-weight:800;fill:#e8eeff}
+body.lab-space #scene .ladder-step{font-size:12px;font-weight:700;fill:#8fd3ff}
+body.lab-space #scene .ladder-hundred{font-size:12px;font-weight:700;fill:#ffcf6e}
+body.lab-space #scene .sky-label{font-size:13px;font-weight:700;fill:#fff;paint-order:stroke;stroke:#000b;stroke-width:3px}
+body.lab-space #scene .sky-mag{fill:#ffcf6e}
+body.lab-space #scene .ten-label{font-size:15px;font-weight:800;fill:#ffcf6e}
+body.lab-space .fx-layer{position:absolute;left:0;top:0;pointer-events:none;z-index:1}
+
+/* ---------- 별의 표면 온도와 색 ---------- */
+body.lab-space .stage:not([data-tab="heat"]) #heat-view,body.lab-space .stage:not([data-tab="heat"]) #ball-view{display:none}
+body.lab-space .stage:not([data-tab="sky"]) #sky-view{display:none}
+body.lab-space #scene .heater-temp{font-size:22px;font-weight:800;fill:#ff9f6e;font-family:ui-monospace,monospace}
+body.lab-space #scene .obj-dark{font-size:12px;font-weight:700;fill:#3a3f52}
+body.lab-space #scene .ball-temp{font-size:18px;font-weight:800;fill:#fff}
+body.lab-space #scene .ball-class{font-size:15px;font-weight:700;fill:#ffcf6e}
+body.lab-space #scene .band-label{font-size:13px;font-weight:800;fill:#10121f}
+body.lab-space #scene .dot-label{font-size:12px;font-weight:700;fill:#dfe6ff;paint-order:stroke;stroke:#000c;stroke-width:3px}
+body.lab-space #scene .dot-label.now{fill:#ffcf6e;font-size:13px}
+body.lab-space #scene .card-strong{font-weight:800;fill:#ffcf6e}
+body.lab-space #scene .photo-cap{font-size:13px;font-weight:700;fill:#fff}
+body.lab-space #scene .photo-thumb{cursor:zoom-in;pointer-events:all}
+body.lab-space #scene .photo-thumb.big{cursor:zoom-out}
+body.lab-space #scene .photo-thumb:focus-visible rect{stroke:var(--volt);stroke-width:3}
+body.lab-space .stage[data-tab="sky"] #scene{touch-action:auto}
+body.lab-space .space-range{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap;color:var(--muted);font-size:calc(14px * var(--fs, 1))}
+body.lab-space .space-range input{width:min(260px,60vw);accent-color:var(--volt)}
+body.lab-space .space-range .range-ends{font-size:calc(12px * var(--fs, 1));color:var(--faint)}
+body.lab-space .chip-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:middle;box-shadow:0 0 6px currentColor}
+
+/* ---------- 우리은하와 천체 ---------- */
+body.lab-space .stage:not([data-tab="shape"]) #shape-view{display:none}
+body.lab-space .stage:not([data-tab="band"]) #band-view{display:none}
+body.lab-space .stage:not([data-tab="objects"]) #objects-view{display:none}
+body.lab-space .stage.three-on.galaxy3d #scene>:not(defs):not(#shape-view){display:none}
+body.lab-space .stage.three-on.galaxy3d #shape2d{display:none}
+body.lab-space #scene .sky-label.strong{fill:#ffcf6e;font-size:14px}
+body.lab-space #scene .strip-label{font-size:10.5px;font-weight:700;fill:#dfe6ff}
+body.lab-space #scene .strip-item{cursor:pointer;pointer-events:all}
+body.lab-space #scene .strip-item:focus-visible rect{stroke:var(--volt);stroke-width:3}
+body.lab-space .stage[data-tab="objects"] #scene,body.lab-space .stage[data-tab="sky"] #scene{touch-action:manipulation}
+
+/* ---------- 우주 팽창 ---------- */
+body.lab-space .stage:not([data-tab="balloon"]) #balloon-view{display:none}
+body.lab-space .stage:not([data-tab="center"]) #center-view{display:none}
+body.lab-space .stage:not([data-tab="time"]) #time-view{display:none}
+body.lab-space .stage:not([data-tab="analogy"]) #analogy-view{display:none}
+body.lab-space .stage.three-on.balloon3d #scene>:not(defs):not(#balloon-view){display:none}
+body.lab-space .stage.three-on.balloon3d #balloon2d-g{display:none}
+body.lab-space #scene .sticker-num{font-size:11px;font-weight:800;fill:#1d1505}
+body.lab-space #scene .tape-read{font-size:12px;font-weight:800;fill:#1d1505}
+body.lab-space #scene .table-num{font-size:15px;font-weight:800;fill:#5b6690}
+body.lab-space #scene .table-num.on{fill:#ffcf6e}
+body.lab-space #scene .time-label{font-size:16px;font-weight:800;fill:#ffe9c4}
+body.lab-space #scene .match-card{cursor:pointer;pointer-events:all}
+body.lab-space #scene .match-card rect{fill:#0a1029;stroke:#2d3566;stroke-width:1.5;transition:fill .2s,stroke .2s}
+body.lab-space #scene .match-card text{font-size:15px;font-weight:700;fill:#e8eeff}
+body.lab-space #scene .match-card:hover rect,body.lab-space #scene .match-card:focus-visible rect{stroke:var(--current)}
+body.lab-space #scene .match-card.picked rect{fill:#3a3000;stroke:var(--volt);stroke-width:2.5}
+body.lab-space #scene .match-card.done rect{fill:#0d3a24;stroke:#5fe08a}
+body.lab-space #scene .ox-text{font-size:14px;fill:#e8eeff}
+body.lab-space #scene .ox-btn{cursor:pointer;pointer-events:all}
+body.lab-space #scene .ox-btn rect{fill:#0a1029;stroke:#2d3566}
+body.lab-space #scene .ox-btn text{font-size:16px;font-weight:800;fill:#e8eeff}
+body.lab-space #scene .ox-btn.right rect{fill:#0d3a24;stroke:#5fe08a}
+body.lab-space #scene .ox-btn.wrong rect{fill:#3a1420;stroke:#ff8a9a}
+body.lab-space #scene .ox-why{font-size:12px;fill:#9dffb0}
+body.lab-space #scene .ox-why.wrong{fill:#ff9aa6}
+body.lab-space .stage[data-tab="analogy"] #scene{touch-action:manipulation}
+/* 실제 별 사진 관측 창 */
+body.lab-space #scene .obs-hit{cursor:grab;pointer-events:all;touch-action:none}
+body.lab-space #scene .obs-hit.grabbing{cursor:grabbing}
+body.lab-space #scene .obs-zoom{font-size:12px;font-weight:700;fill:#ffcf6e}
+body.lab-space #scene .card-tiny{font-size:10.5px;fill:#8f9bc4}
+body.lab-space #scene .measure-card{animation:measure-in .6s cubic-bezier(.2,.7,.3,1)}
+@keyframes measure-in{from{opacity:0;transform:translateX(18px)}}
+body.lab-space #scene .pin-pulse{transform-box:fill-box;transform-origin:center;animation:pin-pulse 1.8s ease-out infinite}
+@keyframes pin-pulse{from{opacity:.9;transform:scale(1)}99%{opacity:0;transform:scale(2.4)}}
+body.lab-space .obs-tools{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
+body.lab-space .obs-tools button{border:1px solid var(--line-2);border-radius:8px;background:#0a1029;color:#cfe6ff;padding:8px 12px;font-size:calc(14px * var(--fs, 1))}
+body.lab-space .obs-tools button[aria-pressed=true]{border-color:var(--volt);color:#fff}
+body.lab-space .obs-tools button:disabled{opacity:.35}
+@media(prefers-reduced-motion:reduce){body.lab-space #scene .measure-card,body.lab-space #scene .pin-pulse{animation:none}}

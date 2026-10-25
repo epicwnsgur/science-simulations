@@ -1,0 +1,18 @@
+/* VIII. 별과 우주 단원 페이지: 깊은 밤하늘과 성운의 빛. home.css 다음에 불러와요. */
+.unit-space{--current:#8fd3ff;--volt:#ffcf6e;--nebula:#c77dff}
+.unit-space .cosmos{background:radial-gradient(ellipse at 80% 18%,#5b3fb033,transparent 48%),radial-gradient(ellipse at 15% 8%,#0e5a8a33,transparent 55%),radial-gradient(ellipse at 50% 120%,#7a2a5a33,transparent 60%)}
+.unit-space .grade-hero h1{color:#fff;text-shadow:0 0 18px #c77dff88,0 0 42px #6a8cff55}
+.unit-space .eyebrow>span{background:var(--volt);box-shadow:0 0 10px var(--volt)}
+.unit-space .active-folder .folder-face{border-color:#2d3566;background:linear-gradient(135deg,#141238ee,#080a1ff5)}
+.unit-space .active-folder:hover .folder-face{border-color:var(--nebula);box-shadow:0 0 0 1px #c77dff55,0 15px 45px #6a8cff33}
+.unit-space .folder-tab{border-color:#2d3566;background:#11143a;color:#e6dcff;font-weight:700}
+.unit-space .subject{color:#d8ccff}
+.unit-space .open-mark{color:var(--volt)}
+.unit-space .art-orbit{border-color:#c77dff33;background:radial-gradient(ellipse,#c77dff1f,transparent 70%)}
+.unit-space .folder-footer{color:#e6dcff}
+.unit-space .space-art{position:relative;width:100%;height:100%;filter:drop-shadow(0 0 6px #8fd3ff44)}
+.unit-space .art-photo{position:relative;width:100%;height:100%;object-fit:cover;border-radius:10px;opacity:.95;transition:transform .8s cubic-bezier(.2,.7,.3,1)}
+.unit-space .active-folder:hover .art-photo{transform:scale(1.06)}
+.unit-space .section-group{grid-column:1/-1;margin:18px 0 18px;font-size:13px;color:#e6dcff;letter-spacing:1px;display:flex;align-items:center;gap:12px}
+.unit-space .section-group::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,#c77dff66,transparent)}
+@media(prefers-reduced-motion:reduce){.unit-space .art-photo{transition:none}}

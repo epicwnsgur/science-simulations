@@ -115,7 +115,7 @@ function doPost(e) {
     const submissionId = typeof data.submissionId === 'string' && /^[A-Za-z0-9-]{8,64}$/.test(data.submissionId) ? data.submissionId : '';
     const lab = labName_(data.title);
     const sections = readSections_(data);
-    const headers = headersFor_(sections);
+    const headers = headersFor_(sections, readLabels_(data));
     const cls = Number(id.slice(1, 3));
     return withLock_(() => {
       const sheet = labSheet_(ss, lab, headers);
@@ -149,9 +149,19 @@ function readSections_(data) {
   });
 }
 
-function headersFor_(sections) {
+// 수업 모형(예: 발생 학습, 비유 활용)에 따라 칸 이름이 다를 수 있어요. 페이지가 fieldLabels를 보내면 새 탭의 머리글에 써요.
+// 칸의 순서와 저장되는 내용은 늘 같아요(처음 생각 → 그 까닭 → 탐구·관찰 → 설명). 이미 있는 탭의 머리글은 바꾸지 않아요.
+function readLabels_(data) {
+  const given = data && typeof data.fieldLabels === 'object' && data.fieldLabels ? data.fieldLabels : {};
+  const out = {};
+  SECTION_FIELDS.forEach(f => { out[f[0]] = (typeof given[f[0]] === 'string' ? clean_(given[f[0]], 20).replace(/[\[\]]/g, '') : '') || f[1]; });
+  return out;
+}
+
+function headersFor_(sections, labels) {
   const headers = BASE_HEADERS.slice();
-  sections.forEach(s => SECTION_FIELDS.forEach(f => headers.push(s.name ? '[' + s.name + '] ' + f[1] : f[1])));
+  const nameOf = f => (labels && labels[f[0]]) || f[1];
+  sections.forEach(s => SECTION_FIELDS.forEach(f => headers.push(s.name ? '[' + s.name + '] ' + nameOf(f) : nameOf(f))));
   return headers.concat([FEEDBACK_HEADER, ID_HEADER]);
 }
 
