@@ -4,6 +4,8 @@ import './lab.css';
 import './theme-electric.css';
 import './readable.css';
 import { setupPOEFlow } from './src/poe-flow.js';
+import { webglAvailable } from './src/view-toggle.js';
+import { PAIRS } from './src/water-model.js';
 import { $, $$, setText, setHTML, buildLab, checklist, toast, burst, arc, PathFlow, ELECTRON_GLYPH, reducedMotion, instantLessons } from './src/lab-shell.js';
 
 // 교과서 242–243쪽, 지도서 552–557쪽(4차시).
@@ -89,7 +91,7 @@ const scene = `
       <rect x="182" y="361" width="50" height="22" rx="4" fill="url(#cur-cell-dark)"/>
       <rect x="182" y="361" width="16" height="22" rx="3" fill="url(#cur-cell)"/>
       <rect x="232" y="366" width="5" height="12" rx="1.5" fill="url(#cur-screw)"/>
-      <text x="214" y="376" text-anchor="middle" font-size="9" font-weight="700" style="fill:#e8edf8">1.5 V</text>
+      <text id="cell-volt" x="214" y="376" text-anchor="middle" font-size="9" font-weight="700" style="fill:#e8edf8">1.5 V</text>
       <path d="M186 364 h44" stroke="#fff" stroke-width="1.5" opacity=".35"/>
     </g>
     <text id="cell-minus" x="164" y="378" text-anchor="middle" font-size="16" font-weight="700">−</text><text id="cell-plus" x="258" y="378" text-anchor="middle" font-size="16" font-weight="700">+</text>
@@ -109,8 +111,9 @@ const scene = `
   <text class="muted" x="250" y="96" font-size="12">전구</text>
   <g id="electron-layer"></g>
   <g id="direction" opacity="0"><path d="M92 320 V170" stroke="#5cc8ff" stroke-width="4" marker-end="url(#arrow-head)"/><path d="M118 170 V320" stroke="#ff9f43" stroke-width="4" marker-end="url(#arrow-head)"/><text x="136" y="236" font-size="13" fill="#9fdcff">↑ 전자의 이동 방향</text><text x="136" y="258" font-size="13" fill="#ffc48a">↓ 전류의 방향</text></g>
-  <text id="bulb-count" x="210" y="344" text-anchor="middle" font-size="12" class="muted"></text>
-  <!-- 수로 모형: 관 속을 물이 돌아요. 펌프 → (높은 곳) → 물레방아 → (낮은 곳) → 펌프 -->
+  <text id="bulb-count" x="210" y="300" text-anchor="middle" font-size="12" class="muted"></text>
+  <!-- 수로 모형(2D, 3D 화면을 쓸 수 없을 때): 관 속을 물이 돌아요. 펌프 → (높은 곳) → 물레방아 → (낮은 곳) → 펌프 -->
+  <g id="water-2d">
   <path d="M450 250 A150 105 0 0 1 750 250 A150 105 0 0 1 450 250" stroke="#4a5f8a" stroke-width="40" fill="none" opacity=".9"/>
   <path id="water-path" d="M450 250 A150 105 0 0 1 750 250 A150 105 0 0 1 450 250" stroke="#2d7fc1" stroke-width="30" fill="none" opacity=".75"/>
   <path d="M460 240 A140 96 0 0 1 740 240" stroke="#bfe6ff" stroke-width="2" fill="none" opacity=".45"/>
@@ -132,6 +135,8 @@ const scene = `
     </g>
   </g>
   <text class="muted" x="750" y="318" text-anchor="middle" font-size="12">물레방아</text>
+  </g>
+  <g id="pair-marks"></g>
 </g>`;
 
 const lab = buildLab({
@@ -150,8 +155,12 @@ const lab = buildLab({
 let mode = 'neon', show = false;
 let rubs = 0, placed = false, touching = false, charge = 0, discharged = false, motion = null, flight = null, flash = 0;
 let battery = false, pump = false, batteryTime = 0, pumpTime = 0, lastFrame = 0;
+// 전기 회로와 수로 모형 잇기: 전지 개수(전압), 펌프 세기(물의 높이 차), 학생이 찾은 짝
+let cells = 1, pumpLevel = 1, strongTime = 0, pick = null, justMatched = null, water3d = null, water3dLoading = false;
+const matched = new Set();
 let inCount = 0, outCount = 0, wheelAngle = 0, impellerAngle = 0, bulbLevel = 0;
-const seen = { lit: false, noLight: false, battery: false, pump: false };
+// viewNeon·viewCircuit: ‘전하·방향 보기’를 켜고 전하(전자)의 움직임을 직접 본 적이 있는지(꼭 봐야 다음으로 넘어가요).
+const seen = { lit: false, noLight: false, battery: false, pump: false, viewNeon: false, viewCircuit: false, strong: false };
 let flow = null;
 
 const ions = $('#ions');
@@ -163,6 +172,61 @@ const wirePath = $('#wire');
 const electrons = new PathFlow($('#electron-layer'), wirePath, { count: 22, radius: 4.2, fill: '#2f9bff', glyph: ELECTRON_GLYPH });
 const water = new PathFlow($('#water-layer'), $('#water-path'), { count: 26, radius: 4.5, fill: '#7fd6ff' });
 const WIRE_LEN = wirePath.getTotalLength();
+
+/* ---------- 전기 회로 ↔ 수로 모형 짝 찾기 ---------- */
+// 왼쪽(전기 회로)에서 하나, 오른쪽(수로 모형)에서 하나를 골라 짝을 지어요. 찾은 짝은 두 그림에 같은 색으로 표시돼요.
+const PAIR_COLORS = { pump: '#ffd166', channel: '#ff9f6b', wheel: '#ffe9a6', flow: '#7fd6ff', height: '#b9a6ff' };
+const RIGHT_ORDER = ['wheel', 'height', 'pump', 'flow', 'channel'];   // 오른쪽 단추는 섞어서 보여 줘요.
+const pairOf = key => PAIRS.find(p => p[0] === key || p[2] === key);
+function choosePair(side, key) {
+  const pair = pairOf(key);
+  if (matched.has(pair[2])) return;
+  if (side === 'left') { pick = key; renderControls(); return; }
+  if (!pick) { toast('먼저 왼쪽(전기 회로)에서 하나를 골라요'); return; }
+  const left = pairOf(pick);
+  if (left[2] === key) {
+    matched.add(key); justMatched = key; pick = null;
+    toast(`🔗 ${left[1]} ↔ ${left[3]}: ${left[4]}`);
+    burst($('#fx'), 400, 220, PAIR_COLORS[key], 14);
+  } else {
+    toast(`🤔 ${left[1]}과(와) ${pairOf(key)[3]}은(는) 짝이 아니에요. ${left[1]}은(는) 회로에서 어떤 일을 하는지 떠올려 봐요.`);
+    pick = null;
+  }
+  renderControls(); renderPairMarks();
+}
+// 찾은 짝을 그림에 표시해요(전기 회로 쪽 + 3D를 쓸 수 없을 때의 2D 수로 모형 쪽).
+const MARKS = {
+  pump: { circuit: [210, 372, 46, 24], tag: [210, 334], water: [450, 250, 48, 44] },
+  channel: { circuit: [60, 240, 16, 120], tag: [132, 240], water: [600, 148, 120, 22] },
+  wheel: { circuit: [210, 80, 44, 46], tag: [318, 70], water: [750, 250, 62, 62] },
+  flow: { circuit: [360, 240, 16, 110], tag: [288, 200], water: [600, 352, 120, 22] },
+  height: { circuit: [210, 410, 80, 13], tag: [345, 410], water: [523, 203, 24, 44] },
+};
+function renderPairMarks() {
+  const tag = (x, y, text, color) => `<g transform="translate(${x} ${y})"><rect x="${-text.length * 6.5 - 8}" y="-12" width="${text.length * 13 + 16}" height="22" rx="11" fill="${color}"/><text y="4" text-anchor="middle" font-size="12" font-weight="700" fill="#0a1029">${text}</text></g>`;
+  setHTML('#pair-marks', [...matched].map(key => {
+    const [ckey, cname, , full] = pairOf(key), c = PAIR_COLORS[key], m = MARKS[key], wname = full.replace('물의 높이 차', '높이 차');
+    const ring = ([x, y, rx, ry]) => `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="none" stroke="${c}" stroke-width="3" stroke-dasharray="7 5" opacity=".95"/>`;
+    return `<g data-mark="${ckey}">${ring(m.circuit)}${tag(m.tag[0], m.tag[1], `${cname} = ${wname}`, c)}${water3d ? '' : ring(m.water) + tag(m.water[0], m.water[1] + m.water[3] + 18, `${wname} = ${cname}`, c)}</g>`;
+  }).join(''));
+}
+
+/* ---------- 3D 수로 모형(높이 차가 보이게) ---------- */
+$('.stage').insertAdjacentHTML('beforeend', '<div class="water-box" id="water-box" aria-hidden="true"></div>');
+function loadWater3D() {
+  if (water3d || water3dLoading || !webglAvailable()) return;
+  water3dLoading = true;
+  import('./src/water-3d.js').then(({ createWater3D }) => {
+    water3d = createWater3D({ stage: $('.stage'), box: $('#water-box'), reducedMotion: instantLessons });
+    applyWaterView(); renderPairMarks(); renderText();
+  }).catch(err => { console.error(err); water3dLoading = false; });
+}
+function applyWaterView() {
+  const on = !!water3d && mode === 'circuit';
+  $('.stage').classList.toggle('three-on', on);
+  $('.stage').classList.toggle('water-3d', on);
+  $('#water-2d').style.display = on ? 'none' : '';
+}
 const U_IN = (120 + 262 + (188 - 60)) / WIRE_LEN, U_OUT = (120 + 262 + (232 - 60)) / WIRE_LEN;
 
 /* ---------- 네온전구 ---------- */
@@ -243,8 +307,9 @@ function touch() {
 /* ---------- 전기 회로와 수로 모형 ---------- */
 function stepCircuit(now, dt) {
   const before = electrons.offset;
-  bulbLevel += ((battery ? 1 : 0) - bulbLevel) * (instantLessons.matches ? 1 : 1 - Math.exp(-dt * 5));
-  electrons.step(dt, battery ? .045 : 0, battery ? 1.2 : 2.6);
+  // 전지 2개(전압이 2배)이면 전자가 더 빨리 움직이고 전구가 더 밝아요(같은 전구일 때).
+  bulbLevel += ((battery ? (cells === 2 ? 1 : .62) : 0) - bulbLevel) * (instantLessons.matches ? 1 : 1 - Math.exp(-dt * 5));
+  electrons.step(dt, battery ? .045 * cells : 0, battery ? 1.2 : 2.6);
   // 전구로 들어간 전자와 나온 전자를 셉니다. 전구를 지나도 전자는 사라지지 않아요.
   if (battery) {
     const n = electrons.dots.length, after = electrons.offset;
@@ -257,11 +322,17 @@ function stepCircuit(now, dt) {
     batteryTime += dt;
     if (batteryTime > 1.5 && !seen.battery) { seen.battery = true; toast('💡 전자가 한 방향으로 이동해요'); }
   }
-  water.step(dt, pump ? .07 : 0, 0);
+  water.step(dt, pump ? .07 * pumpLevel : 0, 0);
   if (pump) {
-    wheelAngle += dt * 140; impellerAngle += dt * 520; pumpTime += dt;
-    if (pumpTime > 1.5 && !seen.pump) { seen.pump = true; toast('🌊 물이 흐르며 물레방아가 돌아요'); }
+    wheelAngle += dt * 140 * pumpLevel; impellerAngle += dt * 520 * pumpLevel; pumpTime += dt;
+    if (pumpTime > 1.5 && !seen.pump) { seen.pump = true; toast('🌊 펌프가 물을 높은 곳으로 끌어올리니, 높은 곳의 물이 낮은 곳으로 흐르며 물레방아를 돌려요'); }
   }
+  if (battery && pump && cells === 2 && pumpLevel === 2) {
+    strongTime += dt;
+    if (strongTime > 1.5 && !seen.strong) { seen.strong = true; toast('⚡ 전압이 커지면 전구가 더 밝아지고, 높이 차가 커지면 물이 더 빨리 흘러요!'); renderText(); }
+  } else strongTime = 0;
+  water3d?.update(dt, { on: pump, level: pumpLevel, matched, flash: justMatched });
+  justMatched = null;
   $('#paddles').setAttribute('transform', `rotate(${wheelAngle.toFixed(1)})`);
   $('#impeller').setAttribute('transform', `rotate(${impellerAngle.toFixed(1)})`);
   $('#lift').setAttribute('opacity', pump ? 1 : 0);
@@ -272,7 +343,8 @@ function stepCircuit(now, dt) {
   $('#ions').style.display = show ? '' : 'none';
   ['#cell', '#cell-minus', '#cell-plus'].forEach(s => $(s).style.display = battery ? '' : 'none');
   $('#bridge').style.display = battery ? 'none' : '';
-  setText('#battery-label', battery ? '전지 연결됨' : '전지가 없는 회로');
+  setText('#battery-label', battery ? (cells === 2 ? '전지 2개 연결(3 V)' : '전지 1개 연결(1.5 V)') : '전지가 없는 회로');
+  setText('#cell-volt', cells === 2 ? '3 V' : '1.5 V');
   setText('#bulb-count', battery ? `전구로 들어간 전자 ${inCount} · 나온 전자 ${outCount} · 전구를 지나는 중 ${inCount - outCount}` : '');
 }
 
@@ -283,10 +355,20 @@ function renderControls() {
     $('#actions').innerHTML = `<button id="rub-btn" class="secondary" ${placed || motion || rubs >= MAX_RUBS ? 'disabled' : ''}>털가죽으로 접시 문지르기</button><button id="place-btn" class="secondary" ${motion ? 'disabled' : ''}>${placed ? '알루미늄 접시 들기' : '알루미늄 접시 올려놓기'}</button><button id="touch-btn" class="primary" ${placed ? '' : 'disabled'}>${touching ? '네온전구 떼기' : '네온전구 끝을 접시에 대기'}</button>`;
     $('#rub-btn').onclick = rub; $('#place-btn').onclick = togglePlates; $('#touch-btn').onclick = touch;
   } else {
-    $('#controls').innerHTML = `<div role="group" aria-label="전기 회로"><span class="group-label">전기 회로</span><button id="battery-btn" aria-pressed="${battery}">${battery ? '전지 빼기' : '전지 연결하기'}</button></div><div role="group" aria-label="수로 모형"><span class="group-label">수로 모형</span><button id="pump-btn" aria-pressed="${pump}">${pump ? '펌프 멈추기' : '펌프 작동하기'}</button></div>`;
-    $('#actions').innerHTML = '';
+    $('#controls').innerHTML = `<div role="group" aria-label="전기 회로"><span class="group-label">전기 회로</span><button id="battery-btn" aria-pressed="${battery}">${battery ? '전지 빼기' : '전지 연결하기'}</button><button data-cells="1" aria-pressed="${cells === 1}">전지 1개</button><button data-cells="2" aria-pressed="${cells === 2}">전지 2개</button></div>
+      <div role="group" aria-label="수로 모형"><span class="group-label">수로 모형</span><button id="pump-btn" aria-pressed="${pump}">${pump ? '펌프 멈추기' : '펌프 작동하기'}</button><button data-pump-level="1" aria-pressed="${pumpLevel === 1}">펌프 약하게</button><button data-pump-level="2" aria-pressed="${pumpLevel === 2}">펌프 세게</button></div>`;
+    // 짝 찾기: 왼쪽(전기 회로)에서 하나, 오른쪽(수로 모형)에서 하나
+    const leftBtn = ([k, name, w]) => `<button data-pair-left="${k}" class="${matched.has(w) ? 'paired' : ''}" aria-pressed="${pick === k}" ${matched.has(w) ? `disabled style="--pair:${PAIR_COLORS[w]}"` : ''}>${name}</button>`;
+    const rightBtn = w => { const [, , , name] = pairOf(w); return `<button data-pair-right="${w}" class="${matched.has(w) ? 'paired' : ''}" ${matched.has(w) ? `disabled style="--pair:${PAIR_COLORS[w]}"` : ''}>${name}</button>`; };
+    $('#actions').innerHTML = `<div class="pair-area" id="pair-area"><p class="pair-title">🔗 짝 찾기: 전기 회로의 무엇이 수로 모형의 무엇과 닮았을까요? <small>왼쪽에서 하나, 오른쪽에서 하나를 차례로 눌러요 (${matched.size} / ${PAIRS.length})</small></p>
+      <div class="pair-row"><span class="group-label">전기 회로</span>${PAIRS.map(leftBtn).join('')}</div>
+      <div class="pair-row"><span class="group-label">수로 모형</span>${RIGHT_ORDER.map(rightBtn).join('')}</div></div>`;
     $('#battery-btn').onclick = () => { battery = !battery; batteryTime = 0; renderControls(); };
     $('#pump-btn').onclick = () => { pump = !pump; pumpTime = 0; renderControls(); };
+    $$('[data-cells]').forEach(b => b.onclick = () => { cells = +b.dataset.cells; renderControls(); });
+    $$('[data-pump-level]').forEach(b => b.onclick = () => { pumpLevel = +b.dataset.pumpLevel; renderControls(); });
+    $$('[data-pair-left]').forEach(b => b.onclick = () => choosePair('left', b.dataset.pairLeft));
+    $$('[data-pair-right]').forEach(b => b.onclick = () => choosePair('right', b.dataset.pairRight));
   }
   renderText();
 }
@@ -301,12 +383,12 @@ function renderText() {
     setText('#model-note', '알루미늄 접시에는 손이 닿지 않도록 빨대를 잡고 옮겨요. 전하는 대전된 만큼 남는 전하만 나타냈고, 입자의 수와 이동 속도는 보기 쉽게 나타낸 모형이에요.');
     setText('#discovery', '마찰 전기는 일상생활에서 쓰는 전기와 어떤 관계가 있을까요?');
   } else {
-    setText('#guide', '전지를 연결하거나 펌프를 작동해 두 모형을 비교해 보세요.');
-    setText('#subguide', '전지가 없을 때와 있을 때 도선 속 전자의 움직임, 펌프가 없을 때와 있을 때 물의 흐름을 비교해요.');
-    setText('#stage-state', `전지 ${battery ? '연결' : '없음'} · 펌프 ${pump ? '작동' : '멈춤'}`);
+    setText('#guide', '왼쪽 전기 회로와 오른쪽 수로 모형을 나란히 놓고 비교해 보세요.');
+    setText('#subguide', water3d ? '수로 모형은 3D예요. 끌어서 돌려 보면 펌프가 물을 높은 곳으로 올리고, 물이 물레방아에서 낮은 곳으로 떨어지는 모습(높이 차)이 잘 보여요.' : '전지가 없을 때와 있을 때 도선 속 전자의 움직임, 펌프가 없을 때와 있을 때 물의 흐름을 비교해요.');
+    setText('#stage-state', `전지 ${battery ? (cells === 2 ? '2개' : '1개') : '없음'} · 펌프 ${pump ? (pumpLevel === 2 ? '세게' : '약하게') : '멈춤'} · 짝 ${matched.size}/${PAIRS.length}`);
     setText('#note-title', battery ? '전자가 어느 쪽으로 움직이나요?' : '도선 속 전자를 살펴보세요');
     setText('#note-text', show ? '전자의 이동 방향과 전류의 방향을 비교해 보세요. 전구로 들어간 전자와 나온 전자의 수도 비교해요.' : '‘전하·방향 보기’를 켜면 도선 속 원자핵과 전류의 방향을 볼 수 있어요.');
-    setHTML('#readout', `<table class="data-table"><tr><th>수로 모형</th><th>전기 회로</th></tr><tr><td>펌프</td><td>전지</td></tr><tr><td>수로</td><td>전선</td></tr><tr><td>물레방아</td><td>전구</td></tr><tr><td>물의 흐름</td><td>전류</td></tr><tr><td>물의 높이 차</td><td>전압</td></tr></table>`);
+    setHTML('#readout', `<table class="data-table"><tr><th>수로 모형</th><th>전기 회로</th></tr>${PAIRS.map(([, cname, w, wname]) => `<tr><td>${wname}</td><td>${matched.has(w) ? `<b style="color:${PAIR_COLORS[w]}">${cname}</b>` : '?'}</td></tr>`).join('')}</table>`);
     setText('#model-note', '수로 모형은 눈에 보이지 않는 전류를 나타내기 위한 모형이에요. 물은 전류의 방향으로 흐르지만 실제 전자는 반대 방향으로 이동해요. 수로가 끊어져도 물은 흐르지만 전선이 끊어지면 전류는 흐르지 않아요. 전자의 수와 빠르기는 보기 쉽게 나타냈어요.');
     setText('#discovery', '전지가 없을 때도 도선 속 전자는 불규칙하게 움직이고 있어요.');
   }
@@ -316,11 +398,14 @@ function setMode(next) {
   $('#neon-scene').toggleAttribute('hidden', next !== 'neon');
   $('#circuit-scene').toggleAttribute('hidden', next !== 'circuit');
   $('.legend').hidden = next !== 'neon' || !show;
+  if (next === 'circuit') loadWater3D();
+  applyWaterView();
   renderControls();
 }
 function resetScene() {
   rubs = 0; placed = false; touching = false; charge = 0; discharged = false; motion = null; flight = null; flash = 0;
   battery = false; pump = false; batteryTime = 0; pumpTime = 0; inCount = 0; outCount = 0; bulbLevel = 0; electrons.offset = 0;
+  cells = 1; pumpLevel = 1; strongTime = 0; pick = null;
   setMode(mode);
 }
 $('#tab-neon').onclick = () => setMode('neon');
@@ -333,11 +418,17 @@ function frame(now) {
   if (!flow || flow.stage === 'observe') {
     if (mode === 'neon') { stepNeon(now, dt); paintNeon(now); renderText(); }
     else stepCircuit(now, dt);
+    if (show && mode === 'neon' && rubs > 0) seen.viewNeon = true;
+    if (show && mode === 'circuit' && battery) seen.viewCircuit = true;
     flow?.update(checklist([
       ['마찰 전기로 네온전구 켜기', seen.lit, '‘털가죽으로 접시 문지르기’ 3번 이상 → ‘알루미늄 접시 올려놓기’ → ‘네온전구 끝을 접시에 대기’'],
+      ['‘전하·방향 보기’를 켜고 접시의 전하 살펴보기', seen.viewNeon, '위쪽 ‘전하·방향 보기’를 켜고, 네온전구를 댈 때 전하가 어디로 이동하는지 봐요', '', '#show-detail'],
       ['네온전구를 다시 대어 보기', seen.noLight, '‘네온전구 떼기’를 누른 뒤 한 번 더 ‘네온전구 끝을 접시에 대기’'],
       ['전지를 연결해 전자의 움직임 관찰하기', seen.battery, '‘전기 회로와 수로 모형’ 탭 → ‘전지 연결하기’', '#tab-circuit, #battery-btn'],
-      ['펌프를 작동해 수로 모형 관찰하기', seen.pump, '‘펌프 작동하기’를 눌러 물레방아를 살펴요', '#pump-btn'],
+      ['‘전하·방향 보기’를 켜고 전자와 전류의 방향 비교하기', seen.viewCircuit, '‘전하·방향 보기’를 켜고, 전자가 움직이는 방향과 전류의 방향(화살표)을 비교해요', '', '#show-detail'],
+      ['펌프를 작동해 수로 모형 관찰하기', seen.pump, '‘펌프 작동하기’를 누르고, 높은 곳과 낮은 곳의 물(높이 차)과 물레방아를 살펴요', '#pump-btn'],
+      ['전기 회로와 수로 모형의 짝 5개 찾기', matched.size === PAIRS.length, '아래 ‘짝 찾기’에서 전기 회로(왼쪽) 하나와 수로 모형(오른쪽) 하나를 차례로 눌러 닮은 것끼리 짝을 지어요', '[data-pair-left], [data-pair-right]', '#pair-area'],
+      ['전지 2개와 펌프 세게: 전압과 높이 차를 함께 키워 비교하기', seen.strong, '‘전지 2개’와 ‘펌프 세게’를 누르고 전지 연결·펌프 작동을 켠 채로, 전구의 밝기·전자의 빠르기와 물의 높이 차·흐름을 비교해요', '[data-cells], [data-pump-level]', '[data-cells="2"]'],
     ]));
   }
   requestAnimationFrame(frame);
@@ -373,6 +464,7 @@ flow = setupPOEFlow({
   onRestart: () => {
     show = false; $('#show-detail').checked = false;
     Object.keys(seen).forEach(k => seen[k] = false);
+    matched.clear(); renderPairMarks();
     lab.resetQuiz(); mode = 'neon'; resetScene();
   },
 });

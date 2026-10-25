@@ -97,7 +97,8 @@ $('#autoplay').after($('#actions'));
 let mode = 'rub', show = false, lastFrame = 0;
 let pos = { ...START }, motion = null, rubDistance = 0, transfers = 0, flights = [];
 let tool = 'spoon', toolPos = { ...TOOL_START }, angle = 0, rubbedSpoons = false, spoonFlights = [];
-const seen = { rubbed: false, lifted: false, repel: false, attract: false };
+// viewRub·viewSpoon: ‘전하 보기’를 켜고 문지른 뒤의 전하를 직접 본 적이 있는지(꼭 봐야 다음으로 넘어가요).
+const seen = { rubbed: false, lifted: false, repel: false, attract: false, viewRub: false, viewSpoon: false };
 let flow = null;
 
 const balloonCharge = () => charges(transfers).balloon;
@@ -426,11 +427,15 @@ function frame() {
       if (transfers && !contact() && Math.hypot(pos.x - 400, pos.y + 50 - FUR.y) < 200) { liftedTime += dt; if (liftedTime > .6 && !seen.lifted) { seen.lifted = true; toast('🪶 털끝이 풍선 쪽으로 끌려와요'); } } else liftedTime = 0;
       renderText();
     } else { followTool(time); stepSpoon(dt); paintSpoon(t); }
+    if (show && mode === 'rub' && transfers > 0) seen.viewRub = true;
+    if (show && mode === 'spoon' && rubbedSpoons) seen.viewSpoon = true;
     flow?.update(checklist(mode === 'rub' ? [
       ['풍선을 털에 문지르기', seen.rubbed, '‘① 털에 문지르기’를 누르거나 풍선을 끌어 털 위에서 좌우로'],
+      ['‘전하 보기’를 켜고 털과 풍선의 전하 비교하기', seen.viewRub, '위쪽 ‘전하 보기’를 켜고, 털과 풍선의 (+)·(−) 개수가 어떻게 달라졌는지 세어 봐요', '', '#show-detail'],
       ['문지른 풍선을 털 가까이에서 들어 올리기', seen.lifted, '‘② 털 가까이에서 들어 올리기’를 누르고 털끝을 살펴요', '#lift-btn, #away-btn'],
     ] : [
       ['장갑으로 숟가락 ㉮와 ㉯ 문지르기', rubbedSpoons, '‘① 장갑으로 ㉮와 ㉯ 문지르기’'],
+      ['‘전하 보기’를 켜고 숟가락과 장갑의 전하 살펴보기', seen.viewSpoon, '위쪽 ‘전하 보기’를 켜고, 숟가락 ㉮·㉯와 장갑이 어떤 전하를 띠는지 살펴봐요', '', '#show-detail'],
       ['숟가락 ㉯를 숟가락 ㉮에 가까이 하기', seen.repel, '‘숟가락 ㉯’를 고르고 ‘② 가까이 가져가기’', '#approach, #away, #tool'],
       ['장갑을 숟가락 ㉮에 가까이 하기', seen.attract, '‘장갑’을 고르고 ‘② 가까이 가져가기’', '[data-tool="glove"]'],
     ]));

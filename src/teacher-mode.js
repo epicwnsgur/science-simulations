@@ -25,7 +25,6 @@ export function mountTeacherMode(bar, { onChange }) {
     <dialog id="teacher-dialog" class="flow-dialog teacher-dialog" aria-labelledby="teacher-title">
       <form id="teacher-form" class="flow-dialog-body" novalidate>
         <h2 id="teacher-title">👩‍🏫 교사 모드</h2>
-        <p>선생님 비밀번호를 넣으면 <b>예상·관찰·설명 단계를 자유롭게 오가고</b>, 복습과 <b>관찰 단계의 실험 순서 잠금이 모두 풀려요.</b> 이 탭을 닫으면 다시 학생 모드가 돼요.</p>
         <label for="teacher-pass">비밀번호</label>
         <input id="teacher-pass" type="password" inputmode="numeric" autocomplete="off" maxlength="30">
         <p class="teacher-error" id="teacher-error" role="alert"></p>

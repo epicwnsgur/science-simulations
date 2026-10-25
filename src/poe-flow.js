@@ -7,6 +7,7 @@ import { teacherMode, mountTeacherMode } from './teacher-mode.js';
 import { modelOf } from './teaching-models.js';
 import { draftStore, pruneDrafts, KEEP_HOURS } from './draft-store.js';
 import { blockPaste, PASTE_MESSAGE, writingProblem } from './text-guard.js';
+import { previewOf } from './previews.js';
 const $ = selector => document.querySelector(selector);
 export const MIN_CHARS = 20;
 const STAGES = ['predict', 'observe', 'explain'];
@@ -71,6 +72,7 @@ export function setupPOEFlow(config) {
         <h2 id="predict-title" tabindex="-1"></h2>
         <p id="predict-lead"></p>
         <div class="prediction-illustration"></div>
+        <div class="prediction-preview"></div>
         <p class="poe-hint" id="predict-hint">${L.predictHint}</p>
         ${glossary}
       </div>
@@ -140,6 +142,35 @@ export function setupPOEFlow(config) {
   $('#reset').setAttribute('aria-label', '실험만 초기화');
   $('#reset').innerHTML = '↻ <span>실험 초기화</span>';
 
+  // 개념 정리의 주요 개념(노란 글씨)은 포스트잇으로 가려 두고, 학생이 눌러 떼면서 하나씩 확인해요.
+  // 모두 떼어야 보고서를 제출할 수 있어요(교사 모드는 예외). 뗀 포스트잇은 임시 저장에 함께 기억해요.
+  const stickies = [...document.querySelectorAll('#concept-review .concept-sequence b')].map((b, i) => {
+    const btn = document.createElement('button');
+    btn.type = 'button'; btn.className = 'sticky'; btn.dataset.sticky = i;
+    btn.innerHTML = `<span class="sticky-word">${b.innerHTML}</span><span class="sticky-note" aria-hidden="true">📌 눌러서 떼기</span>`;
+    b.replaceWith(btn);
+    btn.onclick = () => peel(i);
+    return btn;
+  });
+  $('#concept-title').insertAdjacentHTML('afterend', stickies.length ? '<p class="sticky-progress" role="status" aria-live="polite"></p>' : '');
+  const peeled = () => (state.peeled ??= []);
+  function peel(i) {
+    if (peeled().includes(i)) return;
+    peeled().push(i); save(); renderStickies();
+    if (peeled().length === stickies.length) toast('📌 주요 개념을 모두 확인했어요! 이제 보고서를 제출할 수 있어요.');
+  }
+  function renderStickies() {
+    stickies.forEach((btn, i) => {
+      const open = peeled().includes(i);
+      btn.classList.toggle('peeled', open);
+      btn.setAttribute('aria-label', open ? btn.querySelector('.sticky-word').textContent : `가려진 주요 개념 ${i + 1}: 눌러서 확인하기`);
+    });
+    const left = stickies.length - peeled().length, out = $('.sticky-progress');
+    if (out) out.textContent = left ? `📌 노란 포스트잇 아래에 주요 개념이 숨어 있어요. 눌러서 떼어 보세요. (${peeled().length} / ${stickies.length} 확인)` : `✔ 주요 개념 ${stickies.length}개를 모두 확인했어요.`;
+    out?.classList.toggle('done', !left);
+  }
+  renderStickies();
+
   const resetConceptQuiz = mountConceptQuiz(mission, config.quiz ?? CONCEPT_QUIZZES[slug], { saved: state.quiz, onChange: quiz => { state.quiz = quiz; save(); } });
   const submit = mountReportSubmit($('#report-submit'), {
     slug,
@@ -154,6 +185,12 @@ export function setupPOEFlow(config) {
       return { lab: slug, title: labTitle, model: L.id, fieldLabels: L.fields, sections, prediction: joined('prediction'), reason: joined('reason'), observation: joined('observation'), explanation: joined('explanation') };
     },
     check: () => {
+      const left = stickies.length - peeled().length;
+      if (left && !teacherMode.on) {
+        stickies.filter((_, i) => !peeled().includes(i)).forEach(b => { b.classList.remove('nudge'); void b.offsetWidth; b.classList.add('nudge'); });
+        $('.sticky-progress')?.scrollIntoView({ behavior: reducedMotion.matches ? 'instant' : 'smooth', block: 'center' });
+        return `위의 ‘개념 정리’에서 노란 포스트잇을 모두 떼어 주요 개념을 확인해 주세요. (${left}개 남았어요)`;
+      }
       const short = experiments.findIndex((e, i) => plain(state.exps[i].explanation).length < MIN_CHARS);
       if (short !== -1) return `${multi ? `실험 ${short + 1}(${experiments[short].name})의 ` : ''}설명을 공백을 빼고 ${MIN_CHARS}자 이상 써 주세요.`;
       for (const [i, e] of state.exps.entries()) {
@@ -187,6 +224,7 @@ export function setupPOEFlow(config) {
     $('#predict-title').innerHTML = i.predict.title;
     $('#predict-lead').innerHTML = i.predict.lead;
     $('.prediction-illustration').innerHTML = i.predict.illustration;
+    renderPreview();
     $('#prediction-form legend').textContent = `1. ${i.predict.question}`;
     $('#prediction-choices').innerHTML = i.predict.choices.map((label, n) => `<label class="prediction-choice"><input type="radio" name="prediction" value="${n}" required${(e.prediction?.index ?? e.choice) === n ? ' checked' : ''}><span>${label}</span></label>`).join('');
     $('#prediction-reason').placeholder = i.predict.placeholder;
@@ -209,6 +247,27 @@ export function setupPOEFlow(config) {
     showWrapUp();
     renderSwitch();
     applyLock();
+  }
+  // 예상 단계의 ‘실험 미리 보기’(src/previews.js): 어떤 실험인지 한 단계씩 움직이며 보여 주고, 마지막에 모두 펼쳐 둬요.
+  // 단계를 누르면 그 단계부터 다시 볼 수 있어요. 결과(답)는 알려 주지 않아요.
+  let previewTimer = null, previewKey = '';
+  function renderPreview() {
+    const box = $('.prediction-preview'), pv = previewOf(slug, info().id), key = `${slug}:${info().id}`;
+    if (key === previewKey) return;
+    previewKey = key; clearInterval(previewTimer);
+    if (!pv) { box.innerHTML = ''; return; }
+    box.innerHTML = `<section class="preview" aria-label="어떤 실험인지 미리 보기">
+      <div class="preview-head"><b>🎬 어떤 실험을 할까요? 미리 보기</b><button type="button" class="preview-replay">▶ 처음부터 다시 보기</button></div>
+      <ol class="preview-steps">${pv.steps.map(([icon, motion, text], n) => `<li data-step="${n}"><button type="button" class="preview-step" aria-label="${n + 1}단계: ${text}"><span class="preview-icon m-${motion}" aria-hidden="true">${icon}</span><span class="preview-num">${n + 1}</span><span class="preview-text">${text}</span></button></li>`).join('')}</ol>
+      <p class="preview-watch">👀 <b>잘 지켜볼 것:</b> ${pv.watch}</p></section>`;
+    const items = [...box.querySelectorAll('.preview-steps li')];
+    let at = -1;
+    const show = () => items.forEach((li, n) => { li.classList.toggle('on', n === at); li.classList.toggle('seen', n < at || at >= items.length); });
+    const next = () => { at++; show(); if (at >= items.length) clearInterval(previewTimer); };
+    const play = from => { clearInterval(previewTimer); at = from - 1; next(); previewTimer = setInterval(next, 2600); };
+    box.querySelector('.preview-replay').onclick = () => play(0);
+    items.forEach((li, n) => { li.querySelector('button').onclick = () => play(n); });
+    play(0);
   }
   const allExplained = (except = -1) => state.exps.every((e, i) => i === except || e.explained);
   function showWrapUp() {
@@ -550,6 +609,7 @@ export function setupPOEFlow(config) {
   function restart(keepReview) {
     state = fresh(); if (keepReview) state.reviewed = true; save();
     document.querySelector('.draft-banner')?.remove();
+    renderStickies(); previewKey = '';
     resetConceptQuiz(); submit.reset();
     for (const id of ['prediction-form', 'observation-form', 'explanation-form']) $(`#${id}`).reset();
     lastProgress = null;

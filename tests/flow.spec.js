@@ -76,7 +76,7 @@ test('뒤로 가기: 실험이 둘이면 실험 2의 예상에서 실험 1의 �
   await page.locator('input[name="prediction"][value="0"]').check();
   await page.locator('#prediction-reason').fill('겨울에 털옷을 벗을 때 머리카락이 달라붙었던 적이 있어요.');
   await savePrediction(page);
-  await page.locator('#rub-btn').click(); await page.locator('#lift-btn').click();
+  await page.locator('#rub-btn').click(); await page.locator('#show-detail').check(); await page.locator('#lift-btn').click();
   await expect(page.locator('#to-explanation')).toBeEnabled({ timeout: 8000 });
   await page.locator('#observation-record').fill('풍선을 들어 올리니 털끝이 풍선 쪽으로 끌려왔어요.');
   await page.locator('#to-explanation').click();

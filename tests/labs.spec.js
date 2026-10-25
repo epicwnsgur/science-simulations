@@ -43,9 +43,20 @@ const LABS = [
     for (let i = 0; i < 3; i++) await page.locator('#rub-btn').click();
     await page.locator('#place-btn').click(); await page.locator('#touch-btn').click();
     await page.waitForTimeout(200);
+    await page.locator('#show-detail').check();
     await page.locator('#touch-btn').click(); await page.locator('#touch-btn').click();
     await page.locator('#tab-circuit').click(); await page.locator('#battery-btn').click(); await page.locator('#pump-btn').click();
     await page.waitForTimeout(1800);
+    // 전기 회로와 수로 모형의 짝 찾기: 틀린 짝은 받지 않고, 맞는 짝 5개를 모두 찾아요.
+    await page.locator('[data-pair-left="battery"]').click(); await page.locator('[data-pair-right="wheel"]').click();
+    await expect(page.locator('[data-pair-right="wheel"]')).toBeEnabled();
+    for (const [a, b] of [['battery', 'pump'], ['wire', 'channel'], ['bulb', 'wheel'], ['current', 'flow'], ['voltage', 'height']]) {
+      await page.locator(`[data-pair-left="${a}"]`).click(); await page.locator(`[data-pair-right="${b}"]`).click();
+      await expect(page.locator(`[data-pair-right="${b}"]`)).toBeDisabled();
+    }
+    await expect(page.locator('#readout')).toContainText('전지');
+    await page.locator('[data-cells="2"]').click(); await page.locator('[data-pump-level="2"]').click();
+    await page.waitForTimeout(1900);
   }],
   ['/simulations/ohms-law/', '옴의 법칙', async page => {
     for (const w of ['long', 'short']) {
@@ -63,17 +74,20 @@ const LABS = [
   ['/simulations/coil-magnetic-field/', '자기장', async page => {
     await page.waitForTimeout(1700);
     await page.locator('#tab-coil').click(); await hold(page);
+    await page.locator('#show-detail').check(); await hold(page);
     await page.locator('#flip-btn').click(); await hold(page);
     await page.locator('[data-level="2"]').click(); await hold(page);
   }],
   ['/simulations/electric-swing/', '힘의 방향', async page => {
     await hold(page);
+    await page.locator('#show-detail').check(); await hold(page);
     await page.locator('#flip-current').click(); await hold(page);
     await page.locator('#flip-current').click(); await page.locator('#flip-magnet').click(); await hold(page);
     await page.locator('[data-v="2"]').click(); await hold(page);
   }],
   ['/simulations/electric-motor/', '코일과 자석', async page => {
     await page.locator('#switch-btn').click(); await page.waitForTimeout(1500);
+    await page.locator('#show-detail').check();
     await page.locator('#flip-current').click(); await page.waitForTimeout(2500);
     await page.locator('#tab-simple').click(); await page.locator('#switch-btn').click(); await page.locator('#nudge').click(); await page.waitForTimeout(2000);
     await page.locator('[data-strip="full"]').click(); await page.locator('#nudge').click(); await page.waitForTimeout(3500);

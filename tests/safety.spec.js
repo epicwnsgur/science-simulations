@@ -1,6 +1,6 @@
 // 수업 중 장난·실수에 대비한 기능: 붙여 넣기 막기, 임시 저장(창을 닫아도 남음), 뜻 없는 글 거르기, 보고서에 질문 함께 넣기.
 import { test, expect } from '@playwright/test';
-import { finishReview, savePrediction } from './poe-helpers.js';
+import { finishReview, savePrediction, peelAll } from './poe-helpers.js';
 
 const URL_ = '/simulations/ohms-law/';
 const REASON = '전압이 커지면 전류를 미는 힘이 커지니까 전류도 커질 것 같아요.';
@@ -98,6 +98,7 @@ test('보고서 미리보기와 PDF에 칸마다 질문이 함께 들어가요',
   await page.locator('#submit-code').fill('123456');
   for (const f of ['#submit-id', '#submit-id-confirm']) await page.locator(f).fill('20315');
   for (const f of ['#submit-name', '#submit-name-confirm']) await page.locator(f).fill('홍길동');
+  await peelAll(page);
   await page.locator('#submit-report').click();
   const dialog = page.locator('.report-preview');
   await expect(dialog).toBeVisible();
@@ -111,4 +112,47 @@ test('보고서 미리보기와 PDF에 칸마다 질문이 함께 들어가요',
   await expect(sheet.locator('.print-q')).toHaveCount(4);
   await expect(sheet.locator('.print-q').first()).toHaveText(question);
   await expect(sheet).toContainText(done.explanation);
+});
+
+test('개념 정리: 주요 개념은 포스트잇으로 가려져 있고, 모두 떼어야 보고서를 제출할 수 있어요(새로 고침해도 뗀 것은 남아요)', async ({ page }) => {
+  const done = { stage: 'explain', reached: 2, prediction: { index: 0, choice: '예상', reason: REASON }, choice: null, reason: '', observation: '', saved: '전압을 높일수록 전류계의 값이 커졌어요. 2 V에서 100 mA였어요.', observed: true, explanation: '저항이 일정하면 전류의 세기는 전압에 비례해서 전압이 2배면 전류도 2배예요.', explained: true };
+  await page.addInitScript(v => { if (!sessionStorage.getItem('poe:ohms-law')) sessionStorage.setItem('poe:ohms-law', v); }, JSON.stringify({ current: 0, reviewed: true, onReview: false, reviewAnswers: [], quiz: null, locked: false, exps: [done] }));
+  await page.goto(URL_);
+  const notes = page.locator('.concept-sequence .sticky');
+  const n = await notes.count();
+  expect(n).toBeGreaterThanOrEqual(3);
+  await expect(notes.first().locator('.sticky-word')).toBeHidden();
+  await expect(page.locator('.sticky-progress')).toContainText(`0 / ${n}`);
+  await page.locator('#submit-code').fill('123456');
+  for (const f of ['#submit-id', '#submit-id-confirm']) await page.locator(f).fill('20315');
+  for (const f of ['#submit-name', '#submit-name-confirm']) await page.locator(f).fill('홍길동');
+  await page.locator('#submit-report').click();
+  await expect(page.locator('.submit-status')).toContainText('포스트잇을 모두 떼어');
+  await expect(page.locator('.report-preview')).toBeHidden();
+  await notes.first().click();
+  await expect(notes.first().locator('.sticky-word')).toBeVisible();
+  await expect(notes.first()).toHaveClass(/peeled/);
+  await page.reload();
+  await expect(page.locator('.concept-sequence .sticky.peeled')).toHaveCount(1);
+  await peelAll(page);
+  await expect(page.locator('.sticky-progress')).toContainText('모두 확인했어요');
+  // 학번·이름은 기억하지 않으니 다시 적어요.
+  for (const f of ['#submit-id', '#submit-id-confirm']) await page.locator(f).fill('20315');
+  for (const f of ['#submit-name', '#submit-name-confirm']) await page.locator(f).fill('홍길동');
+  await page.locator('#submit-report').click();
+  await expect(page.locator('.report-preview')).toBeVisible();
+});
+
+test('화면 크기: 작게·크게 단추로 페이지 전체를 줄이고 키우며, 다른 실험에서도 기억해요', async ({ page }) => {
+  await page.goto(URL_);
+  await expect(page.locator('.zoom-value')).toHaveText('100%');
+  await page.locator('[data-zoom="-"]').click();
+  await page.locator('[data-zoom="-"]').click();
+  await expect(page.locator('.zoom-value')).toHaveText('80%');
+  expect(await page.evaluate(() => document.documentElement.style.zoom)).toBe('0.8');
+  await page.goto('/simulations/star-color/');
+  await expect(page.locator('.zoom-value')).toHaveText('80%');
+  for (let i = 0; i < 8; i++) if (await page.locator('[data-zoom="+"]').isEnabled()) await page.locator('[data-zoom="+"]').click();
+  await expect(page.locator('.zoom-value')).toHaveText('125%');
+  await expect(page.locator('[data-zoom="+"]')).toBeDisabled();
 });

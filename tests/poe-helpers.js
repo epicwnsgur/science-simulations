@@ -6,6 +6,10 @@ export async function finishReview(page) {
   await page.locator('#check-review').click();
   await page.locator('#finish-review').click();
 }
+// 개념 정리의 포스트잇을 모두 떼요(모두 떼야 보고서를 제출할 수 있어요).
+export async function peelAll(page) {
+  for (const s of await page.locator('.concept-sequence .sticky').all()) if (!(await s.getAttribute('class')).includes('peeled')) await s.click();
+}
 // 예상 저장: ‘예상 저장하고 실험하기’를 누르면 확인 창이 뜨고, 확인해야 저장돼요.
 export async function savePrediction(page) {
   await page.locator('#start-observation').click();

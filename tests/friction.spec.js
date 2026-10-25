@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { loadAppsScript } from '../apps-script/fake-google.js';
 import { SUBMIT_URL } from '../src/submission-config.js';
 import { CONCEPT_QUIZZES } from '../src/concept-quizzes.js';
-import { finishReview, savePrediction, openObserveUnlocked } from './poe-helpers.js';
+import { finishReview, savePrediction, openObserveUnlocked, peelAll } from './poe-helpers.js';
 
 const URL_ = '/simulations/friction-electricity/';
 const REASON = '겨울에 털옷을 벗을 때 머리카락이 달라붙었던 적이 있어요.';
@@ -21,13 +21,16 @@ async function predict(page, choice, reason) {
 }
 async function balloonExperiment(page) {
   await page.locator('#rub-btn').click(); await page.locator('#rub-btn').click();
+  // 전하를 꼭 보고 넘어가요: ‘전하 보기’를 켜야 다음 단계가 열려요.
+  await page.locator('#show-detail').check();
   await page.locator('#lift-btn').click();
   await expect(page.locator('#to-explanation')).toBeEnabled({ timeout: 8000 });
 }
 async function spoonExperiment(page) {
   await page.locator('#rub-spoons').click();
+  await page.locator('#show-detail').check();
   await page.locator('#approach').click();
-  await expect(page.locator('#step-guide li.done')).toHaveCount(2, { timeout: 8000 });
+  await expect(page.locator('#step-guide li.done')).toHaveCount(3, { timeout: 8000 });
   await page.locator('[data-tool="glove"]').click();
   await expect(page.locator('[data-tool="glove"]')).toHaveAttribute('aria-pressed', 'true');
   await page.locator('#approach').click();
@@ -50,6 +53,7 @@ async function finishBoth(page) {
   await spoonExperiment(page);
   await observeAndExplain(page, '숟가락 ㉯는 ㉮를 밀어냈고 장갑은 ㉮를 끌어당겼어요.', '숟가락 ㉮와 ㉯는 같은 (−)전하라 척력이, 장갑은 (+)라 인력이 작용했어요.');
   await expect(page.locator('#concept-review')).toBeVisible();
+  await peelAll(page);
 }
 // 제출 주소를 가로채 실제 Code.gs(가짜 시트)로 처리합니다. mode로 실패 상황을 흉내 내요.
 async function fakeServer(page) {

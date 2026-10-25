@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { loadAppsScript } from '../apps-script/fake-google.js';
 import { SUBMIT_URL } from '../src/submission-config.js';
 import { CONCEPT_QUIZZES } from '../src/concept-quizzes.js';
-import { beginObservation, openObserveUnlocked } from './poe-helpers.js';
+import { beginObservation, openObserveUnlocked, peelAll } from './poe-helpers.js';
 
 // VIII. 별과 우주: 다섯 실험의 학습 흐름, 실험 순서, 과학 내용, 모바일 화면, 보고서 제출을 확인해요.
 // 움직임 줄이기(reduced motion)를 켜면 애니메이션이 바로 끝나서 빠르게 시험할 수 있어요.
@@ -11,6 +11,7 @@ const setRange = (page, sel, v) => page.locator(sel).evaluate((el, val) => { el.
 const LABS = [
   ['stellar-parallax', '연주 시차', 'poe', async page => {
     for (const id of ['a', 'b']) { await page.locator(`[data-model="${id}"]`).click(); await page.locator('[data-hole="left"]').click(); await page.locator('[data-hole="right"]').click(); }
+    await page.locator('#show-detail').check();
     await page.locator('#measure').click(); await expect(page.locator('#readout')).toContainText('약 19°');
     await page.locator('[data-model="a"]').click(); await page.locator('#measure').click(); await expect(page.locator('#readout')).toContainText('약 37°');
     await page.locator('#tab-orbit').click(); await page.locator('#orbit-play').click(); await expect(page.locator('#readout')).toContainText('크다');
@@ -231,6 +232,7 @@ test('보고서 제출: 발생 학습 모형 실험은 모형에 맞는 칸 이�
   await page.locator('#explanation-record').fill('우리가 원반 안에 있어서 원반 방향으로 별이 겹쳐 띠로 보여요.');
   await page.locator('#reveal-concepts').click();
   await answerQuiz(page, 'milky-way');
+  await peelAll(page);
   await page.locator('#submit-code').fill(code);
   for (const f of ['#submit-id', '#submit-id-confirm']) await page.locator(f).fill('20315');
   for (const f of ['#submit-name', '#submit-name-confirm']) await page.locator(f).fill('홍길동');
