@@ -145,7 +145,8 @@ export function setupPOEFlow(config) {
 
   // 개념 정리의 주요 개념(노란 글씨)은 포스트잇으로 가려 두고, 학생이 눌러 떼면서 하나씩 확인해요.
   // 모두 떼어야 보고서를 제출할 수 있어요(교사 모드는 예외). 뗀 포스트잇은 임시 저장에 함께 기억해요.
-  const stickies = [...document.querySelectorAll('#concept-review .concept-sequence b')].map((b, i) => {
+  // 학생이 문장을 읽을 수 있도록 주어(<b class="subj">)는 가리지 않고 보여 주고, 그 뒤의 내용만 가려요. 명사 하나만 물을 때는 그 명사만 가려요.
+  const stickies = [...document.querySelectorAll('#concept-review .concept-sequence b:not(.subj)')].map((b, i) => {
     const btn = document.createElement('button');
     btn.type = 'button'; btn.className = 'sticky'; btn.dataset.sticky = i;
     btn.innerHTML = `<span class="sticky-word">${b.innerHTML}</span><span class="sticky-note" aria-hidden="true"><i class="pin">📌</i></span>`;
