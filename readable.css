@@ -139,6 +139,8 @@
 
 /* 머리글의 글씨 크기 소·중·대 버튼 */
 .header-right{display:flex;align-items:center;gap:18px}
+.theme-toggle{height:36px;padding:0 12px;border-radius:18px;border:1px solid var(--line-2);background:#0a1029;color:#cfe6ff;font:inherit;font-size:14px;font-weight:700;white-space:nowrap;cursor:pointer}
+.theme-toggle:hover{border-color:var(--current)}
 .text-size{display:flex;align-items:center;gap:4px}
 .page-zoom{display:flex;align-items:center;gap:4px;margin-right:14px}
 .page-zoom span{margin-right:4px;font-size:14px;color:var(--muted)}
@@ -151,4 +153,4 @@
 .text-size [data-text-size=m]{font-size:16px}
 .text-size [data-text-size=l]{font-size:19px}
 .text-size button[aria-pressed=true]{background:var(--volt);border-color:var(--volt);color:#2a1600}
-@media(max-width:600px){.lab-readable .grade{display:none}.text-size span,.page-zoom>span,.zoom-word{display:none}.page-zoom{margin-right:0}.header-right{gap:8px}.page-zoom button{min-width:36px;padding:0 8px}.page-zoom .zoom-value{min-width:38px;font-size:13px}.text-size button{min-width:34px;padding:0 6px}}
+@media(max-width:600px){.lab-readable .grade{display:none}.lab-readable header{flex-wrap:wrap;gap:8px}.theme-toggle{padding:0 10px;font-size:13px}.text-size span,.page-zoom>span,.zoom-word{display:none}.page-zoom{margin-right:0}.header-right{gap:8px}.page-zoom button{min-width:36px;padding:0 8px}.page-zoom .zoom-value{min-width:38px;font-size:13px}.text-size button{min-width:34px;padding:0 6px}}

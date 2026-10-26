@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { finishReview, savePrediction, beginObservation } from './poe-helpers.js';
+import { finishReview, savePrediction, beginObservation, fillObservation } from './poe-helpers.js';
 import { CONCEPT_QUIZZES } from '../src/concept-quizzes.js';
 
 // 모든 실험에 공통으로 들어가는 학습 흐름(뒤로 가기, 예상 확인 창, 순서 지키기, 퀴즈 선택 표시)을 확인해요.
@@ -46,7 +46,7 @@ test('뒤로 가기: 위쪽·아래쪽 버튼과 브라우저 뒤로 가기가 �
   await expect(page.locator('#flow-back')).toBeVisible();
   await writePrediction(page);
   await savePrediction(page);
-  await page.locator('#observation-record').fill('전구 하나일 때 밝기를 기억해 두었어요. 쓰는 중이에요.');
+  await fillObservation(page, '전구 하나일 때 밝기를 기억해 두었어요. 쓰는 중이에요.');
   // 관찰 → (아래쪽 뒤로 가기) 예상
   await page.locator('#observation-form .flow-back').click();
   await expect(page.locator('#predict-panel')).toBeVisible();
@@ -78,7 +78,7 @@ test('뒤로 가기: 실험이 둘이면 실험 2의 예상에서 실험 1의 �
   await savePrediction(page);
   await page.locator('#rub-btn').click(); await page.locator('#show-detail').check(); await page.locator('#lift-btn').click();
   await expect(page.locator('#to-explanation')).toBeEnabled({ timeout: 8000 });
-  await page.locator('#observation-record').fill('풍선을 들어 올리니 털끝이 풍선 쪽으로 끌려왔어요.');
+  await fillObservation(page, '풍선을 들어 올리니 털끝이 풍선 쪽으로 끌려왔어요.');
   await page.locator('#to-explanation').click();
   await page.locator('#explanation-record').fill('털의 전자가 풍선으로 옮겨 가 털은 (+), 풍선은 (−)가 되어 끌어당겼어요.');
   await page.locator('#reveal-concepts').click();

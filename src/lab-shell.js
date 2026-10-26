@@ -1,5 +1,7 @@
 // 실험 페이지 공통 틀: 머리글, 활동 탭, 무대(SVG), 관찰 기록, 스스로 평가, 핵심 개념을 만듭니다.
 // 각 실험은 내용(config)만 넘기고, 반환된 도우미로 화면을 갱신합니다.
+import '../theme-light.css';
+import { setupTheme, themeButtonHTML } from './theme.js';
 export const $ = s => document.querySelector(s);
 export const $$ = s => [...document.querySelectorAll(s)];
 
@@ -34,15 +36,16 @@ function setPageZoom(z) {
 }
 const zoomNow = () => Number(document.documentElement.style.zoom) || 1;
 
-// 실험 페이지 머리글(실험 목록으로 · 화면 크기 · 글씨 크기 · 학년). 머리글을 넣은 뒤 setupTextSize()를 불러요.
+// 실험 페이지 머리글(실험 목록으로 · 테마 · 화면 크기 · 글씨 크기 · 학년). 머리글을 넣은 뒤 setupTextSize()를 불러요.
 // 단원: 실험 페이지 위쪽의 ‘← 실험 목록’과 경로 표시에 써요. 새 단원은 UNITS에 더하고 buildLab({ unit })로 골라요.
 export const UNITS = {
   7: { href: '../../grades/middle-school-2/unit-7/', label: 'VII. 전기와 자기' },
   8: { href: '../../grades/middle-school-2/unit-8/', label: 'VIII. 별과 우주' },
 };
-export const headerHTML = (unit = 7) => `<header><a class="brand" href="${UNITS[unit].href}">← 실험 목록</a><div class="header-right"><div class="page-zoom" role="group" aria-label="화면 크기"><span aria-hidden="true">화면 크기</span><button type="button" data-zoom="-" aria-label="화면 작게" title="화면 작게 (Ctrl −)">－<span class="zoom-word"> 작게</span></button><output class="zoom-value" aria-live="polite">100%</output><button type="button" data-zoom="+" aria-label="화면 크게" title="화면 크게 (Ctrl +)">＋<span class="zoom-word"> 크게</span></button></div><div class="text-size" role="group" aria-label="글씨 크기"><span aria-hidden="true">글씨 크기</span>${TEXT_SIZES.map(([id, label, name]) => `<button type="button" data-text-size="${id}" aria-pressed="false" aria-label="글씨 ${name}" title="글씨 ${name}">${label}</button>`).join('')}</div><span class="grade">중학교 2학년 <i></i> 과학</span></div></header>`;
+export const headerHTML = (unit = 7) => `<header><a class="brand" href="${UNITS[unit].href}">← 실험 목록</a><div class="header-right">${themeButtonHTML()}<div class="page-zoom" role="group" aria-label="화면 크기"><span aria-hidden="true">화면 크기</span><button type="button" data-zoom="-" aria-label="화면 작게" title="화면 작게 (Ctrl −)">－<span class="zoom-word"> 작게</span></button><output class="zoom-value" aria-live="polite">100%</output><button type="button" data-zoom="+" aria-label="화면 크게" title="화면 크게 (Ctrl +)">＋<span class="zoom-word"> 크게</span></button></div><div class="text-size" role="group" aria-label="글씨 크기"><span aria-hidden="true">글씨 크기</span>${TEXT_SIZES.map(([id, label, name]) => `<button type="button" data-text-size="${id}" aria-pressed="false" aria-label="글씨 ${name}" title="글씨 ${name}">${label}</button>`).join('')}</div><span class="grade">중학교 2학년 <i></i> 과학</span></div></header>`;
 export function setupTextSize() {
   document.body.classList.add('lab-readable');
+  setupTheme();
   let saved = 'm';
   try { saved = localStorage.getItem('text-size') || 'm'; } catch { /* 처음 크기(중)로 시작해요. */ }
   setTextSize(TEXT_SIZES.some(([id]) => id === saved) ? saved : 'm');

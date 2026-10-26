@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { loadAppsScript } from '../apps-script/fake-google.js';
 import { SUBMIT_URL } from '../src/submission-config.js';
 import { CONCEPT_QUIZZES } from '../src/concept-quizzes.js';
-import { beginObservation, openObserveUnlocked, peelAll } from './poe-helpers.js';
+import { beginObservation, openObserveUnlocked, peelAll, fillObservation } from './poe-helpers.js';
 
 // VIII. 별과 우주: 다섯 실험의 학습 흐름, 실험 순서, 과학 내용, 모바일 화면, 보고서 제출을 확인해요.
 // 움직임 줄이기(reduced motion)를 켜면 애니메이션이 바로 끝나서 빠르게 시험할 수 있어요.
@@ -83,7 +83,7 @@ for (const [slug, concept, model, run] of LABS) {
     await expect(page.locator('#step-guide li.locked').first()).toBeVisible();
     await run(page);
     await expect(page.locator('#to-explanation'), await page.locator('#observation-progress').textContent()).not.toHaveAttribute('aria-disabled', 'true', { timeout: 10000 });
-    await page.locator('#observation-record').fill('탐구하며 관찰한 내용을 빠짐없이 자세하게 적어 보았어요.');
+    await fillObservation(page, '탐구하며 관찰한 내용을 빠짐없이 자세하게 적어 보았어요.');
     await page.locator('#to-explanation').click();
     await page.locator('#explanation-record').fill('관찰한 결과의 까닭을 과학 개념으로 설명해 보았어요. 거리와 밝기, 색을 비교했어요.');
     await page.locator('#reveal-concepts').click();
@@ -227,7 +227,7 @@ test('보고서 제출: 발생 학습 모형 실험은 모형에 맞는 칸 이�
   await page.goto('/simulations/milky-way/');
   await beginObservation(page);
   await LABS[3][3](page);
-  await page.locator('#observation-record').fill('위에서 보면 막대와 나선팔, 옆에서 보면 볼록한 원반이었어요.');
+  await fillObservation(page, '위에서 보면 막대와 나선팔, 옆에서 보면 볼록한 원반이었어요.');
   await page.locator('#to-explanation').click();
   await page.locator('#explanation-record').fill('우리가 원반 안에 있어서 원반 방향으로 별이 겹쳐 띠로 보여요.');
   await page.locator('#reveal-concepts').click();

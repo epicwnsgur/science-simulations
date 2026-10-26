@@ -538,3 +538,27 @@ button.term:focus-visible{outline:2px solid var(--current);outline-offset:2px}
 .stage-alert-bar{position:absolute;left:0;bottom:0;height:5px;width:100%;background:#ff6b6b;transform-origin:left}
 .stage-alert.show .stage-alert-bar{animation-name:alert-time;animation-timing-function:linear;animation-fill-mode:forwards}
 @keyframes alert-time{to{transform:scaleX(0)}}
+
+/* ---------- 관찰 기록을 활동마다 나눈 칸 ---------- */
+.observation-part.many{margin:0 0 18px;padding:14px 16px 6px;border-radius:12px;background:#0a1029;border:1px solid var(--line)}
+.part-tag{display:flex;align-items:center;gap:8px;margin:0 0 6px;font-weight:700;color:var(--ink)!important}
+.part-tag span{padding:2px 10px;border-radius:999px;background:var(--current);color:#04121f;font-size:13px}
+#saved-observation{white-space:pre-line}
+
+/* ---------- 내 메모(오른쪽 아래 단추로 여닫는 메모장) ---------- */
+.memo-toggle{position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom));z-index:55;display:flex;align-items:center;gap:6px;padding:12px 18px;border-radius:999px;border:1px solid var(--volt);background:#16264f;color:#fff;font:inherit;font-size:16px;font-weight:700;box-shadow:0 8px 24px #0009;cursor:pointer}
+.memo-toggle:hover,.memo-toggle.on{background:#1d3166;box-shadow:0 8px 24px #0009,0 0 0 3px #ffd23f44}
+.memo-dot{width:9px;height:9px;border-radius:50%;background:var(--volt)}
+.memo-dot[hidden]{display:none}
+.memo-panel{position:fixed;right:18px;bottom:calc(78px + env(safe-area-inset-bottom));z-index:56;width:min(380px,calc(100vw - 24px));padding:16px 16px 12px;border-radius:14px;background:var(--panel);border:1px solid var(--volt);box-shadow:0 14px 40px #000b;animation:panel-in .25s ease-out}
+.memo-panel[hidden]{display:none}
+.memo-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.memo-head h2{margin:0;font-size:18px;color:var(--ink)}
+.memo-close,.memo-clear{padding:6px 12px;border-radius:999px;border:1px solid var(--line-2);background:#0a1029;color:#cfe6ff;font:inherit;font-size:13px;cursor:pointer}
+.memo-hint{margin:8px 0;font-size:14px;line-height:1.6;color:var(--muted)}
+#memo-text{display:block;width:100%;min-height:170px;padding:10px 12px;border-radius:8px;border:1px solid var(--line-2);background:#070c22;color:var(--ink);font:inherit;font-size:16px;line-height:1.7;resize:vertical}
+#memo-text:focus{outline:2px solid var(--current)}
+.memo-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px}
+.memo-saved{color:var(--muted);font-size:12px;line-height:1.4}
+@media(max-width:600px){.memo-toggle{right:12px;bottom:calc(12px + env(safe-area-inset-bottom));padding:10px 14px;font-size:15px}.memo-panel{right:12px;left:12px;width:auto;bottom:calc(64px + env(safe-area-inset-bottom))}}
+@media print{.memo-toggle,.memo-panel{display:none!important}}

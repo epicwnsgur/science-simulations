@@ -45,3 +45,7 @@ export async function openObserveUnlocked(page, url, { count = 1, current = 0, o
   await page.addInitScript(([k, v]) => { if (!sessionStorage.getItem(k)) sessionStorage.setItem(k, v); }, [key, JSON.stringify(state)]);
   await page.goto(url);
 }
+// 관찰 기록: 실험에 활동이 여럿이면 관찰 칸이 활동마다 나뉘어 있어요. 모든 칸에 같은 글을 적어요.
+export async function fillObservation(page, text) {
+  for (const box of await page.locator('#observation-parts textarea').all()) await box.fill(text);
+}

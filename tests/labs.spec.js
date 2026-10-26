@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { beginObservation, finishReview, openObserveUnlocked } from './poe-helpers.js';
+import { beginObservation, finishReview, openObserveUnlocked, fillObservation } from './poe-helpers.js';
 import { CONCEPT_QUIZZES } from '../src/concept-quizzes.js';
 
 async function hold(page, ms = 900) {
@@ -11,7 +11,7 @@ async function hold(page, ms = 900) {
 }
 async function finish(page, concept) {
   await expect(page.locator('#to-explanation'), await page.locator('#observation-progress').textContent()).toBeEnabled({ timeout: 8000 });
-  await page.locator('#observation-record').fill('관찰한 내용을 빠짐없이 자세하게 적어 보았어요.');
+  await fillObservation(page, '관찰한 내용을 빠짐없이 자세하게 적어 보았어요.');
   await page.locator('#to-explanation').click();
   await page.locator('#explanation-record').fill('관찰한 결과의 까닭을 과학 개념으로 설명했어요.');
   await page.locator('#reveal-concepts').click();
