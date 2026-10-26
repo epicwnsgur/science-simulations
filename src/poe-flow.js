@@ -12,8 +12,6 @@ import { previewOf } from './previews.js';
 import { sceneOf, playStep } from './preview-scenes.js';
 const $ = selector => document.querySelector(selector);
 export const MIN_CHARS = 20;
-// 관찰을 여러 칸(실험의 활동마다)으로 나눠 쓸 때 한 칸에 써야 하는 글자 수
-export const PART_MIN_CHARS = 10;
 const STAGES = ['predict', 'observe', 'explain'];
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 
@@ -513,7 +511,7 @@ export function setupPOEFlow(config) {
     if (done > guideDone && guideDone >= 0) { guide.classList.remove('advance'); void guide.offsetWidth; guide.classList.add('advance'); }
     guideDone = done;
   }
-  // 예상·관찰·설명은 최소 MIN_CHARS자 이상 써야 저장하고 다음 단계로 넘어갈 수 있어요(관찰을 여러 칸으로 나눈 실험은 칸마다 PART_MIN_CHARS자).
+  // 예상·관찰·설명은 최소 MIN_CHARS자 이상 써야 저장하고 다음 단계로 넘어갈 수 있어요(관찰을 여러 칸으로 나눈 실험도 칸마다 MIN_CHARS자).
   // 글자 수는 저장 검사와 똑같이 셉니다(src/text-guard.js의 meaningfulLength: 공백·문장 부호는 세지 않아요). 안내가 ✔이면 저장도 돼요.
   const countChars = el => meaningfulLength(el.value);
   const minOf = el => +(el.dataset.min || MIN_CHARS);
@@ -540,7 +538,7 @@ export function setupPOEFlow(config) {
       partsFor = state.current;
       $('#observation-parts').innerHTML = parts.map((p, n) => {
         const id = n ? `observation-record-${n + 1}` : 'observation-record';
-        return `<div class="observation-part${many ? ' many' : ''}">${many ? `<p class="part-tag"><span>관찰 ${n + 1}</span> ${p.title}</p>` : ''}<label class="writing-label" for="${id}">${p.label}</label><textarea id="${id}" rows="3" maxlength="1500" required data-min="${many ? PART_MIN_CHARS : MIN_CHARS}" placeholder="${escapeAttr(p.placeholder)}"></textarea><p class="char-count" data-for="${id}" aria-live="polite"></p></div>`;
+        return `<div class="observation-part${many ? ' many' : ''}">${many ? `<p class="part-tag"><span>관찰 ${n + 1}</span> ${p.title}</p>` : ''}<label class="writing-label" for="${id}">${p.label}</label><textarea id="${id}" rows="3" maxlength="1500" required data-min="${MIN_CHARS}" placeholder="${escapeAttr(p.placeholder)}"></textarea><p class="char-count" data-for="${id}" aria-live="polite"></p></div>`;
       }).join('') + '<p class="autosave-note" aria-hidden="true"></p>';
       partAreas().forEach(wireWriting);
     }
