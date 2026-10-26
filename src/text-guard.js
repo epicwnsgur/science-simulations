@@ -20,14 +20,32 @@ export const hasBadWords = text => BAD_WORDS.test(String(text ?? ''));
 export function meaningfulLength(text) {
   return String(text ?? '').replace(/[^\p{L}\p{N}\u2460-\u24ff\u3200-\u32ff]/gu, '').replace(/[ㄱ-ㅎㅏ-ㅣ]/g, '').replace(/(\D)\1{2,}/gu, '$1').length;
 }
-// 같은 말을 되풀이한 글인지(예: ‘가나다가나다가나다…’): 서로 다른 두 글자 묶음이 너무 적으면 되풀이예요.
-// 글자와 숫자만 보고 살펴요(공백·문장 부호는 빼요).
-function repetitive(text) {
-  const s = String(text ?? '').replace(/[^\p{L}\p{N}\u2460-\u24ff\u3200-\u32ff]/gu, '');
+// 같은 말을 되풀이한 글인지 살펴요. 글자와 숫자만 보고 살펴요(공백·문장 부호는 빼요).
+// repeatedText는 apps-script/Code.gs의 repeatedText_와 똑같아야 해요(src/text-guard.test.js가 확인해요).
+const repetitive = text => repeatedText(String(text ?? '').replace(/[^\p{L}\p{N}\u2460-\u24ff\u3200-\u32ff]/gu, ''));
+function repeatedText(s) {
   if (s.length < 12) return false;
+  // ① 서로 다른 글자가 너무 적어요(예: ‘모르겟어여모르겟어요…’는 7가지 글자뿐이에요).
+  if (new Set(s).size < 8) return true;
+  // ② 서로 다른 두 글자 묶음이 너무 적어요(예: ‘가나다가나다가나다…’).
   const pairs = new Set();
   for (let i = 0; i < s.length - 1; i++) pairs.add(s.slice(i, i + 2));
-  return pairs.size / (s.length - 1) < .3;
+  if (pairs.size / (s.length - 1) < 0.3) return true;
+  // ③ 같은 말 덩어리가 글의 많은 부분을 차지해요. 오타를 섞어 되풀이해도(모르겟어여·모르겟어요·모르겟아여) 같은 덩어리(모르겟)가 남아요.
+  //    2~4글자 덩어리가 세 번 이상 나와 글의 45% 이상이면 되풀이예요.
+  //    5~10글자 덩어리(문장 조각)는 두 번 이상 나오고, 그 덩어리를 빼면 남는 글이 30%도 안 될 때만 되풀이예요.
+  //    (측정값을 나열한 글은 ‘일 때 빛의 세기는’처럼 문장 틀이 되풀이되어도 사이사이 값이 남아서 막지 않아요.)
+  for (let k = 2; k <= 10; k++) {
+    const seen = new Set();
+    for (let i = 0; i + k <= s.length; i++) {
+      const unit = s.slice(i, i + k);
+      if (seen.has(unit)) continue;
+      seen.add(unit);
+      const count = s.split(unit).length - 1;
+      if (k <= 4 ? count >= 3 && count * k >= s.length * 0.45 : count >= 2 && s.length - count * k < s.length * 0.3) return true;
+    }
+  }
+  return false;
 }
 const same = (a, b) => { const k = t => String(t ?? '').replace(/\s/g, ''); return k(a) !== '' && k(a) === k(b); };
 

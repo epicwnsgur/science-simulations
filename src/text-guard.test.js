@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { writingProblem, meaningfulLength, hasBadWords } from './text-guard.js';
 
 test('글 거르기: 뜻 없는 글(ㅋㅋ, 같은 글자·같은 말 되풀이)은 막고, 보통 문장은 받아요', () => {
@@ -28,6 +28,27 @@ test('글 거르기: 학생이 흔히 쓰는 보통 문장(겹친 글자, 숫자
   assert.equal(meaningfulLength('㉮와 ㉯, ①'), 4);
 });
 
+test('글 거르기: 같은 말을 오타를 섞어 되풀이한 글도 막아요', () => {
+  for (const t of [
+    '모르겟어여모르겟어요모르겟아여모르겟어요',
+    '모르겠어요 모르겠어요 모르겠어요 모르겠어요',
+    '몰라요몰라요진짜몰라요진짜진짜몰라',
+    '잘모르겠다잘모르겟다잘모르겠당잘모르것다',
+    '하기싫어요하기싫어요하기실어요하기싫어',
+    '아무거나아무거나아무거나쓰기 아무거나',
+    '가나다라마바사가나다라마바사아자차',
+    'asdfasdfasdfqwerqwer',
+    '전류전류전류전류전류전류전류',
+  ]) assert.match(writingProblem(t, { min: 20 }), /되풀이|20자 이상/, t);
+});
+
+test('글 거르기: 교과서·실험 화면의 문장(20자 이상)은 되풀이로 걸리지 않아요', () => {
+  const files = [...readdirSync('.').filter(f => f.endsWith('.js')), ...readdirSync('src').filter(f => f.endsWith('.js') && !f.includes('test')).map(f => `src/${f}`)];
+  const sentences = files.flatMap(f => [...readFileSync(f, 'utf8').matchAll(/'([^'\n]{25,})'/g)].map(m => m[1].replace(/<[^>]+>/g, '')).filter(t => /[가-힣]{6}/.test(t) && !/[{}$]/.test(t)));
+  assert.ok(sentences.length > 50);
+  for (const t of sentences) if (meaningfulLength(t) >= 20) assert.equal(writingProblem(t, { min: 20 }), '', t);
+});
+
 test('글 거르기: 짧은 글은 몇 자인지, 되풀이한 글은 되풀이라고 따로 알려 줘요', () => {
   assert.match(writingProblem('전류가 흘러요.', { min: 20 }), /20자 이상.*지금 6자/);
   assert.match(writingProblem('가나다가나다가나다가나다가나다가나다가나다', { min: 20 }), /되풀이/);
@@ -51,6 +72,6 @@ test('화면(src/text-guard.js)과 선생님 시트(apps-script/Code.gs)의 거�
   assert.equal(bad(server), bad(client));
   const count = src => src.match(/function meaningfulLength_?\(text\) \{\n\s*return String\(text[^)]*\)(.*)\.length;/)[1];
   assert.equal(count(server), count(client));
-  assert.match(server, /< 0\.3;/);
-  assert.match(client, /< \.3;/);
+  const body = src => src.match(/function repeatedText_?\(s\) \{\n([\s\S]*?)\n\}/)[1];
+  assert.equal(body(server), body(client));
 });
