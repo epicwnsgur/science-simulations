@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { finishReview, savePrediction, openObserveUnlocked } from './poe-helpers.js';
+import { finishReview, savePrediction, openObserveUnlocked, fillObservation } from './poe-helpers.js';
 const url = '/simulations/electrostatic-induction/';
 async function begin(page) {
   if (await page.locator('#review-panel').isVisible()) await finishReview(page);
@@ -94,7 +94,7 @@ test('네 가지 관찰 후 기록→설명→개념 확인과 스스로 평가'
   await expect(page.locator('#to-explanation')).toBeDisabled();
   await page.locator('[data-rub="2"]').click();
   await expect(page.locator('#to-explanation')).toBeEnabled();
-  await page.locator('#observation-record').fill('빨대와 장갑 모두 숟가락을 자기 쪽으로 끌어당겼어요.');
+  await fillObservation(page, '빨대와 장갑 모두 숟가락을 자기 쪽으로 끌어당겼어요.');
   await page.locator('#to-explanation').click();
   await expect(page.locator('#explain-panel')).toBeVisible();
   await page.locator('#explanation-record').fill('전자가 이동해서 가까운 쪽에 다른 전하가 생겼어요.');

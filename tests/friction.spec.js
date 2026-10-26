@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { loadAppsScript } from '../apps-script/fake-google.js';
 import { SUBMIT_URL } from '../src/submission-config.js';
 import { CONCEPT_QUIZZES } from '../src/concept-quizzes.js';
-import { finishReview, savePrediction, openObserveUnlocked, peelAll } from './poe-helpers.js';
+import { finishReview, savePrediction, openObserveUnlocked, peelAll, fillObservation } from './poe-helpers.js';
 
 const URL_ = '/simulations/friction-electricity/';
 const REASON = '겨울에 털옷을 벗을 때 머리카락이 달라붙었던 적이 있어요.';
@@ -37,7 +37,7 @@ async function spoonExperiment(page) {
   await expect(page.locator('#to-explanation')).toBeEnabled({ timeout: 8000 });
 }
 async function observeAndExplain(page, observation, explanation) {
-  await page.locator('#observation-record').fill(observation);
+  await fillObservation(page, observation);
   await page.locator('#to-explanation').click();
   await page.locator('#explanation-record').fill(explanation);
   await page.locator('#reveal-concepts').click();
@@ -95,7 +95,7 @@ test('마찰 전기: 두 실험의 예상·관찰·설명을 따로 기록하고
   await expect(page.locator('.flow-toast')).toContainText('실험 1(풍선과 털)을 설명까지 마치면');
   await expect(page.locator('#observe-panel')).toBeVisible();
   // 단계 버튼으로 예상 단계에 돌아가도 처음 예상은 그대로예요(고칠 수는 없음). 쓰던 관찰 기록도 남아요.
-  await page.locator('#observation-record').fill('털끝이 풍선 쪽으로 끌려왔어요. 쓰는 중이에요.');
+  await fillObservation(page, '털끝이 풍선 쪽으로 끌려왔어요. 쓰는 중이에요.');
   await page.locator('[data-goto="predict"]').click();
   await expect(page.locator('#prediction-reason')).toHaveValue(REASON);
   await expect(page.locator('#prediction-reason')).toHaveJSProperty('readOnly', true);

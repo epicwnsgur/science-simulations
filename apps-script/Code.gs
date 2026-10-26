@@ -385,14 +385,14 @@ function arrangeDeferred_(done) {
 const BAD_WORDS_ = /씨발|시발(?!점)|씨팔|시팔|ㅅㅂ|ㅆㅂ|병신|븅신|ㅂㅅ|개새|새끼|좆|존나|지랄|ㅈㄹ|닥쳐|미친놈|미친년|엿\s?먹|fuck|shit|bitch/i;
 function hasBadWords_(text) { return BAD_WORDS_.test(String(text == null ? '' : text)); }
 function meaningfulLength_(text) {
-  return String(text == null ? '' : text).replace(/[\sㄱ-ㅎㅏ-ㅣ.,!?~·…'"()\-_=+*^;:/\\[\]{}<>@#$%&|]/g, '').replace(/(.)\1+/g, '$1').length;
+  return String(text == null ? '' : text).replace(/[^\p{L}\p{N}\u2460-\u24ff\u3200-\u32ff]/gu, '').replace(/[ㄱ-ㅎㅏ-ㅣ]/g, '').replace(/(\D)\1{2,}/gu, '$1').length;
 }
 function repetitive_(text) {
-  const s = String(text == null ? '' : text).replace(/\s/g, '');
+  const s = String(text == null ? '' : text).replace(/[^\p{L}\p{N}\u2460-\u24ff\u3200-\u32ff]/gu, '');
   if (s.length < 12) return false;
   const pairs = {};
   for (let i = 0; i < s.length - 1; i++) pairs[s.slice(i, i + 2)] = true;
-  return Object.keys(pairs).length / (s.length - 1) < 0.35;
+  return Object.keys(pairs).length / (s.length - 1) < 0.3;
 }
 function checkWriting_(sections) {
   sections.forEach(s => {
