@@ -8,7 +8,7 @@ export function blockPaste(el, { onBlocked = () => {}, allow = () => false } = {
   el.addEventListener('drop', stop);
   el.addEventListener('beforeinput', e => { if (/^insertFrom(Paste|Drop|PasteAsQuotation)$/.test(e.inputType)) stop(e); });
 }
-export const PASTE_MESSAGE = '✋ 붙여 넣기는 할 수 없어요. 내 생각을 내 말로 직접 써 주세요.';
+export const PASTE_MESSAGE = '붙여 넣기는 할 수 없어요. 내 생각을 내 말로 직접 써 주세요.';
 
 // 바르지 않은 말(학교에서 흔한 욕설). 과학 글에 나올 수 있는 낱말(시발점, 불이 꺼져요, 영향을 미친다 등)은 걸리지 않게 골랐어요.
 const BAD_WORDS = /씨발|시발(?!점)|씨팔|시팔|ㅅㅂ|ㅆㅂ|병신|븅신|ㅂㅅ|개새|새끼|좆|존나|지랄|ㅈㄹ|닥쳐|미친놈|미친년|엿\s?먹|fuck|shit|bitch/i;
@@ -16,7 +16,7 @@ export const hasBadWords = text => BAD_WORDS.test(String(text ?? ''));
 
 // 뜻 있는 글자 수: 글자(한글·영어)와 숫자, 동그라미 글자(㉮, ㉯, ①)만 세요. 공백·문장 부호·자음이나 모음만 쓴 글자(ㅋㅋ, ㅠㅠ)는 세지 않아요.
 // 같은 글자가 세 번 이상 이어질 때만(‘아아아아’) 한 글자로 세요. ‘점점’, ‘쭉쭉’, ‘1000’처럼 보통 문장에 나오는 글자는 그대로 세요.
-// 글자 수 안내(✔ 좋아요)와 저장·제출 검사가 모두 이 수를 써서, 안내와 검사가 어긋나지 않아요.
+// 글자 수 안내(✓ 좋아요)와 저장·제출 검사가 모두 이 수를 써서, 안내와 검사가 어긋나지 않아요.
 export function meaningfulLength(text) {
   return String(text ?? '').replace(/[^\p{L}\p{N}\u2460-\u24ff\u3200-\u32ff]/gu, '').replace(/[ㄱ-ㅎㅏ-ㅣ]/g, '').replace(/(\D)\1{2,}/gu, '$1').length;
 }

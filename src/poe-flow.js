@@ -8,6 +8,7 @@ import { modelOf } from './teaching-models.js';
 import { draftStore, pruneDrafts, KEEP_HOURS } from './draft-store.js';
 import { blockPaste, PASTE_MESSAGE, writingProblem, meaningfulLength } from './text-guard.js';
 import { mountMemo } from './memo.js';
+import { icon } from './icons.js';
 import { previewOf } from './previews.js';
 import { sceneOf, playStep } from './preview-scenes.js';
 const $ = selector => document.querySelector(selector);
@@ -60,8 +61,8 @@ export function setupPOEFlow(config) {
 
   const intro = $('.intro');
   intro.querySelector('p').textContent = multi ? L.introMulti(experiments.length) : L.intro;
-  if (L.id !== 'poe') intro.insertAdjacentHTML('beforeend', `<p class="model-badge">🧭 수업 모형: <b>${L.name}</b> · ${L.flow}</p>`);
-  const glossary = config.glossary ? `<details class="glossary"><summary>📖 어려운 낱말 뜻 보기</summary><dl>${config.glossary.map(([t, d]) => `<div><dt>${t}</dt><dd>${d}</dd></div>`).join('')}</dl></details>` : '';
+  if (L.id !== 'poe') intro.insertAdjacentHTML('beforeend', `<p class="model-badge">수업 모형: <b>${L.name}</b> · ${L.flow}</p>`);
+  const glossary = config.glossary ? `<details class="glossary"><summary>${icon('book')} 어려운 낱말 뜻 보기</summary><dl>${config.glossary.map(([t, d]) => `<div><dt>${t}</dt><dd>${d}</dd></div>`).join('')}</dl></details>` : '';
   intro.insertAdjacentHTML('afterend', `
     <div class="teacher-bar" id="teacher-bar"></div>
     ${review ? `<section id="review-panel" class="poe-panel review-panel" aria-labelledby="review-title" hidden>
@@ -87,7 +88,7 @@ export function setupPOEFlow(config) {
       </div>
       <form id="prediction-form" class="poe-form">
         <fieldset><legend></legend><div id="prediction-choices"></div>
-          <div class="other-box" hidden><label class="writing-label" for="prediction-other">✏️ 보기와 다른 내 생각(예상)을 직접 써 주세요.</label><textarea id="prediction-other" rows="2" maxlength="300" data-min="${OTHER_MIN_CHARS}" placeholder="예: ○○이 △△ 쪽으로 움직일 것 같아요."></textarea><p class="char-count" data-for="prediction-other" aria-live="polite"></p></div>
+          <div class="other-box" hidden><label class="writing-label" for="prediction-other">보기와 다른 내 생각(예상)을 직접 써 주세요.</label><textarea id="prediction-other" rows="2" maxlength="300" data-min="${OTHER_MIN_CHARS}" placeholder="예: ○○이 △△ 쪽으로 움직일 것 같아요."></textarea><p class="char-count" data-for="prediction-other" aria-live="polite"></p></div>
         </fieldset>
         <label class="writing-label" for="prediction-reason">${L.reasonLabel}</label>
         <textarea id="prediction-reason" rows="3" maxlength="1200" required></textarea><p class="char-count" data-for="prediction-reason" aria-live="polite"></p><p class="autosave-note" aria-hidden="true"></p>
@@ -100,7 +101,7 @@ export function setupPOEFlow(config) {
       <details class="prediction-reminder"><summary>${L.reminder}</summary><p data-prediction></p><p data-reason></p></details>
       <div class="observe-body">
       <aside id="step-guide" class="step-guide" aria-labelledby="step-guide-title">
-        <p class="guide-kicker" id="step-guide-title">🧭 실험 순서 안내</p>
+        <p class="guide-kicker" id="step-guide-title">${icon('compass')} 실험 순서 안내</p>
         <div class="guide-progress"><div class="guide-bar"><span></span></div><b class="guide-count"></b></div>
         <ol class="guide-steps"></ol>
       </aside>
@@ -158,7 +159,7 @@ export function setupPOEFlow(config) {
   const stickies = [...document.querySelectorAll('#concept-review .concept-sequence b:not(.subj)')].map((b, i) => {
     const btn = document.createElement('button');
     btn.type = 'button'; btn.className = 'sticky'; btn.dataset.sticky = i;
-    btn.innerHTML = `<span class="sticky-word">${b.innerHTML}</span><span class="sticky-note" aria-hidden="true"><i class="pin">📌</i></span>`;
+    btn.innerHTML = `<span class="sticky-word">${b.innerHTML}</span><span class="sticky-note" aria-hidden="true"><i class="pin"></i></span>`;
     b.replaceWith(btn);
     btn.onclick = () => peel(i);
     return btn;
@@ -172,13 +173,13 @@ export function setupPOEFlow(config) {
   function peel(i) {
     if (peeled().includes(i)) return;
     const now = performance.now();
-    if (now < peelReady) { toast('📌 방금 나온 개념을 먼저 읽어 보세요. 잠시 뒤에 다음 포스트잇을 뗄 수 있어요.'); return; }
+    if (now < peelReady) { toast('방금 나온 개념을 먼저 읽어 보세요. 잠시 뒤에 다음 포스트잇을 뗄 수 있어요.'); return; }
     peelReady = now + PEEL_WAIT;
     const list = $('#concept-review .concept-sequence');
     list.classList.add('sticky-wait'); clearTimeout(peelTimer);
     peelTimer = setTimeout(() => list.classList.remove('sticky-wait'), PEEL_WAIT);
     peeled().push(i); save(); renderStickies();
-    if (peeled().length === stickies.length) toast('📌 주요 개념을 모두 확인했어요! 이제 보고서를 제출할 수 있어요.');
+    if (peeled().length === stickies.length) toast('주요 개념을 모두 확인했어요! 이제 보고서를 제출할 수 있어요.');
   }
   function renderStickies() {
     stickies.forEach((btn, i) => {
@@ -187,7 +188,7 @@ export function setupPOEFlow(config) {
       btn.setAttribute('aria-label', open ? btn.querySelector('.sticky-word').textContent : `가려진 주요 개념 ${i + 1}: 눌러서 확인하기`);
     });
     const left = stickies.length - peeled().length, out = $('.sticky-progress');
-    if (out) out.textContent = left ? `📌 노란 포스트잇 아래에 주요 개념이 숨어 있어요. 눌러서 떼어 보세요. (${peeled().length} / ${stickies.length} 확인)` : `✔ 주요 개념 ${stickies.length}개를 모두 확인했어요.`;
+    if (out) out.textContent = left ? `노란 포스트잇 아래에 주요 개념이 숨어 있어요. 눌러서 떼어 보세요. (${peeled().length} / ${stickies.length} 확인)` : `✓ 주요 개념 ${stickies.length}개를 모두 확인했어요.`;
     out?.classList.toggle('done', !left);
   }
   renderStickies();
@@ -233,7 +234,7 @@ export function setupPOEFlow(config) {
     drafts.save(state, { keepLocal: !state.locked });
     savedAt = new Date();
     const hm = `${String(savedAt.getHours()).padStart(2, '0')}:${String(savedAt.getMinutes()).padStart(2, '0')}`;
-    document.querySelectorAll('.autosave-note').forEach(el => { el.textContent = state.locked ? '' : `💾 자동 저장됨 · ${hm}`; });
+    document.querySelectorAll('.autosave-note').forEach(el => { el.textContent = state.locked ? '' : `자동 저장됨 · ${hm}`; });
   }
 
   // 지금 고른 실험의 글과 상태를 화면에 채웁니다.
@@ -318,7 +319,7 @@ export function setupPOEFlow(config) {
       b.classList.toggle('done', e.explained);
       b.classList.toggle('locked', !open);
       if (open) b.removeAttribute('aria-disabled'); else b.setAttribute('aria-disabled', 'true');
-      b.querySelector('small').textContent = !open ? '🔒 앞 실험을 마치면 열려요' : e.explained ? '✔ 설명까지 마침' : e.reached ? `${['예상', '관찰', '설명'][e.reached]} 단계까지 함` : '아직 시작 전';
+      b.querySelector('small').textContent = !open ? '앞 실험을 마치면 열려요' : e.explained ? '✓ 설명까지 마침' : e.reached ? `${['예상', '관찰', '설명'][e.reached]} 단계까지 함` : '아직 시작 전';
     });
     $('.experiment-now').textContent = `지금 하는 실험: 실험 ${state.current + 1}. ${info().name}`;
   }
@@ -331,7 +332,7 @@ export function setupPOEFlow(config) {
     document.body.classList.toggle('report-locked', locked);
   }
   function selectExperiment(n, stage) {
-    if (!experimentOpen(n)) return toast(`🔒 실험 ${n}(${experiments[n - 1].name})을 설명까지 마치면 다음 실험이 열려요.`);
+    if (!experimentOpen(n)) return toast(`실험 ${n}(${experiments[n - 1].name})을 설명까지 마치면 다음 실험이 열려요.`);
     keepDrafts();
     state.current = n;
     if (stage) exp().stage = stage;
@@ -403,7 +404,7 @@ export function setupPOEFlow(config) {
     let current = steps.findIndex(v => !v.done);
     if (current === -1 || exp().observed || state.locked || teacherMode.on) current = steps.length;
     const later = steps.slice(current + 1).filter(v => v.unlocks);
-    gateMessage = current < steps.length ? `🔒 실험 순서대로 해요. 먼저 ‘${steps[current].label}’부터 해 보세요.` : '';
+    gateMessage = current < steps.length ? `실험 순서대로 해요. 먼저 ‘${steps[current].label}’부터 해 보세요.` : '';
     const selector = later.map(v => v.unlocks).join(', ');
     document.querySelectorAll('[data-gated]').forEach(el => {
       if (selector && el.matches(selector)) return;
@@ -421,7 +422,7 @@ export function setupPOEFlow(config) {
     const el = ev.target?.closest?.('[data-gated]');
     if (!el || (ev.type === 'keydown' && !['Enter', ' ', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(ev.key))) return;
     ev.preventDefault(); ev.stopImmediatePropagation();
-    if (ev.type === 'click' || ev.type === 'keydown') pointToGuide(gateMessage || '🔒 앞 단계를 먼저 해 보세요.');
+    if (ev.type === 'click' || ev.type === 'keydown') pointToGuide(gateMessage || '앞 단계를 먼저 해 보세요.');
   }
   for (const type of ['pointerdown', 'mousedown', 'touchstart', 'click', 'keydown']) window.addEventListener(type, blockGated, { capture: true, passive: false });
 
@@ -447,13 +448,13 @@ export function setupPOEFlow(config) {
     guide.querySelector('li.current')?.scrollIntoView?.({ block: 'nearest' });
     const step = (lastProgress?.steps ?? []).find(v => !v.done);
     const target = step ? stepTarget(step) ?? (step.unlocks ? [...document.querySelectorAll(step.unlocks)].find(el => el.offsetParent) : null) : null;
-    if (target) { target.dataset.targetLabel = '👆 여기부터!'; target.classList.add('step-target'); }
+    if (target) { target.dataset.targetLabel = '▲ 여기부터!'; target.classList.add('step-target'); }
     clearTimeout(pointTimer);
     pointTimer = setTimeout(() => { guide.classList.remove('attention'); target?.classList.remove('step-target'); }, 4500);
   }
   // 단계에서 눌러야 할 조작 찾기: 안내 글의 ‘단추 이름’을 차례로 보며, 화면에 보이고 아직 고르지 않은 첫 단추를 골라요.
   // (탭은 이미 열려 있으면 건너뛰어요.) 이름이 없으면 단계의 press 선택자를 써요.
-  const words = t => t.replace(/[()‘’'"↑↓↻▶⇅🧲👆🥄🧤✔·:,]/g, ' ').split(/\s+/).filter(Boolean);
+  const words = t => t.replace(/[()‘’'"↑↓↻▶⇅▲✓·:,]/g, ' ').split(/\s+/).filter(Boolean);
   function stepTarget(step) {
     const visible = el => el.offsetParent || el.closest('svg');
     const fresh = el => !el.disabled && el.getAttribute('aria-selected') !== 'true' && el.getAttribute('aria-pressed') !== 'true';
@@ -477,7 +478,7 @@ export function setupPOEFlow(config) {
     clearTimeout(pointTimer);
     pointTimer = setTimeout(() => el.classList.remove('step-target'), 5000);
   }
-  // 실험 순서 안내의 단계를 누르면: 그 단계를 하는 방법을 알려 주고, 눌러야 할 단추에 ‘👆 여기를 눌러요’를 표시해요.
+  // 실험 순서 안내의 단계를 누르면: 그 단계를 하는 방법을 알려 주고, 눌러야 할 단추에 ‘▲ 여기를 눌러요’를 표시해요.
   $('#step-guide').addEventListener('click', ev => {
     const item = ev.target.closest('[data-guide-step]');
     if (!item) return;
@@ -491,14 +492,14 @@ export function setupPOEFlow(config) {
     if (!step) return;
     const current = steps.findIndex(v => !v.done);
     const locked = !step.done && i > current && !exp().observed && !teacherMode.on;
-    if (locked) { markTarget(null); return toast(`🔒 ‘${step.label}’은(는) 앞 단계를 마치면 열려요. 먼저 ‘${steps[current].label}’부터 해요.`); }
+    if (locked) { markTarget(null); return toast(`‘${step.label}’은(는) 앞 단계를 마치면 열려요. 먼저 ‘${steps[current].label}’부터 해요.`); }
     const target = stepTarget(step);
-    toast(`${step.done ? '✓ 이미 해 본 단계예요. 다시 해 보려면 · ' : '👉 이렇게 해요 · '}${step.hint || step.label}`);
-    markTarget(target, '👆 여기를 눌러요');
+    toast(`${step.done ? '✓ 이미 해 본 단계예요. 다시 해 보려면 · ' : '이렇게 해요 · '}${step.hint || step.label}`);
+    markTarget(target, '▲ 여기를 눌러요');
   });
   const nextStepLabel = () => (lastProgress?.steps ?? []).find(v => !v.done)?.label;
 
-  // 왼쪽 실험 순서 안내: 끝낸 단계는 ✓, 지금 할 단계는 강조, 뒤 단계는 🔒, 모두 끝나면 마지막 ‘기록하기’ 단계를 강조해요.
+  // 왼쪽 실험 순서 안내: 끝낸 단계는 ✓, 지금 할 단계는 강조, 뒤 단계는 자물쇠, 모두 끝나면 마지막 ‘기록하기’ 단계를 강조해요.
   let guideDone = -1;
   function renderGuide(progress) {
     const steps = progress.steps ?? [];
@@ -509,7 +510,7 @@ export function setupPOEFlow(config) {
     const items = steps.map((v, i) => {
       const state = v.done ? 'done' : i === current ? 'current' : 'todo';
       const lockedStep = state === 'todo' && !exp().observed && !teacherMode.on;
-      return `<li class="${state}${lockedStep ? ' locked' : ''}"${state === 'current' ? ' aria-current="step"' : ''}><button type="button" class="guide-item" data-guide-step="${i}" aria-label="${v.label}: 어떻게 하는지 보기"><span class="guide-num">${v.done ? '✓' : lockedStep ? '🔒' : i + 1}</span><div><b>${v.label}</b>${state === 'current' ? `<small class="guide-now">지금 할 일</small>` : ''}${v.hint && state === 'current' ? `<small>${v.hint}</small>` : ''}${lockedStep ? '<small>앞 단계를 마치면 열려요</small>' : ''}<small class="guide-how">👆 눌러서 할 일 보기</small></div></button></li>`;
+      return `<li class="${state}${lockedStep ? ' locked' : ''}"${state === 'current' ? ' aria-current="step"' : ''}><button type="button" class="guide-item" data-guide-step="${i}" aria-label="${v.label}: 어떻게 하는지 보기"><span class="guide-num">${v.done ? '✓' : lockedStep ? icon('lock') : i + 1}</span><div><b>${v.label}</b>${state === 'current' ? `<small class="guide-now">지금 할 일</small>` : ''}${v.hint && state === 'current' ? `<small>${v.hint}</small>` : ''}${lockedStep ? '<small>앞 단계를 마치면 열려요</small>' : ''}<small class="guide-how">눌러서 할 일 보기 ›</small></div></button></li>`;
     });
     const allDone = current === -1;
     items.push(`<li class="${allDone ? 'current final' : 'todo final'}"${allDone ? ' aria-current="step"' : ''}><button type="button" class="guide-item" data-guide-step="final"><span class="guide-num">✎</span><div><b>${L.guideFinal}</b>${allDone ? '<small class="guide-now">지금 할 일</small>' : ''}<small>${L.guideFinalHint}</small></div></button></li>`);
@@ -520,13 +521,13 @@ export function setupPOEFlow(config) {
     guideDone = done;
   }
   // 예상·관찰·설명은 최소 MIN_CHARS자 이상 써야 저장하고 다음 단계로 넘어갈 수 있어요(관찰을 여러 칸으로 나눈 실험도 칸마다 MIN_CHARS자).
-  // 글자 수는 저장 검사와 똑같이 셉니다(src/text-guard.js의 meaningfulLength: 공백·문장 부호는 세지 않아요). 안내가 ✔이면 저장도 돼요.
+  // 글자 수는 저장 검사와 똑같이 셉니다(src/text-guard.js의 meaningfulLength: 공백·문장 부호는 세지 않아요). 안내가 ✓이면 저장도 돼요.
   const countChars = el => meaningfulLength(el.value);
   const minOf = el => +(el.dataset.min || MIN_CHARS);
   function showCount(el) {
     const n = countChars(el), min = minOf(el), out = document.querySelector(`.char-count[data-for="${el.id}"]`);
     if (!out) return;
-    out.textContent = n >= min ? `✔ ${n}자 · 좋아요!` : `${n} / ${min}자 · ${min - n}자 더 써 주세요 (공백·문장 부호는 세지 않아요)`;
+    out.textContent = n >= min ? `✓ ${n}자 · 좋아요!` : `${n} / ${min}자 · ${min - n}자 더 써 주세요 (공백·문장 부호는 세지 않아요)`;
     out.classList.toggle('enough', n >= min);
   }
   // 같은 글이면 안 되는 앞 칸: 관찰은 예상한 까닭과, 설명은 예상한 까닭·관찰과 달라야 해요.
@@ -625,7 +626,7 @@ export function setupPOEFlow(config) {
     if ($('#to-explanation').getAttribute('aria-disabled') !== 'true') return;
     ev.preventDefault();
     const label = nextStepLabel();
-    pointToGuide(`🧭 아직 해 보지 않은 실험 단계가 있어요. ‘실험 순서 안내’를 보고 ${label ? `‘${label}’부터` : '남은 단계를'} 해 보세요.`);
+    pointToGuide(`아직 해 보지 않은 실험 단계가 있어요. ‘실험 순서 안내’를 보고 ${label ? `‘${label}’부터` : '남은 단계를'} 해 보세요.`);
   });
   document.querySelectorAll('.flow-back').forEach(b => b.onclick = () => goBack());
   $('#explanation-form').onsubmit = ev => {
@@ -646,12 +647,12 @@ export function setupPOEFlow(config) {
   });
   // 아직 갈 수 없는 단계를 누르면 먼저 할 일을 알려 줘요.
   function explainClosedStep(target) {
-    if (isReviewing()) return toast('📝 먼저 ‘실험 전 1분 복습’ 질문에 모두 답하고 ‘복습 마치고 실험 시작하기’를 눌러요.');
+    if (isReviewing()) return toast('먼저 ‘실험 전 1분 복습’ 질문에 모두 답하고 ‘복습 마치고 실험 시작하기’를 눌러요.');
     const now = exp().stage;
-    if (now === 'predict') { toast(`✏️ 먼저 ${L.id === 'poe' ? '예상' : '내 생각'}을 고르고 까닭을 쓴 뒤 ‘${L.savePredict.replace(' →', '')}’를 눌러요.`); $('#start-observation').dataset.targetLabel = '👆 여기부터!'; $('#start-observation').classList.add('step-target'); setTimeout(() => $('#start-observation').classList.remove('step-target'), 4500); return; }
+    if (now === 'predict') { toast(`먼저 ${L.id === 'poe' ? '예상' : '내 생각'}을 고르고 까닭을 쓴 뒤 ‘${L.savePredict.replace(' →', '')}’를 눌러요.`); $('#start-observation').dataset.targetLabel = '▲ 여기부터!'; $('#start-observation').classList.add('step-target'); setTimeout(() => $('#start-observation').classList.remove('step-target'), 4500); return; }
     if (now === 'observe' && target === 'explain') {
       const label = nextStepLabel();
-      if (label) return pointToGuide(`🧭 아직 해 보지 않은 실험 단계가 있어요. ‘실험 순서 안내’를 보고 ‘${label}’부터 해 보세요.`);
+      if (label) return pointToGuide(`아직 해 보지 않은 실험 단계가 있어요. ‘실험 순서 안내’를 보고 ‘${label}’부터 해 보세요.`);
       toast(`✎ 아래 ‘${L.recordTitle}’에 적고 ‘${L.saveObserve.replace(' →', '')}’를 눌러요.`);
       $('#observation-record').focus();
     }
@@ -674,7 +675,7 @@ export function setupPOEFlow(config) {
   }
   // 창을 닫았다가 다시 열어 되살린 글이면 알려 줘요. 함께 쓰는 컴퓨터에서 앞 학생의 글이면 새로 시작할 수 있어요.
   if (restoredFromComputer && !state.locked) {
-    $('#teacher-bar').insertAdjacentHTML('afterend', `<div class="draft-banner" role="status"><p>💾 이 컴퓨터에 임시 저장된 글을 불러왔어요. 이어서 쓰면 돼요.<small>임시 저장한 글은 ${KEEP_HOURS}시간이 지나거나 제출하면 이 컴퓨터에서 지워져요.</small></p><button type="button" class="secondary" id="draft-fresh">내 글이 아니에요 · 새로 시작</button></div>`);
+    $('#teacher-bar').insertAdjacentHTML('afterend', `<div class="draft-banner" role="status"><p>이 컴퓨터에 임시 저장된 글을 불러왔어요. 이어서 쓰면 돼요.<small>임시 저장한 글은 ${KEEP_HOURS}시간이 지나거나 제출하면 이 컴퓨터에서 지워져요.</small></p><button type="button" class="secondary" id="draft-fresh">내 글이 아니에요 · 새로 시작</button></div>`);
     $('#draft-fresh').onclick = () => { if (confirm('불러온 글을 모두 지우고 처음부터 시작할까요?')) restart(false); };
   }
 
@@ -697,7 +698,7 @@ export function setupPOEFlow(config) {
         if (!checked || picked === undefined || picked === null) { out.textContent = ''; out.dataset.state = ''; return; }
         // answer가 없는 문항은 생활 경험을 떠올리는 질문이라 맞고 틀림을 말하지 않아요.
         const right = item.answer === undefined || picked === item.answer;
-        out.textContent = `${item.answer === undefined ? '' : right ? '⭕ 맞아요! ' : `❌ 정답은 ‘${item.choices[item.answer]}’예요. `}${item.explanation}`;
+        out.textContent = `${item.answer === undefined ? '' : right ? '○ 맞아요! ' : `× 정답은 ‘${item.choices[item.answer]}’예요. `}${item.explanation}`;
         out.dataset.state = right ? 'right' : 'wrong';
       });
       const done = answered(), all = done === review.items.length;

@@ -7,6 +7,9 @@ import { setupPOEFlow } from './src/poe-flow.js';
 import { createAutoplay } from './src/autoplay.js';
 import { $, $$, setText, setHTML, buildLab, checklist, toast, burst, reducedMotion, josa, smoothDrag, instantLessons } from './src/lab-shell.js';
 import { charges, MAX_TRANSFER, chargeLabel, interaction, SPOON_TOOLS, SPOON_A_SIGN } from './src/friction-model.js';
+// 고르기 단추의 작은 그림(에모지 대신 직접 그린 숟가락·장갑)
+const SPOON_ICON = '<svg viewBox="0 0 32 32" width="1.3em" height="1.3em"><ellipse cx="9" cy="10" rx="6" ry="7.5" fill="#f2f4f8" stroke="#9aa4b8" stroke-width="1.5" transform="rotate(-35 9 10)"/><path d="M13 15 L27 28" stroke="#f2f4f8" stroke-width="3.4" stroke-linecap="round"/><path d="M13 15 L27 28" stroke="#9aa4b8" stroke-width=".8" stroke-linecap="round"/></svg>';
+const GLOVE_ICON = '<svg viewBox="0 0 32 32" width="1.3em" height="1.3em"><path d="M9 29 V16 C6 14 4 11 5 10 C6 9 8 11 9.5 12.5 V6 C9.5 4.4 11.8 4.4 11.8 6 V13 V4.5 C11.8 2.8 14.2 2.8 14.2 4.5 V13 V5 C14.2 3.4 16.6 3.4 16.6 5 V13.5 V7 C16.6 5.4 19 5.4 19 7 V20 C19 24 17 26 16 29Z" fill="#a78bdb" stroke="#6a4fa5" stroke-width="1.2" stroke-linejoin="round"/><path d="M9 25 H16.5" stroke="#6a4fa5" stroke-width="1.2"/></svg>';
 import { closeness, segmentDistance, clamp } from './src/induction-model.js';
 
 // 교과서 236–237쪽, 지도서 540–543쪽(1차시).
@@ -175,8 +178,8 @@ function transfer() {
   transfers++;
   flights.push({ from: { x: site.x + 9, y: site.y }, to: { x: -36 + ((transfers - 1) % 4) * 24, y: 26 + Math.floor((transfers - 1) / 4) * 13 }, start: clock(), duration: instantLessons.matches ? 1 : 900 });
   burst($('#rub-fx'), pos.x, pos.y + 46, '#8fd3ff', 10);
-  if (!seen.rubbed) { seen.rubbed = true; toast('⚡ 털의 전자 일부가 풍선으로 옮겨 갔어요!'); }
-  if (transfers === MAX_TRANSFER) toast('🎈 충분히 문질렀어요. 이제 풍선을 들어 올려 보세요');
+  if (!seen.rubbed) { seen.rubbed = true; toast('털의 전자 일부가 풍선으로 옮겨 갔어요!'); }
+  if (transfers === MAX_TRANSFER) toast('충분히 문질렀어요. 이제 풍선을 들어 올려 보세요');
   renderControls();
 }
 function moveBalloon(x, y, auto = false) {
@@ -215,7 +218,7 @@ function stepSpoon(dt) {
     if (segmentDistance(toolPos, seg.a, seg.b) < GAP) break;
     if (Math.abs(next - angle) > 1e-4) {
       if (kind === 'repel' && !seen.repel && Math.abs(next) > .08) { seen.repel = true; toast('↔ 숟가락 ㉮가 밀려났어요 (척력)'); }
-      if (kind === 'attract' && !seen.attract && Math.abs(next) > .08) { seen.attract = true; toast('🤝 숟가락 ㉮가 끌려왔어요 (인력)'); }
+      if (kind === 'attract' && !seen.attract && Math.abs(next) > .08) { seen.attract = true; toast('숟가락 ㉮가 끌려왔어요 (인력)'); }
     }
     angle = next;
   }
@@ -279,7 +282,7 @@ function rubSpoons() {
   spoonFlights = [0, 1, 2, 3].map(k => ({ k: `a${k}`, from: { x: RUB_GLOVE.x + 30, y: RUB_GLOVE.y + 10 }, to: () => handleSite(k), start: now + k * 160, duration }));
   if (tool === 'spoon') spoonFlights.push(...[0, 1, 2, 3].map(k => ({ k: `b${k}`, from: { x: RUB_GLOVE.x + 60, y: RUB_GLOVE.y + 10 }, to: () => toolSite(k), start: now + (k + 2) * 160, duration })));
   burst($('#spoon-fx'), PIVOT.x + TIP - 40, PIVOT.y, '#8fd3ff', 14); burst($('#spoon-fx'), TOOL_START.x, TOOL_START.y, '#8fd3ff', 14);
-  toast('✨ 장갑의 전자 일부가 두 숟가락으로 옮겨 갔어요');
+  toast('장갑의 전자 일부가 두 숟가락으로 옮겨 갔어요');
   renderControls();
 }
 function approachTool() {
@@ -328,11 +331,11 @@ function resetExperiment() {
 function renderControls() {
   const busy = player.running;
   if (mode === 'rub') {
-    $('#controls').innerHTML = `<p class="material-now">실험 재료: <b>🎈 풍선</b>과 <b>털</b> · 풍선을 직접 끌어서 털 위에서 좌우로 문질러도 돼요.</p>`;
+    $('#controls').innerHTML = `<p class="material-now">실험 재료: <b>풍선</b>과 <b>털</b> · 풍선을 직접 끌어서 털 위에서 좌우로 문질러도 돼요.</p>`;
     $('#actions').innerHTML = `<button id="rub-btn" class="primary big" ${busy || transfers >= MAX_TRANSFER ? 'disabled' : ''}>① 털에 문지르기</button><button id="lift-btn" class="primary big" ${busy || !transfers ? 'disabled' : ''}>② 털 가까이에서 들어 올리기 ↑</button><button id="away-btn" class="secondary big" ${busy || farAway() ? 'disabled' : ''}>③ 멀리 하기</button><button id="retry-btn" class="secondary big" ${busy ? 'disabled' : ''}>↻ 다시 실험하기</button>`;
     $('#rub-btn').onclick = rubOnce; $('#lift-btn').onclick = liftBalloon; $('#away-btn').onclick = balloonAway;
   } else {
-    $('#controls').innerHTML = `<div role="group" aria-label="숟가락 ㉮에 가까이 할 물체" class="material-picker"><span class="group-label">가까이 할 물체 고르기</span>${Object.entries(SPOON_TOOLS).map(([k, o]) => `<button data-tool="${k}" aria-pressed="${k === tool}" ${busy ? 'disabled' : ''}><span class="material-icon">${k === 'spoon' ? '🥄' : '🧤'}</span>${o.label}${k === tool ? '<small><span aria-hidden="true">✔</span><span class="picked-word"> 선택됨</span></small>' : ''}</button>`).join('')}</div><p class="material-now">${rubbedSpoons ? '장갑으로 숟가락 ㉮와 ㉯의 손잡이를 문질렀어요.' : '먼저 장갑으로 두 숟가락의 손잡이를 문질러요.'}</p>`;
+    $('#controls').innerHTML = `<div role="group" aria-label="숟가락 ㉮에 가까이 할 물체" class="material-picker"><span class="group-label">가까이 할 물체 고르기</span>${Object.entries(SPOON_TOOLS).map(([k, o]) => `<button data-tool="${k}" aria-pressed="${k === tool}" ${busy ? 'disabled' : ''}><span class="material-icon" aria-hidden="true">${k === 'spoon' ? SPOON_ICON : GLOVE_ICON}</span>${o.label}${k === tool ? '<small><span aria-hidden="true">✓</span><span class="picked-word"> 선택됨</span></small>' : ''}</button>`).join('')}</div><p class="material-now">${rubbedSpoons ? '장갑으로 숟가락 ㉮와 ㉯의 손잡이를 문질렀어요.' : '먼저 장갑으로 두 숟가락의 손잡이를 문질러요.'}</p>`;
     $('#actions').innerHTML = `<button id="rub-spoons" class="primary big" ${busy || rubbedSpoons ? 'disabled' : ''}>① 장갑으로 ㉮와 ㉯ 문지르기</button><button id="approach" class="primary big" ${busy ? 'disabled' : ''}>② ${SPOON_TOOLS[tool].label} 가까이 가져가기</button><button id="away" class="secondary big" ${busy || toolHome() ? 'disabled' : ''}>③ 멀리 하기</button><button id="retry-btn" class="secondary big" ${busy ? 'disabled' : ''}>↻ 다시 실험하기</button>`;
     $$('[data-tool]').forEach(b => b.onclick = () => chooseTool(b.dataset.tool));
     $('#rub-spoons').onclick = rubSpoons;
@@ -424,7 +427,7 @@ function frame() {
       followMotion(time);
       paintRub(dt, t);
       // 대전된 풍선이 털 가까이(닿지 않은 채) 있으면 털끝이 끌려요.
-      if (transfers && !contact() && Math.hypot(pos.x - 400, pos.y + 50 - FUR.y) < 200) { liftedTime += dt; if (liftedTime > .6 && !seen.lifted) { seen.lifted = true; toast('🪶 털끝이 풍선 쪽으로 끌려와요'); } } else liftedTime = 0;
+      if (transfers && !contact() && Math.hypot(pos.x - 400, pos.y + 50 - FUR.y) < 200) { liftedTime += dt; if (liftedTime > .6 && !seen.lifted) { seen.lifted = true; toast('털끝이 풍선 쪽으로 끌려와요'); } } else liftedTime = 0;
       renderText();
     } else { followTool(time); stepSpoon(dt); paintSpoon(t); }
     if (show && mode === 'rub' && transfers > 0) seen.viewRub = true;

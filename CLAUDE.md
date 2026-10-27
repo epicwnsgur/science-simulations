@@ -18,7 +18,9 @@
 
 ## 새 실험을 만들 때 함께 지켜요
 
-- 학습 흐름은 꼭 `setupPOEFlow`(src/poe-flow.js)로 만들어요. 그래야 공통 기능이 저절로 들어가요: 복습, 미리 보기, 예상의 ‘기타(직접 쓰기)’, 📝 메모(머리글 + 왼쪽 아래), 관찰 칸 나누기(`observe.parts`), 포스트잇, 테마.
+- 학습 흐름은 꼭 `setupPOEFlow`(src/poe-flow.js)로 만들어요. 그래야 공통 기능이 저절로 들어가요: 복습, 미리 보기, 예상의 ‘기타(직접 쓰기)’, 메모(머리글 + 왼쪽 아래), 관찰 칸 나누기(`observe.parts`), 포스트잇, 테마.
 - 예상 보기에 ‘아직 잘 모르겠어요’는 넣지 않아요(‘기타’가 대신해요).
+- 화면에 그림 에모지(📝 🔒 ⚡ 같은 것)는 쓰지 않아요. 아이콘은 `src/icons.js`의 선 아이콘이나 직접 그린 SVG를 써요(`src/no-emoji.test.js`).
+- 새 단원의 그림은 `build/unit-art.mjs`에 더하고 `node build/unit-art.mjs`로 다시 만들어요.
 - 공통 CSS를 고치면 `node build/light-theme.mjs`로 밝은 테마를, `node build/dark-deco.mjs`로 어두운 테마 장식을 다시 만들어요(`npm test`가 최신인지 확인해요).
 

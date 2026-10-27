@@ -25,7 +25,7 @@ test('간이 전동기: 접촉이 끊어지는 반주기에 요약과 그림 모
     const seen = new Set(), errors = [], start = performance.now();
     function sample() {
       const label = document.querySelector('#contact-label').textContent;
-      const flowing = label.includes('⚡');
+      const flowing = label.startsWith('전류가 흘러요');
       seen.add(flowing);
       const expected = flowing ? '흐름' : '끊김';
       if (document.querySelector('#readout b').textContent !== expected || !document.querySelector('#stage-state').textContent.startsWith('전류 ' + expected)) errors.push(label);

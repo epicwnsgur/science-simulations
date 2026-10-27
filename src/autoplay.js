@@ -19,8 +19,8 @@ export function createAutoplay({ mount, plays, getMode, isIdle = () => true, onC
   mount.innerHTML = `
     <div class="autoplay-buttons">
       <button type="button" class="secondary big" data-auto="play">▶ 자동 재생으로 보기</button>
-      <button type="button" class="secondary big" data-auto="pause" hidden>⏸ 일시정지</button>
-      <button type="button" class="secondary big" data-auto="restart" hidden>⏮ 처음부터</button>
+      <button type="button" class="secondary big" data-auto="pause" hidden>‖ 일시정지</button>
+      <button type="button" class="secondary big" data-auto="restart" hidden>↺ 처음부터</button>
       <button type="button" class="secondary big" data-auto="stop" hidden>■ 멈추고 직접 하기</button>
       <div class="pace" role="group" aria-label="자동 재생 빠르기"><span>빠르기</span>${PACES.map(([id, label]) => `<button type="button" data-pace="${id}" aria-pressed="${id === pace}">${label}</button>`).join('')}</div>
     </div>
@@ -35,11 +35,11 @@ export function createAutoplay({ mount, plays, getMode, isIdle = () => true, onC
     const steps = run ? plays[run.mode] : [];
     button('play').hidden = !!run;
     for (const name of ['pause', 'restart', 'stop']) button(name).hidden = !run;
-    button('pause').textContent = paused ? '▶ 이어서 재생' : '⏸ 일시정지';
+    button('pause').textContent = paused ? '▶ 이어서 재생' : '‖ 일시정지';
     mount.querySelectorAll('[data-pace]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.pace === pace)));
     list.hidden = !run;
     if (run) list.innerHTML = steps.map(([name], i) => `<li class="${i < run.step ? 'done' : i === run.step ? 'current' : ''}"${i === run.step ? ' aria-current="step"' : ''}>${i + 1}. ${name}</li>`).join('');
-    caption.textContent = text ?? (run ? `${paused ? '⏸ 일시정지 · ' : ''}${run.step + 1}/${steps.length} ${steps[run.step][1]}` : idleText);
+    caption.textContent = text ?? (run ? `${paused ? '일시정지 · ' : ''}${run.step + 1}/${steps.length} ${steps[run.step][1]}` : idleText);
   }
   function wait(ms) {
     const me = run, end = clock() + (reducedMotion?.matches ? Math.min(ms, 300) : ms);

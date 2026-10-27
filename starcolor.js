@@ -125,7 +125,7 @@ let photoSeen = false;
 const measuredStars = new Map();   // 사진에서 별빛 색을 잰 별
 const surfaceSeen = new Set();
 const viewer = createStarViewer($('#obs'), VIEW, { reducedMotion: instantLessons, onChange: what => {
-  if (what === 'measured' && viewer.measured) { measuredStars.set(viewer.key, viewer.measured); toast(`🎨 ${STARS[viewer.key].name}의 사진 속 별빛: ${tintWord(viewer.measured)}`); renderControls(); }
+  if (what === 'measured' && viewer.measured) { measuredStars.set(viewer.key, viewer.measured); toast(`${STARS[viewer.key].name}의 사진 속 별빛: ${tintWord(viewer.measured)}`); renderControls(); }
   else if (tab === 'stars') renderStars();
 } });
 
@@ -142,7 +142,7 @@ function renderHeat(dt) {
   // 전원을 켜면 열선의 온도가 점점 올라가 약 1100 ℃에 가까워져요. 끄면 식어요.
   const target = heaterOn ? 1100 : 25;
   heaterT += (target - heaterT) * (instantLessons.matches ? 1 : 1 - Math.exp(-dt * (heaterOn ? .38 : .6)));
-  if (heaterOn && heaterT > 1000 && !heaterDone) { heaterDone = true; toast('🔥 열선이 처음에는 어두운 붉은색이었다가 온도가 높아지면서 밝은 주황색(노란빛)이 되었어요'); renderText(); }
+  if (heaterOn && heaterT > 1000 && !heaterDone) { heaterDone = true; toast('열선이 처음에는 어두운 붉은색이었다가 온도가 높아지면서 밝은 주황색(노란빛)이 되었어요'); renderText(); }
   const b = Math.max(0, Math.min(1, (heaterT - 480) / 560)), bb = blackbodyRGB(K(heaterT));
   const metal = [.42, .44, .48];
   const core = bb.map((v, i) => metal[i] * (1 - b) + Math.min(1, v + b * .45) * b);
@@ -173,7 +173,7 @@ function chooseStar(key) {
   const s = STARS[key];
   viewer.show(key);
   if (!STAR_PHOTOS[key]) setSky($('#close-sky'), { ra: s.ra, dec: s.dec, fov: 9, width: VIEW.w, height: VIEW.h, milkyWay: .7, lines: [], maxMag: 6.2, skip: (r, d) => Math.abs(r - s.ra) < .3 && Math.abs(d - s.dec) < .3, skipKey: key });
-  toast(`🔭 ${s.name}: ${STAR_PHOTOS[key] ? '실제 사진 · ' : ''}${s.color} · 표면 온도 약 ${roundTemp(s.temp)} ℃`);
+  toast(`${s.name}: ${STAR_PHOTOS[key] ? '실제 사진 · ' : ''}${s.color} · 표면 온도 약 ${roundTemp(s.temp)} ℃`);
   renderControls();
 }
 function renderStars() {
@@ -214,7 +214,7 @@ function chooseSky(id) {
   setSky($('#con-sky'), { ra: c.ra, dec: c.dec, fov: c.fov, width: 430, height: 412, milkyWay: .9, lines: c.lines, maxMag: 6.2 }).then(p => { if (skyId === id) { conProject = p; renderSky(); } });
   renderControls();
 }
-function pickSkyStar(key) { skyPicked.add(key); toast(`⭐ ${STARS[key].name}: ${STARS[key].color} · 표면 온도 약 ${roundTemp(STARS[key].temp)} ℃`); renderControls(); }
+function pickSkyStar(key) { skyPicked.add(key); toast(`${STARS[key].name}: ${STARS[key].color} · 표면 온도 약 ${roundTemp(STARS[key].temp)} ℃`); renderControls(); }
 // 크게 본 사진: 별자리 사진에는 교과서의 별 이름과 색·표면 온도를 붙여요(사진 속 자리는 사진에서 찾은 값).
 const PINS = {
   orionWide: { w: 714, h: 1100, stars: [['betelgeuse', 98, 222, 1], ['rigel', 526, 885, -1]] },
@@ -255,24 +255,24 @@ function renderSky() {
 function renderControls() {
   if (tab !== 'stars') $('#actions').innerHTML = '';
   if (tab === 'heat') {
-    $('#controls').innerHTML = `<button id="heater-btn" aria-pressed="${heaterOn}">${heaterOn ? '⏻ 전원 끄기' : '⏻ 전원 켜기'}</button>
+    $('#controls').innerHTML = `<button id="heater-btn" aria-pressed="${heaterOn}">${heaterOn ? '전원 끄기' : '전원 켜기'}</button>
       <label class="space-range"><span>빛을 내는 공의 표면 온도</span><span class="range-ends">낮음</span><input type="range" id="temp" min="0" max="1000" value="${sliderV}" aria-label="빛을 내는 공의 표면 온도"><span class="range-ends">높음</span></label>`;
     $('#heater-btn').onclick = () => { heaterOn = !heaterOn; renderControls(); };
     $('#temp').oninput = e => {
       sliderV = +e.target.value; ballT = tempOf(sliderV);
-      if (ballT < 4000 && !lowSeen) { lowSeen = true; toast('🔴 표면 온도가 낮으니 붉은색을 띠어요'); }
-      if (ballT > 20000 && !highSeen) { highSeen = true; toast('🔵 표면 온도가 높으니 파란색을 띠어요'); }
+      if (ballT < 4000 && !lowSeen) { lowSeen = true; toast('표면 온도가 낮으니 붉은색을 띠어요'); }
+      if (ballT > 20000 && !highSeen) { highSeen = true; toast('표면 온도가 높으니 파란색을 띠어요'); }
     };
   } else if (tab === 'stars') {
     $('#controls').innerHTML = `<div role="group" aria-label="별 고르기" class="star-chips"><span class="group-label">조사할 별</span>${CARD_STARS.map(k => `<button data-star="${k}" aria-pressed="${starKey === k}"><i class="chip-dot" style="background:${rgbStr(starPaletteRGB(STARS[k].temp))}"></i>${STARS[k].name}</button>`).join('')}</div>`;
     $$('[data-star]').forEach(b => b.onclick = () => chooseStar(b.dataset.star));
     const ph = starKey && STAR_PHOTOS[starKey];
-    $('#actions').innerHTML = `<div role="group" aria-label="사진 관측" class="obs-tools"><button id="zoom-in" ${ph ? '' : 'disabled'}>➕ 확대</button><button id="zoom-out" ${ph ? '' : 'disabled'}>➖ 축소</button><button id="zoom-center" ${ph ? '' : 'disabled'}>🎯 별을 가운데로</button><button id="measure-color" ${ph && !ph.noMeasure ? '' : 'disabled'}>🎨 별빛 색 재기</button><button id="surface-btn" ${ph?.surface ? '' : 'disabled'} aria-pressed="${viewer.surfaceOn}">🔭 ${viewer.surfaceOn ? '다시 별 사진으로' : '표면까지 확대'}</button></div>`;
+    $('#actions').innerHTML = `<div role="group" aria-label="사진 관측" class="obs-tools"><button id="zoom-in" ${ph ? '' : 'disabled'}>+ 확대</button><button id="zoom-out" ${ph ? '' : 'disabled'}>− 축소</button><button id="zoom-center" ${ph ? '' : 'disabled'}>별을 가운데로</button><button id="measure-color" ${ph && !ph.noMeasure ? '' : 'disabled'}>별빛 색 재기</button><button id="surface-btn" ${ph?.surface ? '' : 'disabled'} aria-pressed="${viewer.surfaceOn}">${viewer.surfaceOn ? '다시 별 사진으로' : '표면까지 확대'}</button></div>`;
     $('#zoom-in').onclick = () => viewer.zoomBy(1.4);
     $('#zoom-out').onclick = () => viewer.zoomBy(1 / 1.4);
     $('#zoom-center').onclick = () => viewer.center();
     $('#measure-color').onclick = () => viewer.measure();
-    $('#surface-btn').onclick = () => { const on = viewer.toggleSurface(); if (on) { surfaceSeen.add(starKey); toast(`🔭 초대형 망원경으로 찍은 ${STARS[starKey].name}의 표면이에요. 별이 아주 커서 표면의 무늬까지 보여요`); } setTimeout(renderControls, 700); renderControls(); };
+    $('#surface-btn').onclick = () => { const on = viewer.toggleSurface(); if (on) { surfaceSeen.add(starKey); toast(`초대형 망원경으로 찍은 ${STARS[starKey].name}의 표면이에요. 별이 아주 커서 표면의 무늬까지 보여요`); } setTimeout(renderControls, 700); renderControls(); };
     renderStars();
   } else {
     const c = SKY_STARS_PICK[skyId];

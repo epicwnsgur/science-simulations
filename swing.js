@@ -111,11 +111,11 @@ function paint(dt) {
       renderText();
     }
     maxByVoltage[VOLTAGES[vIndex]] = Math.max(maxByVoltage[VOLTAGES[vIndex]] ?? 0, Math.abs(angle));
-    if (key === '1,1') mark('first', '🔀 그네가 움직였어요! 방향을 기록해요');
+    if (key === '1,1') mark('first', '그네가 움직였어요! 방향을 기록해요');
     if (key === '-1,1') mark('reversed', '⇄ 전류의 방향을 바꾸니 반대로 움직여요');
-    if (key === '1,-1') mark('flipped', '🧲 자석의 극을 바꾸니 반대로 움직여요');
-    if (Object.keys(maxByVoltage).filter(v => maxByVoltage[v] > 3).length >= 2) mark('voltage', '⚡ 전압에 따라 움직이는 정도가 달라요');
-    if (onTime > 5 && !warned) { warned = true; toast('🔥 코일에 오래 전류가 흐르지 않도록 관찰한 뒤 바로 떼요'); }
+    if (key === '1,-1') mark('flipped', '자석의 극을 바꾸니 반대로 움직여요');
+    if (Object.keys(maxByVoltage).filter(v => maxByVoltage[v] > 3).length >= 2) mark('voltage', '전압에 따라 움직이는 정도가 달라요');
+    if (onTime > 5 && !warned) { warned = true; toast('코일에 오래 전류가 흐르지 않도록 관찰한 뒤 바로 떼요'); }
   }
 }
 function mark(key, msg) { if (!seen[key]) { seen[key] = true; toast(msg); } }
@@ -127,11 +127,11 @@ function press(state) {
   renderText();
 }
 function renderControls() {
-  $('#controls').innerHTML = `<div role="group" aria-label="전압"><span class="group-label">전압</span>${VOLTAGES.map((v, i) => `<button data-v="${i}" aria-pressed="${i === vIndex}">${v} V</button>`).join('')}</div><div role="group" aria-label="바꾸기"><button id="flip-current">⇅ 전류의 방향 바꾸기</button><button id="flip-magnet">🧲 자석의 N극과 S극 바꾸기</button></div>`;
+  $('#controls').innerHTML = `<div role="group" aria-label="전압"><span class="group-label">전압</span>${VOLTAGES.map((v, i) => `<button data-v="${i}" aria-pressed="${i === vIndex}">${v} V</button>`).join('')}</div><div role="group" aria-label="바꾸기"><button id="flip-current">⇅ 전류의 방향 바꾸기</button><button id="flip-magnet">자석의 N극과 S극 바꾸기</button></div>`;
   $('#actions').innerHTML = `<button id="press-btn" class="primary hold" aria-pressed="false">스위치 누르고 있기 (누르는 동안 전류가 흘러요)</button>`;
   $$('[data-v]').forEach(b => b.onclick = () => { vIndex = +b.dataset.v; press(false); renderControls(); });
   $('#flip-current').onclick = () => { current *= -1; press(false); toast('⇅ 전원 장치의 두 전선을 바꾸어 꽂았어요. 전류의 방향이 반대가 돼요'); renderText(); };
-  $('#flip-magnet').onclick = () => { magnet *= -1; press(false); toast('🧲 자석의 극을 바꾸었어요'); renderText(); };
+  $('#flip-magnet').onclick = () => { magnet *= -1; press(false); toast('자석의 극을 바꾸었어요'); renderText(); };
   const btn = $('#press-btn');
   btn.onpointerdown = e => { e.preventDefault(); btn.setPointerCapture?.(e.pointerId); press(true); };
   for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) btn.addEventListener(ev, () => press(false));

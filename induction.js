@@ -430,12 +430,12 @@ function frame(now) {
   if (mode === 'spoon') {
     stepSpoon(dt); paintSpoon();
     if (Math.abs(angle) > .07) {
-      if (spoonKey === 'straw' && !seen.spoonMinus) { seen.spoonMinus = true; celebrate('🥄 (−)빨대가 숟가락을 끌어당겨요!'); }
-      if (spoonKey === 'glove' && !seen.spoonPlus) { seen.spoonPlus = true; celebrate('🧤 (+)장갑도 숟가락을 끌어당겨요!'); }
+      if (spoonKey === 'straw' && !seen.spoonMinus) { seen.spoonMinus = true; celebrate('(−)빨대가 숟가락을 끌어당겨요!'); }
+      if (spoonKey === 'glove' && !seen.spoonPlus) { seen.spoonPlus = true; celebrate('(+)장갑도 숟가락을 끌어당겨요!'); }
     }
   } else {
     stepScope(now, dt); paintScope(now);
-    if (leafShown > 6 && rubLevel && !seen.levels.has(rubLevel)) { seen.levels.add(rubLevel); burst($('#fx'), LEAF_PIVOT.x, LEAF_PIVOT.y + 50, '#ffe27a', 16); toast(rubLevel === 2 ? '✨ 많이 문지르니 금속박이 더 크게 벌어져요!' : '✨ 금속박이 벌어졌어요!'); }
+    if (leafShown > 6 && rubLevel && !seen.levels.has(rubLevel)) { seen.levels.add(rubLevel); burst($('#fx'), LEAF_PIVOT.x, LEAF_PIVOT.y + 50, '#ffe27a', 16); toast(rubLevel === 2 ? '많이 문지르니 금속박이 더 크게 벌어져요!' : '금속박이 벌어졌어요!'); }
   }
   paintObject(); renderText(now);
   flow?.update(progress());

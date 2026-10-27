@@ -55,7 +55,7 @@ const scene = `
   <g id="board-sights">${['a', 'b'].flatMap(id => ['left', 'right'].map(h => { const hx = BOARD.holes[h], [x0, y0] = bp(hx, 0), [x1, y1] = bp(sightOnScale(hx, BOARD.models[id]), BOARD.scaleY), c = id === 'a' ? '#d9480f' : '#1c6dd0'; return `<g data-sight="${id}-${h}"><path class="sight" d="M${x0} ${y0} L${x1} ${y1}" stroke="${c}" pathLength="1"/><path class="sight-mark" d="M${x1 - 6} ${y1 + 14} L${x1} ${y1 + 4} L${x1 + 6} ${y1 + 14}Z" fill="${c}"/></g>`; })).join('')}</g>
   ${model('a', '#ffd84a')}${model('b', '#ffe98f')}
   <g id="protractor" opacity="0"></g>
-  ${['left', 'right'].map(h => { const [x, y] = bp(BOARD.holes[h], 0); return `<g class="hole" data-hole-mark="${h}"><circle cx="${x}" cy="${y}" r="9" fill="#2a2418" stroke="#7d6f55" stroke-width="2"/><text x="${x}" y="${y + 26}" text-anchor="middle" class="board-small">${h === 'left' ? '왼쪽 구멍' : '오른쪽 구멍'}</text><text class="eye" x="${x}" y="${y + 5}" text-anchor="middle">👁</text></g>`; }).join('')}
+  ${['left', 'right'].map(h => { const [x, y] = bp(BOARD.holes[h], 0); return `<g class="hole" data-hole-mark="${h}"><circle cx="${x}" cy="${y}" r="9" fill="#2a2418" stroke="#7d6f55" stroke-width="2"/><text x="${x}" y="${y + 26}" text-anchor="middle" class="board-small">${h === 'left' ? '왼쪽 구멍' : '오른쪽 구멍'}</text><g class="eye" transform="translate(${x} ${y})"><path d="M-10 0Q0-8 10 0Q0 8-10 0Z" fill="#f4f1e8" stroke="#3a3326" stroke-width="1.2"/><circle r="3.6" fill="#3d6ea8"/><circle r="1.6" fill="#111"/></g></g>`; }).join('')}
 </g>
 <g id="peek-view">
   <rect x="${PEEK.cx - 166}" y="8" width="332" height="306" rx="14" fill="#060815" stroke="#2d3566"/>
@@ -94,7 +94,7 @@ const scene = `
       <g id="inset-y"><circle r="13" fill="url(#star-glow-y)"/><circle r="3" fill="#fff"/><text x="10" y="-10" class="inset-label">별 Y</text></g>
       <g id="inset-x"><circle r="17" fill="url(#star-glow-x)"/><circle r="3.6" fill="#fff"/><text x="12" y="-12" class="inset-label">별 X</text></g>
     </g>
-    <rect x="${INSET.x + 10}" y="${INSET.y + 10}" width="150" height="26" rx="13" fill="#0a0d22cc"/><text x="${INSET.x + 22}" y="${INSET.y + 28}" class="inset-title">🔭 지구에서 본 하늘</text>
+    <rect x="${INSET.x + 10}" y="${INSET.y + 10}" width="150" height="26" rx="13" fill="#0a0d22cc"/><text x="${INSET.x + 22}" y="${INSET.y + 28}" class="inset-title">지구에서 본 하늘</text>
     <text id="season" x="${INSET.x + INSET.w - 12}" y="${INSET.y + INSET.h - 12}" text-anchor="end" class="inset-title"></text>
   </g>
   <g id="orbit-read" transform="translate(${INSET.x} ${INSET.y + INSET.h + 22})"></g>
@@ -162,7 +162,7 @@ function renderBoard(dt) {
   const near = modelId === 'a';
   $('#peek-star').setAttribute('transform', `translate(${(PEEK.cx + peekX * PEEK.k).toFixed(1)} ${PEEK.cy + 34}) scale(${near ? 1.15 : .8})`);
   $('#peek-star').style.opacity = hole ? 1 : .25;
-  setText('#peek-title', hole ? `👁 ${hole === 'left' ? '왼쪽' : '오른쪽'} 구멍으로 본 별 모형 ${BOARD.models[modelId].name}` : '구멍으로 본 모습 · 구멍을 골라 보세요');
+  setText('#peek-title', hole ? `${hole === 'left' ? '왼쪽' : '오른쪽'} 구멍으로 본 별 모형 ${BOARD.models[modelId].name}` : '구멍으로 본 모습 · 구멍을 골라 보세요');
   setText('#peek-read', hole ? `별 모형이 눈금 ${circled(scaleNumber(sightOnScale(BOARD.holes[hole], BOARD.models[modelId])))} 앞에 보여요` : '');
   // 각도기
   const p = $('#protractor');
@@ -173,7 +173,7 @@ function renderBoard(dt) {
     p.setAttribute('opacity', 1);
     if (measuring.t >= 1 && measured[measuring.id] === undefined) {
       measured[measuring.id] = Math.round(target);
-      toast(`📐 별 모형 ${BOARD.models[measuring.id].name}의 시차: 약 ${Math.round(target)}°`);
+      toast(`별 모형 ${BOARD.models[measuring.id].name}의 시차: 약 ${Math.round(target)}°`);
       renderText();
     }
   } else p.setAttribute('opacity', 0);
@@ -184,7 +184,7 @@ function look(h) {
   hole = h;
   const n = scaleNumber(sightOnScale(BOARD.holes[h], BOARD.models[modelId]));
   peekTarget = sightOnScale(BOARD.holes[h], BOARD.models[modelId]);
-  if (views[modelId][h] === undefined) toast(`✏️ ${BOARD.models[modelId].name}: ${h === 'left' ? '왼쪽' : '오른쪽'} 구멍으로 보면 눈금 ${circled(n)}에 보여요. 위치를 표시하고 선을 그었어요`);
+  if (views[modelId][h] === undefined) toast(`${BOARD.models[modelId].name}: ${h === 'left' ? '왼쪽' : '오른쪽'} 구멍으로 보면 눈금 ${circled(n)}에 보여요. 위치를 표시하고 선을 그었어요`);
   views[modelId][h] = Math.round(n);
   renderControls();
 }
@@ -216,11 +216,11 @@ function stepOrbit(dt) {
     theta = noOrbit ? thetaFrom : thetaFrom + (thetaTo - thetaFrom) * ease(moveT);
     if (moveT >= 1) {
       theta = noOrbit ? thetaFrom : thetaTo % (2 * Math.PI);
-      if (noOrbit) toast('🌍 6개월이 지났지만 지구가 그 자리에 있어요. 별 X가 보이는 위치는 그대로예요');
+      if (noOrbit) toast('6개월이 지났지만 지구가 그 자리에 있어요. 별 X가 보이는 위치는 그대로예요');
       else {
         const atB = Math.abs(theta - Math.PI) < .01;
-        if (atB) { recorded.B = true; orbited = true; toast('📍 6개월 뒤(B)에 보니 별 X가 배경 별들에 대해 위치가 달라졌어요! 별 Y는 조금만 달라졌어요'); }
-        else toast('📍 다시 6개월이 지나 지구가 A로 돌아왔어요');
+        if (atB) { recorded.B = true; orbited = true; toast('6개월 뒤(B)에 보니 별 X가 배경 별들에 대해 위치가 달라졌어요! 별 Y는 조금만 달라졌어요'); }
+        else toast('다시 6개월이 지나 지구가 A로 돌아왔어요');
       }
       renderControls();
     }
@@ -259,7 +259,7 @@ function chooseStar(key) {
   const opts = { ra: s.ra, dec: s.dec, fov: 34, width: 800, height: 440, milkyWay: .85, lines: [IAU[key]], maxMag: 6.2, skip: (r, d) => Math.abs(r - s.ra) < .25 && Math.abs(d - s.dec) < .25, skipKey: key };
   setSky($('#star-sky'), opts).then(() => renderStars(0));
   const far = !parallaxMeasurable(s.dist);
-  toast(far ? `🔭 ${s.name}: 100 pc보다 멀어서 지구에서 재기에는 연주 시차가 너무 작아요. 위치가 거의 달라지지 않아요` : `🔭 ${s.name}: 연주 시차 약 ${fmtArcsec(parallaxArcsec(s.dist))}`);
+  toast(far ? `${s.name}: 100 pc보다 멀어서 지구에서 재기에는 연주 시차가 너무 작아요. 위치가 거의 달라지지 않아요` : `${s.name}: 연주 시차 약 ${fmtArcsec(parallaxArcsec(s.dist))}`);
   renderControls();
 }
 const IAU = { proxima: 'Cen', sirius: 'CMa', vega: 'Lyr', megrez: 'UMa', polaris: 'UMi', betelgeuse: 'Ori' };
@@ -297,8 +297,8 @@ function renderStars(dt) {
 function renderControls() {
   if (tab === 'board') {
     $('#controls').innerHTML = `<div role="group" aria-label="별 모형 고르기"><span class="group-label">별 모형</span>${['a', 'b'].map(id => `<button data-model="${id}" aria-pressed="${modelId === id}">별 모형 ${BOARD.models[id].name}</button>`).join('')}</div>
-      <div role="group" aria-label="구멍 고르기"><button data-hole="left" aria-pressed="${hole === 'left'}">👁 왼쪽 구멍으로 보기</button><button data-hole="right" aria-pressed="${hole === 'right'}">👁 오른쪽 구멍으로 보기</button></div>
-      <button id="measure" ${views[modelId].left && views[modelId].right ? '' : 'disabled'}>📐 각도기로 시차 재기</button>`;
+      <div role="group" aria-label="구멍 고르기"><button data-hole="left" aria-pressed="${hole === 'left'}">왼쪽 구멍으로 보기</button><button data-hole="right" aria-pressed="${hole === 'right'}">오른쪽 구멍으로 보기</button></div>
+      <button id="measure" ${views[modelId].left && views[modelId].right ? '' : 'disabled'}>각도기로 시차 재기</button>`;
     $$('[data-model]').forEach(b => b.onclick = () => chooseModel(b.dataset.model));
     $$('[data-hole]').forEach(b => b.onclick = () => look(b.dataset.hole));
     $('#measure').onclick = () => { measuring = { id: modelId, t: 0 }; };
@@ -310,7 +310,7 @@ function renderControls() {
     $('#orbit-play').onclick = playOrbit;
     $$('[data-annual]').forEach(b => b.onclick = () => {
       annual = annual === b.dataset.annual ? null : b.dataset.annual;
-      if (annual) { annualSeen[annual] = true; toast(`📐 별 ${annual}의 연주 시차: ∠A${annual}B의 1/2이에요`); }
+      if (annual) { annualSeen[annual] = true; toast(`별 ${annual}의 연주 시차: ∠A${annual}B의 1/2이에요`); }
       renderControls();
     });
     $('#no-orbit').onchange = e => { noOrbit = e.target.checked; if (noOrbit) { theta = 0; trail.X = []; trail.Y = []; recorded.B = false; } renderControls(); };

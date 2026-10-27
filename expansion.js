@@ -96,7 +96,7 @@ const elastic = t => 1 + Math.sin(t * Math.PI * 3) * (1 - t) * .045;
 function inflate(next) {
   if (inflT < 1 || measuring) return;
   phase = next; rFrom = r; rTo = RADII[next]; inflT = 0;
-  toast(next === 'little' ? '🎈 펌프로 공기를 조금 넣었어요' : '🎈 공기를 더 넣었어요. 풍선 표면이 늘어나요');
+  toast(next === 'little' ? '펌프로 공기를 조금 넣었어요' : '공기를 더 넣었어요. 풍선 표면이 늘어나요');
   renderControls();
 }
 function measure() {
@@ -112,13 +112,13 @@ function stepBalloon(dt) {
     pumpT += dt * 9; moving = true;
     if (inflT >= 1) { r = rTo; renderControls(); }
   }
-  if (phase !== 'flat' && stuck < 1 && inflT >= 1) { stuck = Math.min(1, stuck + dt / (instantLessons.matches ? .01 : 1.4)); moving = true; if (stuck >= 1) { toast("🏷️ 은하 붙임딱지 세 개를 붙였어요. 이제 줄자로 거리를 재 보세요"); renderControls(); } }
+  if (phase !== 'flat' && stuck < 1 && inflT >= 1) { stuck = Math.min(1, stuck + dt / (instantLessons.matches ? .01 : 1.4)); moving = true; if (stuck >= 1) { toast("은하 붙임딱지 세 개를 붙였어요. 이제 줄자로 거리를 재 보세요"); renderControls(); } }
   if (measuring) {
     measuring.f += dt / (instantLessons.matches ? .01 : .7); moving = true;
     if (measuring.f >= 1) {
       table[measuring.phase][measuring.i] = surfaceCm(r, ...PAIRS[measuring.i].map(i => STICKERS[i]));
       measuring.i++; measuring.f = 0;
-      if (measuring.i >= PAIRS.length) { const p = measuring.phase; measuring = null; toast(p === 'little' ? '📏 세 붙임딱지 사이의 거리를 재었어요. 이제 공기를 더 넣어 볼까요?' : '📏 많이 불었을 때의 거리도 재었어요. 처음과 비교해 보세요'); renderControls(); }
+      if (measuring.i >= PAIRS.length) { const p = measuring.phase; measuring = null; toast(p === 'little' ? '세 붙임딱지 사이의 거리를 재었어요. 이제 공기를 더 넣어 볼까요?' : '많이 불었을 때의 거리도 재었어요. 처음과 비교해 보세요'); renderControls(); }
     }
   }
   const pumpY = inflT < 1 ? (Math.sin(pumpT) + 1) / 2 : 1;
@@ -163,7 +163,7 @@ function renderTable() {
 /* ---------- 팽창의 중심이 있을까? ---------- */
 function chooseRef(i) { ref = i; scale = 1; playing = false; refsTried.add(i); renderControls(); }
 function stepCenter(dt) {
-  if (playing) { scale = Math.min(1.8, scale + dt * (instantLessons.matches ? 10 : .2)); if (scale > 1.5 && !expandedRefs.has(ref)) { expandedRefs.add(ref); renderText(); } if (scale >= 1.8) { playing = false; toast(`🌌 은하 ${REFS[ref][0]}에서 보아도 다른 모든 은하가 멀어졌어요`); renderControls(); } }
+  if (playing) { scale = Math.min(1.8, scale + dt * (instantLessons.matches ? 10 : .2)); if (scale > 1.5 && !expandedRefs.has(ref)) { expandedRefs.add(ref); renderText(); } if (scale >= 1.8) { playing = false; toast(`은하 ${REFS[ref][0]}에서 보아도 다른 모든 은하가 멀어졌어요`); renderControls(); } }
   const g = fx.begin(); if (!g) return;
   const R = ref === null ? { x: 0, y: 0 } : field[REFS[ref][1]];
   const P = gg => { const s = seenFrom(R, gg, scale); return [FIELD.cx + s.x * FIELD.k, FIELD.cy + s.y * FIELD.k]; };
@@ -203,7 +203,7 @@ function stepCenter(dt) {
 const funnelH = x => 6 + TIME.h * Math.pow(Math.max(0, (x - TIME.x0) / (TIME.x1 - TIME.x0)), .75);
 const timeGal = Array.from({ length: 70 }, (_, i) => { let s = i * 7919 + 13; const rr = () => { s = (s * 16807) % 2147483647; return s / 2147483647; }; return { t: .28 + rr() * .72, u: rr() * 2 - 1, v: rr() * 2 - 1, img: 1 + (i % 14), size: 8 + rr() * 12 }; });
 function stepTime(dt) {
-  if (tPlaying) { tCursor = Math.min(1, tCursor + dt / (instantLessons.matches ? .01 : 7)); if (tCursor >= 1) { tPlaying = false; if (!timeDone) { timeDone = true; toast('🌌 우주는 약 138억 년 전 대폭발 이후 점점 팽창하여 현재와 같은 모습이 되었어요'); } renderControls(); } }
+  if (tPlaying) { tCursor = Math.min(1, tCursor + dt / (instantLessons.matches ? .01 : 7)); if (tCursor >= 1) { tPlaying = false; if (!timeDone) { timeDone = true; toast('우주는 약 138억 년 전 대폭발 이후 점점 팽창하여 현재와 같은 모습이 되었어요'); } renderControls(); } }
   const g = fx.begin(); if (!g) return;
   const xc = TIME.x0 + (TIME.x1 - TIME.x0) * tCursor;
   // 깔때기 모양(교과서 그림 VIII 9): 왼쪽 끝이 대폭발, 오른쪽이 현재
@@ -255,7 +255,7 @@ function renderAnalogy() {
   $$('[data-match-real]').forEach(g => g.onclick = () => {
     if (pickModel === null) return toast('먼저 왼쪽(풍선 모형)에서 하나를 골라요');
     const i = +g.dataset.matchReal, j = REAL_ORDER.indexOf(i);
-    if (i === pickModel) { matched.add(i); toast(`🔗 ${ANALOGY.model[i]} ↔ ${ANALOGY.real[i]}`); }
+    if (i === pickModel) { matched.add(i); toast(`${ANALOGY.model[i]} ↔ ${ANALOGY.real[i]}`); }
     else { wrongFlash.push([pickModel, j]); setTimeout(() => { wrongFlash.shift(); renderAnalogy(); }, 1200); toast('다시 생각해 봐요'); }
     pickModel = null; renderAnalogy(); renderText();
   });
@@ -267,7 +267,7 @@ function renderAnalogy() {
 function renderControls() {
   if (tab === 'balloon') {
     const busy = inflT < 1 || !!measuring;
-    $('#controls').innerHTML = `<button id="inflate-little" ${busy || phase !== 'flat' ? 'disabled' : ''}>🎈 공기 조금 넣기</button><button id="measure-tape" ${busy || phase === 'flat' || stuck < 1 ? 'disabled' : ''}>📏 줄자로 거리 재기</button><button id="inflate-more" ${busy || phase !== 'little' || Object.keys(table.little).length < 3 ? 'disabled' : ''}>🎈 공기 더 넣기</button><button id="deflate" ${busy ? 'disabled' : ''}>↺ 바람 빼기</button>`;
+    $('#controls').innerHTML = `<button id="inflate-little" ${busy || phase !== 'flat' ? 'disabled' : ''}>공기 조금 넣기</button><button id="measure-tape" ${busy || phase === 'flat' || stuck < 1 ? 'disabled' : ''}>줄자로 거리 재기</button><button id="inflate-more" ${busy || phase !== 'little' || Object.keys(table.little).length < 3 ? 'disabled' : ''}>공기 더 넣기</button><button id="deflate" ${busy ? 'disabled' : ''}>↺ 바람 빼기</button>`;
     $('#inflate-little').onclick = () => inflate('little');
     $('#inflate-more').onclick = () => inflate('much');
     $('#measure-tape').onclick = measure;

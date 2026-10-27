@@ -174,7 +174,7 @@ function record() {
   if (tool !== 'device') return;
   const v = Math.round(luxAt(d));
   readings[d] = v;
-  toast(`✏️ ${d} cm에서 빛의 세기 ${v} lx를 기록했어요`);
+  toast(`${d} cm에서 빛의 세기 ${v} lx를 기록했어요`);
   renderControls();
 }
 
@@ -213,7 +213,7 @@ function pick(m) {
   if (picks.length === 2) {
     const [a, b] = [...picks].sort((x, y) => x - y);
     compared.add(`${a}-${b}`);
-    toast(`⭐ ${a}등급 별은 ${b}등급 별보다 약 ${ratioText(b - a)}배 밝아요`);
+    toast(`${a}등급 별은 ${b}등급 별보다 약 ${ratioText(b - a)}배 밝아요`);
   }
   renderControls();
 }
@@ -234,7 +234,7 @@ function absState(key) {
 function renderAbs(dt) {
   if (moveDir) {
     moveU = Math.max(0, Math.min(1, moveU + moveDir * dt / (instantLessons.matches ? .01 : 3.6)));
-    if (moveU === 1 && moveDir > 0) { moveDir = 0; if (!absDone) { absDone = true; toast('🔭 모든 별이 10 pc에 있어요! 이제 별의 밝기가 곧 절대 등급이에요. 이제 미르잠이 시리우스보다 밝게 보여요'); } renderControls(); }
+    if (moveU === 1 && moveDir > 0) { moveDir = 0; if (!absDone) { absDone = true; toast('모든 별이 10 pc에 있어요! 이제 별의 밝기가 곧 절대 등급이에요. 이제 미르잠이 시리우스보다 밝게 보여요'); } renderControls(); }
     if (moveU === 0 && moveDir < 0) { moveDir = 0; renderControls(); }
   }
   const { x, y, R } = TEN;
@@ -259,8 +259,8 @@ function renderAbs(dt) {
 function renderControls() {
   if (tab === 'light') {
     $('#controls').innerHTML = `<div role="group" aria-label="거리"><span class="group-label">손전등과의 거리</span>${DISTANCES.map(v => `<button data-d="${v}" aria-pressed="${d === v}">${v} cm</button>`).join('')}</div>
-      <div role="group" aria-label="측정 도구"><button data-tool="device" aria-pressed="${tool === 'device'}">📱 스마트 기기</button><button data-tool="paper" aria-pressed="${tool === 'paper'}">⬛ 검은색 종이판</button></div>`;
-    $('#actions').innerHTML = `<button id="record-lux" class="primary" ${tool === 'device' ? '' : 'disabled'}>✏️ 빛의 세기 기록하기</button>`;
+      <div role="group" aria-label="측정 도구"><button data-tool="device" aria-pressed="${tool === 'device'}">스마트 기기</button><button data-tool="paper" aria-pressed="${tool === 'paper'}">검은색 종이판</button></div>`;
+    $('#actions').innerHTML = `<button id="record-lux" class="primary" ${tool === 'device' ? '' : 'disabled'}>빛의 세기 기록하기</button>`;
     $$('[data-d]').forEach(b => b.onclick = () => { d = +b.dataset.d; paperTimer = 0; renderControls(); });
     $$('[data-tool]').forEach(b => b.onclick = () => { tool = b.dataset.tool; renderControls(); });
     $('#record-lux').onclick = record;
@@ -270,7 +270,7 @@ function renderControls() {
     $$('[data-mag]').forEach(b => b.onclick = () => pick(+b.dataset.mag));
     renderMag();
   } else {
-    $('#controls').innerHTML = `<button id="to-10pc" ${moveDir || moveU === 1 ? 'disabled' : ''}>🚀 모든 별을 10 pc로 옮기기</button><button id="back-pc" ${moveDir || moveU === 0 ? 'disabled' : ''}>↩ 원래 거리로 되돌리기</button>`;
+    $('#controls').innerHTML = `<button id="to-10pc" ${moveDir || moveU === 1 ? 'disabled' : ''}>모든 별을 10 pc로 옮기기</button><button id="back-pc" ${moveDir || moveU === 0 ? 'disabled' : ''}>↩ 원래 거리로 되돌리기</button>`;
     $('#actions').innerHTML = '';
     $('#to-10pc').onclick = () => { moveDir = 1; renderControls(); };
     $('#back-pc').onclick = () => { moveDir = -1; renderControls(); };

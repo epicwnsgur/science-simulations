@@ -8,7 +8,7 @@ html[data-theme=light] body{background:radial-gradient(900px 500px at 85% -10%,#
 html[data-theme=light] header{border-bottom:1px solid var(--line)}
 html[data-theme=light] header::after{background:linear-gradient(90deg,transparent,var(--current),var(--volt),transparent)}
 html[data-theme=light] .brand{color:var(--ink)}
-html[data-theme=light] .brand::before{color:var(--volt);text-shadow:none}
+html[data-theme=light] .brand::before{background:var(--volt)}
 html[data-theme=light] .grade{color:var(--muted)}
 html[data-theme=light] .breadcrumb{color:var(--faint)}
 html[data-theme=light] .intro h1,html[data-theme=light] h1{color:var(--ink);background:linear-gradient(100deg,#ffffff 0%,#f2ccdb 40%,var(--current) 70%,var(--volt) 100%);-webkit-text-fill-color:transparent}
@@ -186,6 +186,7 @@ html[data-theme=light] .flow-dialog dl>div{background:#fceef4;border:1px solid v
 html[data-theme=light] .flow-dialog dt{color:var(--muted)}
 html[data-theme=light] .flow-dialog dd{color:var(--ink)}
 html[data-theme=light] .flow-dialog-actions{border-top:1px solid var(--line);background:var(--panel-2)}
+html[data-theme=light] button[data-gated]::before{background:currentColor}
 html[data-theme=light] .flow-toast{background:#f7d0e0;border:1px solid var(--volt);color:#38192d;box-shadow:0 10px 30px #81315136}
 html[data-theme=light] .answers button.chosen{background:#f3b6cf;border:2px solid var(--volt);color:#38192d;box-shadow:0 0 0 2px #ffd23f44}
 html[data-theme=light] .answers button.chosen.right{background:#e4f7ef;border-color:var(--ok);color:#38192d}
@@ -201,6 +202,7 @@ html[data-theme=light] .view-bar button[aria-pressed=true]{background:#f8d7e4;bo
 html[data-theme=light] .view-bar .view-tip{color:var(--faint)}
 html[data-theme=light] #to-explanation[aria-disabled=true]{box-shadow:none}
 html[data-theme=light] .step-guide.attention{border-color:var(--volt);box-shadow:0 0 0 3px #ffd23f88,0 0 32px #ffd23f66}
+html[data-theme=light] .step-guide.attention li.current::before{color:var(--volt)}
 html[data-theme=light] .step-target{outline:3px solid var(--volt)!important;box-shadow:0 0 0 6px #ffd23f44,0 0 24px #ffd23f88!important}
 html[data-theme=light] .step-target::after{background:var(--volt);color:#ffffff}
 html[data-theme=light] .teacher-btn{border:1px solid var(--line-2);background:#fceef4;color:var(--muted)}
@@ -224,6 +226,7 @@ html[data-theme=light] .guide-item:focus-visible{outline:2px solid var(--current
 html[data-theme=light] .guide-steps small.guide-how{color:var(--current)}
 html[data-theme=light] .concept-sequence .sticky{border:0;background:transparent;color:var(--volt)}
 html[data-theme=light] .concept-sequence .sticky-note{background:linear-gradient(180deg,#ffe98a,#ffd54a);box-shadow:0 3px 8px #81315124}
+html[data-theme=light] .concept-sequence .sticky-note .pin{background:radial-gradient(circle at 35% 30%,#ff9c9c,#d62828 55%,#f0bebe);box-shadow:0 2px 3px #81315130}
 html[data-theme=light] .concept-sequence .sticky-note::after{border:6px solid transparent;border-right-color:#e8b923;border-bottom-color:#e8b923}
 html[data-theme=light] .concept-sequence .sticky:focus-visible{outline:2px solid var(--current)}
 html[data-theme=light] .sticky-progress{background:#faf6ec;border:1px solid #ffd54a66;color:#ad5c00!important}
@@ -308,7 +311,7 @@ html[data-theme=light] body.lab-space{--bg:#fbf5ff;--panel:#ffffff;--panel-2:#f8
     radial-gradient(1px 1px at 44% 38%,#f7e1e1 95%,transparent),radial-gradient(1px 1px at 70% 92%,#ffffff 95%,transparent),
     #fefbfc}
 html[data-theme=light] body.lab-space header::after{background:linear-gradient(90deg,transparent,#8fd3ff,#c77dff,#ffcf6e,transparent)}
-html[data-theme=light] body.lab-space .brand::before{color:var(--volt)}
+html[data-theme=light] body.lab-space .brand::before{background:none;color:var(--volt)}
 html[data-theme=light] body.lab-space .intro h1,html[data-theme=light] body.lab-space h1{background:linear-gradient(100deg,#ffffff 0%,#f8e3eb 35%,#a9c8ff 65%,#ffcf6e 100%)}
 html[data-theme=light] body.lab-space .discovery{color:#38192d;border-left-color:var(--nebula)}
 html[data-theme=light] body.lab-space .model-badge{color:#38192d}

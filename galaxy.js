@@ -93,8 +93,8 @@ let feedback = null;
 
 /* ---------- 우리은하의 모양 ---------- */
 function setGView(name) {
-  if (name === 'sun') { sunOn = true; toast('📍 태양계는 은하 중심에서 약 8500 pc 떨어진 나선팔에 있어요. 우리은하의 지름은 약 30000 pc예요'); }
-  else if (name !== gview) toast(name === 'top' ? '⬆ 위에서 보면 막대 모양의 중심부와 나선팔이 보여요' : name === 'side' ? '➡ 옆에서 보면 중심부가 볼록한 납작한 원반 모양이에요' : '');
+  if (name === 'sun') { sunOn = true; toast('태양계는 은하 중심에서 약 8500 pc 떨어진 나선팔에 있어요. 우리은하의 지름은 약 30000 pc예요'); }
+  else if (name !== gview) toast(name === 'top' ? '↑ 위에서 보면 막대 모양의 중심부와 나선팔이 보여요' : name === 'side' ? '→ 옆에서 보면 중심부가 볼록한 납작한 원반 모양이에요' : '');
   gview = name; seenViews.add(name);
   if (use3d) view3d.view.setView(name);
   renderControls();
@@ -111,12 +111,12 @@ function chooseBand(id) {
   band = id; seenBands.add(id); bandProject = null;
   const b = BANDS[id];
   setSky($('#band-sky'), { ra: b.ra, dec: b.dec, fov: 82, width: 800, height: 440, milkyWay: 1, milkyWayPasses: 3, lines: [], maxMag: 6 }).then(p => { if (band === id) { bandProject = p; renderBand(); } });
-  toast(id === 'center' ? '🌌 은하 중심 방향(궁수자리 쪽): 별이 밀집해 있어 은하수가 밝고 두껍게 보여요' : '🌌 반대 방향(마차부자리 쪽): 은하수가 희미하고 가늘게 보여요');
+  toast(id === 'center' ? '은하 중심 방향(궁수자리 쪽): 별이 밀집해 있어 은하수가 밝고 두껍게 보여요' : '반대 방향(마차부자리 쪽): 은하수가 희미하고 가늘게 보여요');
   renderControls();
 }
 function renderBand() {
   const b = band && BANDS[band];
-  setText('#band-title', b ? `🔭 ${b.name} · ${b.con}` : '방향을 골라 보세요');
+  setText('#band-title', b ? `${b.name} · ${b.con}` : '방향을 골라 보세요');
   // 지도: 태양계에서 바라보는 방향(부채꼴)
   if (b) {
     const dir = band === "center" ? Math.atan2(MAP.cy - SY, MAP.cx - SX) : Math.atan2(SY - MAP.cy, SX - MAP.cx), L = band === "center" ? 70 : 40, w = .45;
@@ -138,7 +138,7 @@ function classify(kind) {
   if (ok) { answers[key] = 'right'; rightKinds.add(answer); rightKinds.add(kind); }
   else if (answers[key] !== 'right') answers[key] = 'wrong';
   feedback = { ok, kind, text: ok ? `맞아요! ${KINDS[kind].name}: ${KINDS[kind].feature}` : `다시 생각해 봐요. 힌트: ${hint}` };
-  toast(ok ? `⭕ 맞아요! ${PHOTOS[key].name}은(는) ${KINDS[answer].name}${also.length ? ' 등이 함께 있는 천체' : ''}예요` : '❌ 다시 생각해 봐요. 사진 속 모습을 자세히 보세요');
+  toast(ok ? `○ 맞아요! ${PHOTOS[key].name}은(는) ${KINDS[answer].name}${also.length ? ' 등이 함께 있는 천체' : ''}예요` : '× 다시 생각해 봐요. 사진 속 모습을 자세히 보세요');
   renderControls();
 }
 function renderObjects() {
@@ -158,10 +158,10 @@ function renderObjects() {
 /* ---------- 조작 단추 ---------- */
 function renderControls() {
   if (tab === 'shape') {
-    $('#controls').innerHTML = `<div role="group" aria-label="보는 방향"><span class="group-label">보는 방향</span>${[['oblique', '🔭 비스듬히 보기'], ['top', '⬆ 위에서 보기'], ['side', '➡ 옆에서 보기'], ['sun', '📍 태양계 찾기']].map(([id, t]) => `<button data-gview="${id}" aria-pressed="${gview === id}">${t}</button>`).join('')}</div>`;
+    $('#controls').innerHTML = `<div role="group" aria-label="보는 방향"><span class="group-label">보는 방향</span>${[['oblique', '비스듬히 보기'], ['top', '↑ 위에서 보기'], ['side', '→ 옆에서 보기'], ['sun', '태양계 찾기']].map(([id, t]) => `<button data-gview="${id}" aria-pressed="${gview === id}">${t}</button>`).join('')}</div>`;
     $$('[data-gview]').forEach(b => b.onclick = () => setGView(b.dataset.gview));
   } else if (tab === 'band') {
-    $('#controls').innerHTML = `<div role="group" aria-label="바라보는 방향"><span class="group-label">밤하늘에서 바라보는 방향</span><button data-band="center" aria-pressed="${band === 'center'}">🌌 은하 중심 방향</button><button data-band="anti" aria-pressed="${band === 'anti'}">🌌 은하 중심의 반대 방향</button></div>`;
+    $('#controls').innerHTML = `<div role="group" aria-label="바라보는 방향"><span class="group-label">밤하늘에서 바라보는 방향</span><button data-band="center" aria-pressed="${band === 'center'}">은하 중심 방향</button><button data-band="anti" aria-pressed="${band === 'anti'}">은하 중심의 반대 방향</button></div>`;
     $$('[data-band]').forEach(b => b.onclick = () => chooseBand(b.dataset.band));
     renderBand();
   } else {

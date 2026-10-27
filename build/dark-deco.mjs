@@ -13,7 +13,9 @@ const root = fileURLToPath(new URL('..', import.meta.url));
 const D = 'html:not([data-theme=light])';
 const f = n => +n.toFixed(1);
 // 늘 같은 그림이 나오도록 정해진 순서의 ‘무작위’ 수를 써요.
-const rand = (seed => () => (seed = (seed * 16807) % 2147483647) / 2147483647)(20261027);
+// 그림마다 처음부터 다시 시작하므로, 어떤 순서로 만들어도 같은 그림이 나와요.
+export const seeded = seed => () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+let rand = seeded(20261027);
 
 // 반짝이는 별(네 갈래 빛)
 const sparkle = (x, y, r, c = '#ffffff') => `<path d="M${x} ${f(y - r)} Q${f(x + r * .18)} ${f(y - r * .18)} ${f(x + r)} ${y} Q${f(x + r * .18)} ${f(y + r * .18)} ${x} ${f(y + r)} Q${f(x - r * .18)} ${f(y + r * .18)} ${f(x - r)} ${y} Q${f(x - r * .18)} ${f(y - r * .18)} ${x} ${f(y - r)}Z" fill="${c}"/>`;
@@ -50,12 +52,14 @@ export function mars(cx, cy, r) {
 }
 // 제목 오른쪽 그림: 블랙홀, 우주선, 화성, 별.
 export function headerSpace() {
+  rand = seeded(20261027);
   const stars = Array.from({ length: 26 }, () => `<circle cx="${f(rand() * 372)}" cy="${f(rand() * 132)}" r="${f(.5 + rand() * 1)}" fill="${['#ffffff', '#cfe0ff', '#ffe9c4'][Math.floor(rand() * 3)]}" opacity="${f(.4 + rand() * .6)}"/>`).join('');
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 372 132">${stars}${sparkle(60, 20, 5)}${sparkle(214, 112, 4, '#ffe9c4')}${sparkle(352, 18, 3.5, '#cfe0ff')}
 ${blackHole(118, 66, 18)}${ringShip(244, 34, 15)}${mars(320, 86, 26)}</svg>`;
 }
 // 바탕에 까는 별 무늬: 크기가 다른 두 장(300, 470)을 겹쳐 이어 붙여서 같은 무늬가 되풀이되는 것이 잘 보이지 않아요.
 export function starTile(size = 300, count = 34, sparkles = []) {
+  rand = seeded(size * 7919);
   const stars = Array.from({ length: count }, () => {
     const r = rand() < .12 ? 1.2 + rand() * .6 : .4 + rand() * .7;
     return `<circle cx="${f(rand() * size)}" cy="${f(rand() * size)}" r="${f(r)}" fill="${['#ffffff', '#cfe0ff', '#ffe9c4', '#ffffff'][Math.floor(rand() * 4)]}" opacity="${f(.35 + rand() * .6)}"/>`;

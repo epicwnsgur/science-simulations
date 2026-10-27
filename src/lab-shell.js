@@ -2,7 +2,9 @@
 // 각 실험은 내용(config)만 넘기고, 반환된 도우미로 화면을 갱신합니다.
 import '../theme-light.css';
 import '../theme-dark-deco.css';
+import '../theme-unit-art.css';
 import { setupTheme, themeButtonHTML } from './theme.js';
+import { icon } from './icons.js';
 export const $ = s => document.querySelector(s);
 export const $$ = s => [...document.querySelectorAll(s)];
 
@@ -43,9 +45,11 @@ export const UNITS = {
   7: { href: '../../grades/middle-school-2/unit-7/', label: 'VII. 전기와 자기' },
   8: { href: '../../grades/middle-school-2/unit-8/', label: 'VIII. 별과 우주' },
 };
-export const headerHTML = (unit = 7) => `<header><a class="brand" href="${UNITS[unit].href}">← 실험 목록</a><div class="header-right"><button type="button" class="memo-head-btn" data-memo-open aria-controls="memo-panel" aria-expanded="false" title="내 메모 열기·닫기">📝 메모</button>${themeButtonHTML()}<div class="page-zoom" role="group" aria-label="화면 크기"><span aria-hidden="true">화면 크기</span><button type="button" data-zoom="-" aria-label="화면 작게" title="화면 작게 (Ctrl −)">－<span class="zoom-word"> 작게</span></button><output class="zoom-value" aria-live="polite">100%</output><button type="button" data-zoom="+" aria-label="화면 크게" title="화면 크게 (Ctrl +)">＋<span class="zoom-word"> 크게</span></button></div><div class="text-size" role="group" aria-label="글씨 크기"><span aria-hidden="true">글씨 크기</span>${TEXT_SIZES.map(([id, label, name]) => `<button type="button" data-text-size="${id}" aria-pressed="false" aria-label="글씨 ${name}" title="글씨 ${name}">${label}</button>`).join('')}</div><span class="grade">중학교 2학년 <i></i> 과학</span></div></header>`;
+export const headerHTML = (unit = 7) => `<header data-unit="${unit}"><a class="brand" href="${UNITS[unit].href}">← 실험 목록</a><div class="header-right"><button type="button" class="memo-head-btn" data-memo-open aria-controls="memo-panel" aria-expanded="false" title="내 메모 열기·닫기">${icon('memo')} 메모</button>${themeButtonHTML()}<div class="page-zoom" role="group" aria-label="화면 크기"><span aria-hidden="true">화면 크기</span><button type="button" data-zoom="-" aria-label="화면 작게" title="화면 작게 (Ctrl −)">－<span class="zoom-word"> 작게</span></button><output class="zoom-value" aria-live="polite">100%</output><button type="button" data-zoom="+" aria-label="화면 크게" title="화면 크게 (Ctrl +)">＋<span class="zoom-word"> 크게</span></button></div><div class="text-size" role="group" aria-label="글씨 크기"><span aria-hidden="true">글씨 크기</span>${TEXT_SIZES.map(([id, label, name]) => `<button type="button" data-text-size="${id}" aria-pressed="false" aria-label="글씨 ${name}" title="글씨 ${name}">${label}</button>`).join('')}</div><span class="grade">중학교 2학년 <i></i> 과학</span></div></header>`;
 export function setupTextSize() {
   document.body.classList.add('lab-readable');
+  // 단원 번호: 단원에 어울리는 제목 옆 그림(theme-unit-art.css)을 골라요.
+  document.body.dataset.unit = document.querySelector('header[data-unit]')?.dataset.unit ?? '';
   setupTheme();
   let saved = 'm';
   try { saved = localStorage.getItem('text-size') || 'm'; } catch { /* 처음 크기(중)로 시작해요. */ }
@@ -92,12 +96,12 @@ ${headerHTML(cfg.unit)}
 export function markAnswer(buttons, chosen, right, feedback, text) {
   buttons.forEach(v => v.classList.remove('chosen', 'right', 'wrong'));
   chosen.classList.add('chosen', right ? 'right' : 'wrong');
-  feedback.textContent = (right ? '⭕ ' : '❌ ') + text;
+  feedback.textContent = (right ? '○ ' : '× ') + text;
   feedback.classList.toggle('right', right); feedback.classList.toggle('wrong', !right);
 }
 
 // 관찰 단계 체크리스트. steps: [[이름, 완료 여부, 하는 방법, 이 단계에서 처음 쓰는 조작(CSS 선택자), 눌러야 할 조작(선택)], ...]
-// ‘하는 방법’에는 눌러야 할 단추 이름을 ‘ ’로 감싸 적어요. 학생이 실험 순서 안내의 단계를 누르면 그 단추를 찾아 ‘👆 여기를 눌러요’로 알려 줘요.
+// ‘하는 방법’에는 눌러야 할 단추 이름을 ‘ ’로 감싸 적어요. 학생이 실험 순서 안내의 단계를 누르면 그 단추를 찾아 ‘▲ 여기를 눌러요’로 알려 줘요.
 // 넷째 값을 주면 앞 단계를 마치기 전에는 그 조작이 잠겨 실험 순서대로 진행돼요(src/poe-flow.js의 gate).
 export function checklist(steps) {
   const done = steps.filter(([, d]) => d).length;

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { buildLightTheme } from '../build/light-theme.mjs';
 import { buildDarkDeco } from '../build/dark-deco.mjs';
+import { buildUnitArt } from '../build/unit-art.mjs';
 
 // 어두운 테마 CSS를 고치면 밝은 테마도 다시 만들어야 해요: node build/light-theme.mjs
 test('밝은 테마(theme-light.css)가 지금 CSS로 만든 것과 같음', () => {
@@ -33,4 +34,14 @@ test('어두운 테마의 우주 장식(theme-dark-deco.css)이 최신이고, �
   const selectors = body.split('}').map(r => r.split('{')[0].trim()).filter(Boolean).flatMap(s => s.split(','));
   assert.ok(selectors.length > 10);
   for (const s of selectors) assert.match(s.trim(), /^html:not\(\[data-theme=light\]\)/, s);
+});
+
+test('단원 그림(theme-unit-art.css)이 최신이고, 8개 단원마다 밝은·어두운 그림이 있으며, 단원 페이지가 단원 번호를 알려 줌', async () => {
+  assert.equal(readFileSync('theme-unit-art.css', 'utf8'), buildUnitArt(), 'node build/unit-art.mjs를 실행해 theme-unit-art.css를 다시 만들어 주세요.');
+  const css = readFileSync('theme-unit-art.css', 'utf8');
+  for (let n = 1; n <= 8; n++) {
+    assert.match(css, new RegExp(`html\\[data-theme=light\\] body\\[data-unit="${n}"\\]`));
+    assert.match(css, new RegExp(`html:not\\(\\[data-theme=light\\]\\) body\\[data-unit="${n}"\\]`));
+    assert.match(readFileSync(`grades/middle-school-2/unit-${n}/index.html`, 'utf8'), new RegExp(`<body[^>]* data-unit="${n}"`));
+  }
 });

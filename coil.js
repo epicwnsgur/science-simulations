@@ -126,7 +126,7 @@ function paint(dt) {
   if (mode === 'coil') {
     if (on) {
       onTime += dt;
-      if (onTime > HOT_SECONDS && !warned) { warned = true; toast('🔥 스위치를 오래 누르면 코일이 뜨거워져요. 관찰한 뒤 바로 떼요'); }
+      if (onTime > HOT_SECONDS && !warned) { warned = true; toast('스위치를 오래 누르면 코일이 뜨거워져요. 관찰한 뒤 바로 떼요'); }
     }
     $('#coil-glow').setAttribute('opacity', on ? (.35 + .2 * level).toFixed(2) : 0);
     $('#current-arrow').setAttribute('opacity', on ? 1 : 0);
@@ -149,7 +149,7 @@ function press(state) {
     seen.current = true;
     if (direction < 0) seen.reversed = true;
     levelsTried.add(level);
-    if (levelsTried.size >= 2 && !seen.stronger) { seen.stronger = true; toast('🧭 전류의 세기에 따라 바늘이 움직이는 정도가 달라져요'); }
+    if (levelsTried.size >= 2 && !seen.stronger) { seen.stronger = true; toast('전류의 세기에 따라 바늘이 움직이는 정도가 달라져요'); }
   }
   $('#press-btn')?.setAttribute('aria-pressed', on);
   renderText();
@@ -234,7 +234,7 @@ function frame(now) {
   if (!flow || flow.stage === 'observe') {
     probeDrag.follow(dt);
     paint(dt);
-    if (mode === 'magnet' && !seen.magnet && (magnetTime += dt) > 1.5) { seen.magnet = true; toast('🧲 막대자석 주위 나침반을 관찰했어요'); }
+    if (mode === 'magnet' && !seen.magnet && (magnetTime += dt) > 1.5) { seen.magnet = true; toast('막대자석 주위 나침반을 관찰했어요'); }
     if (show && mode === 'coil' && on) seen.view = true;
     flow?.update(checklist([
       ['막대자석 주위 나침반 관찰하기', seen.magnet, '‘막대자석 주위’ 탭에서 바늘의 N극(빨강)을 살펴요'],
