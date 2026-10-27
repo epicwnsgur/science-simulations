@@ -36,13 +36,13 @@ export function mountConceptQuiz(container, questions, { saved = null, onChange 
       b.disabled = state.checked;
       // 고른 보기는 결과를 본 뒤에도 ‘내 답’으로 또렷하게 보여 줘요.
       const right = b.dataset.choice === q.answer;
-      b.querySelector('.pick-tag').textContent = chosen ? (state.checked ? (right ? '✔ 내 답 · 정답' : '✘ 내 답 · 오답') : '● 내 선택') : state.checked && right ? '정답' : '';
+      b.querySelector('.pick-tag').textContent = chosen ? (state.checked ? (right ? '✓ 내 답 · 정답' : '✕ 내 답 · 오답') : '● 내 선택') : state.checked && right ? '정답' : '';
     });
     questions.forEach((q, n) => {
       const out = container.querySelector(`#quiz-feedback-${n}`), right = state.answers[n] === q.answer;
       out.className = 'quiz-feedback' + (state.checked ? right ? ' right' : ' wrong' : '');
       out.textContent = !state.checked ? (state.answers[n] === null ? (q.type === 'ox' ? '맞으면 O, 틀리면 X를 골라 보세요.' : '옳은 답을 하나 골라 보세요.') : '골랐어요. 바꾸고 싶으면 다른 답을 눌러요.')
-        : right ? '✔ 정답이에요.' : `✘ 오답이에요. 정답: ${answerText(q, q.answer)}`;
+        : right ? '✓ 정답이에요.' : `✕ 오답이에요. 정답: ${answerText(q, q.answer)}`;
     });
     const progress = container.querySelector('.quiz-progress');
     progress.textContent = state.checked ? '' : `${picked} / ${questions.length}문제 골랐어요`;
@@ -55,7 +55,7 @@ export function mountConceptQuiz(container, questions, { saved = null, onChange 
       result.querySelector('.quiz-score').textContent = `총 ${questions.length}문항 중 ${score}문항 정답${score === questions.length ? ' · 모두 맞혔어요!' : ''}`;
       result.querySelector('.quiz-review').innerHTML = questions.map((q, n) => {
         const mine = state.answers[n], right = mine === q.answer, why = !right && q.why?.[mine];
-        return `<li class="${right ? 'right' : 'wrong'}"><b>${n + 1}번 ${right ? '정답 ✔' : '오답 ✘'}</b>${right ? '' : `<p>내 답: ${escape(answerText(q, mine))} · 정답: ${escape(answerText(q, q.answer))}</p>`}${why ? `<p>내 답이 틀린 까닭: ${escape(why)}</p>` : ''}<p>해설: ${escape(q.explanation)}</p></li>`;
+        return `<li class="${right ? 'right' : 'wrong'}"><b>${n + 1}번 ${right ? '정답 ✓' : '오답 ✕'}</b>${right ? '' : `<p>내 답: ${escape(answerText(q, mine))} · 정답: ${escape(answerText(q, q.answer))}</p>`}${why ? `<p>내 답이 틀린 까닭: ${escape(why)}</p>` : ''}<p>해설: ${escape(q.explanation)}</p></li>`;
       }).join('');
     }
   }

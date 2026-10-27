@@ -106,7 +106,7 @@ function paint(dt) {
 function mark(key) {
   if (seen[key]) return;
   seen[key] = true;
-  const msg = { single: '💡 전구 1개의 밝기를 기억해요', seriesAll: '🔗 직렬연결: 두 전구의 밝기를 비교해요', seriesOne: '🔌 직렬연결에서 스위치 하나를 열었어요', parallelAll: '🌿 병렬연결: 두 전구의 밝기를 비교해요', parallelOne: '🔌 병렬연결에서 스위치 하나를 열었어요' }[key];
+  const msg = { single: '전구 1개의 밝기를 기억해요', seriesAll: '직렬연결: 두 전구의 밝기를 비교해요', seriesOne: '직렬연결에서 스위치 하나를 열었어요', parallelAll: '병렬연결: 두 전구의 밝기를 비교해요', parallelOne: '병렬연결에서 스위치 하나를 열었어요' }[key];
   toast(msg);
 }
 

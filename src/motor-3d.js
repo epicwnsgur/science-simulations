@@ -92,7 +92,7 @@ export function createMotor3D({ stage, svg, reducedMotion }) {
   const coatBare = new THREE.Mesh(new THREE.CylinderGeometry(.06, .06, .34, 20, 1, false, Math.PI, Math.PI), mat.copper);
   const coatTop = new THREE.Mesh(new THREE.CylinderGeometry(.06, .06, .34, 20, 1, false, 0, Math.PI), mat.enamel);
   for (const c of [coatBare, coatTop]) { c.rotation.z = Math.PI / 2; c.position.x = 1.55; ring.add(c); }
-  const spark = label('⚡', { size: .5 }); spark.position.set(1.62, AY - .3, .3); simple.add(spark);
+  const spark = label('✦', { size: .5, color: '#ffd166' }); spark.position.set(1.62, AY - .3, .3); simple.add(spark);
   const ringDots = Array.from({ length: 18 }, () => { const d = new THREE.Mesh(new THREE.SphereGeometry(.06, 10, 8), mat.dot); simple.add(d); return d; });
   const simpleFieldArrows = Array.from({ length: 5 }, (_, i) => { const a = arrow(COLORS.field, .025, .75); a.userData.x = (i - 2) * .42; simple.add(a); return a; });
   const simpleTexts = [label('건전지', { size: .26, color: '#aab4d6' }), label('네오디뮴 자석', { size: .24, color: '#aab4d6' }), label('반만 벗긴 끝', { size: .24, color: '#e8c15a' })];

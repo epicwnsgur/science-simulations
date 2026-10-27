@@ -15,7 +15,7 @@ async function turnOnTeacher(page, password = '0421') {
 test('교사 모드: 첫 화면의 교사용 단추 → 비밀번호가 틀리면 켜지지 않음', async ({ page }) => {
   await page.goto(SERIES);
   await expect(page.locator('#review-panel')).toBeVisible();
-  await expect(page.locator('#teacher-btn')).toHaveText('👩‍🏫 교사용');
+  await expect(page.locator('#teacher-btn')).toHaveText('교사용');
   await turnOnTeacher(page, '1234');
   await expect(page.locator('#teacher-error')).toContainText('비밀번호가 맞지 않아요');
   await expect(page.locator('body')).not.toHaveClass(/teacher-on/);
@@ -32,7 +32,7 @@ test('교사 모드: 복습을 건너뛰고 예상·관찰·설명을 자유롭�
   // 복습 화면에서 바로 관찰하기로
   await page.locator('[data-goto="observe"]').click();
   await expect(page.locator('#observe-panel')).toBeVisible();
-  // 순서 잠금이 없어요: 병렬연결 탭을 바로 누를 수 있고, 안내에 🔒가 없어요.
+  // 순서 잠금이 없어요: 병렬연결 탭을 바로 누를 수 있고, 안내에 자물쇠가 없어요.
   await expect(page.locator('#tab-parallel')).not.toHaveAttribute('aria-disabled', 'true');
   await page.locator('#tab-parallel').click();
   await expect(page.locator('#tab-parallel')).toHaveAttribute('aria-selected', 'true');
@@ -134,7 +134,7 @@ test('설명하기: 개념 정리·퀴즈·안내 상자의 글씨가 바탕과 
   }
 });
 
-test('순서 안내: 단계를 누르면 그 단계를 하는 방법과 눌러야 할 단추(‘👆 여기를 눌러요’)를 알려 줌', async ({ browser }) => {
+test('순서 안내: 단계를 누르면 그 단계를 하는 방법과 눌러야 할 단추(‘▲ 여기를 눌러요’)를 알려 줌', async ({ browser }) => {
   test.setTimeout(90000); // 여러 실험을 차례로 열어 보는 시험이에요.
   const LIST = [['friction-electricity', 2, '① 털에 문지르기'], ['electrostatic-induction', 1, '가까이 가져가기'], ['electric-current', 1, '털가죽으로 접시 문지르기'], ['ohms-law', 1, '+ 1 V'], ['series-parallel', 1, '스위치 S1 닫기'], ['electric-swing', 1, '스위치 누르고 있기'], ['electric-motor', 1, '전류 흘리기'], ['coil-magnetic-field', 1, null], ['stellar-parallax', 1, '왼쪽 구멍으로 보기'], ['star-brightness', 1, '빛의 세기 기록하기'], ['star-color', 1, '전원 켜기'], ['milky-way', 1, '위에서 보기'], ['expanding-universe', 1, '공기 조금 넣기']];
   for (const [slug, count, button] of LIST) {
@@ -148,7 +148,7 @@ test('순서 안내: 단계를 누르면 그 단계를 하는 방법과 눌러�
       const target = page.locator('.step-target');
       await expect(target, slug).toHaveCount(1);
       await expect(target, slug).toContainText(button);
-      await expect(target).toHaveAttribute('data-target-label', '👆 여기를 눌러요');
+      await expect(target).toHaveAttribute('data-target-label', '▲ 여기를 눌러요');
     }
     // 아직 열리지 않은 뒤 단계를 누르면 앞 단계부터 하라고 알려 줘요.
     await page.locator('[data-guide-step="1"]').click();

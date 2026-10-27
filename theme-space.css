@@ -17,7 +17,7 @@ body.lab-space{
   background-attachment:fixed;
 }
 body.lab-space header::after{background:linear-gradient(90deg,transparent,#8fd3ff,#c77dff,#ffcf6e,transparent);background-size:200% 100%}
-body.lab-space .brand::before{content:'✦';color:var(--volt)}
+body.lab-space .brand::before{content:'✦';width:auto;height:auto;background:none;-webkit-mask:none;mask:none;color:var(--volt)}
 body.lab-space .intro h1,body.lab-space h1{background:linear-gradient(100deg,#ffffff 0%,#e6dcff 35%,#a9c8ff 65%,#ffcf6e 100%);-webkit-background-clip:text;background-clip:text}
 body.lab-space .stage,body.lab-space .stage.night{border-color:#232a55;background:radial-gradient(ellipse at 50% 120%,#1a1440 0%,#070917 55%,#020309 100%)}
 body.lab-space .stage::before{background-image:none}
@@ -66,7 +66,7 @@ body.lab-space #scene .sight-mark{opacity:0;transition:opacity .4s .5s}
 body.lab-space #scene [data-sight].on .sight{stroke-dashoffset:0;opacity:.95}
 body.lab-space #scene [data-sight].on .sight-mark{opacity:1}
 body.lab-space #scene [data-sight].ghost .sight{stroke-dashoffset:0;opacity:.3;stroke-dasharray:.02 .015}
-body.lab-space #scene .hole .eye{font-size:15px;opacity:0;transition:opacity .3s}
+body.lab-space #scene .hole .eye{opacity:0;transition:opacity .3s}
 body.lab-space #scene .hole.looking .eye{opacity:1}
 body.lab-space #scene .hole.looking circle{stroke:#e8590c;stroke-width:3}
 body.lab-space #scene .board-model path{transition:filter .3s}

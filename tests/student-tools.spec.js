@@ -64,12 +64,12 @@ test('관찰 기록: 활동이 여럿인 실험은 활동마다 칸을 나눠 �
   await expect(page.locator('#saved-observation')).toHaveText('[전압과 전류 측정] 전압이 2배가 되면 전류의 세기도 2배가 되었어요.\n[도체와 부도체] 구리선과 철 클립은 도체, 고무줄과 나무 막대는 부도체였어요.');
 });
 
-test('글자 수: ‘✔ 좋아요’가 나오면 저장도 돼요(문장 부호·겹친 글자·숫자가 있는 보통 문장)', async ({ page }) => {
+test('글자 수: ‘✓ 좋아요’가 나오면 저장도 돼요(문장 부호·겹친 글자·숫자가 있는 보통 문장)', async ({ page }) => {
   await openObserveUnlocked(page, '/simulations/friction-electricity/', { count: 2 });
   const box = page.locator('#observation-record');
   // 예전에는 글자 수 안내는 20자를 넘었다고 하고, 저장할 때는 ‘같은 글자 되풀이’로 막히던 문장이에요.
   await box.fill('털끝이 점점 풍선 쪽으로 끌려 올라갔어요!! 1000번 신기해요.');
-  await expect(page.locator('.char-count[data-for="observation-record"]')).toContainText('✔');
+  await expect(page.locator('.char-count[data-for="observation-record"]')).toContainText('✓');
   await page.locator('#to-explanation').click();
   await expect(page.locator('#explain-panel')).toBeVisible();
 });

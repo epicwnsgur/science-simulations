@@ -10,7 +10,7 @@ export function webglAvailable() {
 // stage: 실험 화면, key: 고른 보기를 기억할 이름, cams: [[시점 이름, 단추 글자], …]
 // load(): 3D 화면을 만들어 돌려주는 함수(Promise), onChange(use3d): 보기가 바뀔 때마다 불러요.
 export function setupViewToggle({ stage, key, cams, tip = '화면을 끌면 이리저리 돌려 볼 수 있어요', load, onChange }) {
-  stage.insertAdjacentHTML('afterend', `<div class="view-bar" id="view-bar" role="group" aria-label="보는 방법" hidden><span class="group-label">보기</span><button data-view="3d" aria-pressed="false">🧊 3D 입체</button><button data-view="2d" aria-pressed="true">▭ 2D 그림</button><span class="view-gap"></span>${cams.map(([id, text]) => `<button data-cam="${id}">${text}</button>`).join('')}<span class="view-tip">${tip}</span></div>`);
+  stage.insertAdjacentHTML('afterend', `<div class="view-bar" id="view-bar" role="group" aria-label="보는 방법" hidden><span class="group-label">보기</span><button data-view="3d" aria-pressed="false">3D 입체</button><button data-view="2d" aria-pressed="true">▭ 2D 그림</button><span class="view-gap"></span>${cams.map(([id, text]) => `<button data-cam="${id}">${text}</button>`).join('')}<span class="view-tip">${tip}</span></div>`);
   const bar = document.getElementById('view-bar');
   const state = { view: null, use3d: false };
   function set(next) {

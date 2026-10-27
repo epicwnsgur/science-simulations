@@ -128,8 +128,8 @@ test('퀴즈: 고른 보기가 어두운 바탕에 밝은 글씨로 또렷하고
   });
   expect(contrast).toBeGreaterThan(4.5);
   await page.locator('#quiz-check').evaluate(b => b.click());
-  await expect(page.locator('[data-quiz="0"].chosen .pick-tag')).toHaveText('✔ 내 답 · 정답');
-  await expect(page.locator('[data-quiz="1"].chosen .pick-tag')).toHaveText('✘ 내 답 · 오답');
+  await expect(page.locator('[data-quiz="0"].chosen .pick-tag')).toHaveText('✓ 내 답 · 정답');
+  await expect(page.locator('[data-quiz="1"].chosen .pick-tag')).toHaveText('✕ 내 답 · 오답');
   await expect(page.locator('[data-quiz="1"].answer .pick-tag')).toHaveText('정답');
 });
 

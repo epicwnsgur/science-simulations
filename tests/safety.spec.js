@@ -136,7 +136,7 @@ test('개념 정리: 주요 개념은 포스트잇으로 가려져 있고, 모�
   await notes.nth(1).click();
   await expect(notes.nth(1)).not.toHaveClass(/peeled/);
   await expect(page.locator('.flow-toast')).toContainText('먼저 읽어 보세요');
-  await expect(notes.first().locator('.sticky-note')).toHaveText('📌');
+  await expect(notes.first().locator('.sticky-note .pin')).toBeVisible();
   await page.reload();
   await expect(page.locator('.concept-sequence .sticky.peeled')).toHaveCount(1);
   await peelAll(page);

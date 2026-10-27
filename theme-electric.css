@@ -6,6 +6,8 @@
   --current:#38e1ff;--current-2:#1e9bff;--volt:#ffd23f;--volt-2:#ff9f1c;
   --north:#ff4d5e;--south:#3d7bff;--ok:#5dff9a;
   --glow-c:0 0 12px #38e1ff66,0 0 28px #1e9bff33;--glow-v:0 0 12px #ffd23f66,0 0 28px #ff9f1c33;
+  /* 에모지 대신 쓰는 아이콘 모양(mask): 글자 색으로 칠해요 */
+  --icon-bolt:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22M13.5%201.5%204%2013.5h6.5L9%2022.5l10-13h-6.5z%22%20fill%3D%22%23000%22%2F%3E%3C%2Fsvg%3E");--icon-lock:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%225%22%20y%3D%2210.5%22%20width%3D%2214%22%20height%3D%2210%22%20rx%3D%222%22%2F%3E%3Cpath%20d%3D%22M8.5%2010.5V7.5a3.5%203.5%200%200%201%207%200v3%22%2F%3E%3C%2Fsvg%3E");
   --mark:rgba(56,225,255,.16);--mark-strong:rgba(56,225,255,.32);--mark-line:rgba(56,225,255,.7);
   color:var(--ink);background:var(--bg);color-scheme:dark;
 }
@@ -21,7 +23,7 @@ header{border-bottom:1px solid var(--line);position:relative}
 header::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:1px;background:linear-gradient(90deg,transparent,var(--current),var(--volt),transparent);opacity:.7;animation:wire-run 6s linear infinite;background-size:200% 100%}
 @keyframes wire-run{to{background-position:-200% 0}}
 .brand{color:var(--ink)}
-.brand::before{content:'⚡';margin-right:8px;color:var(--volt);text-shadow:var(--glow-v)}
+.brand::before{content:'';display:inline-block;width:.8em;height:1em;margin-right:8px;vertical-align:-.12em;background:var(--volt);-webkit-mask:var(--icon-bolt) center/contain no-repeat;mask:var(--icon-bolt) center/contain no-repeat;filter:drop-shadow(0 0 5px #ffd23f88)}
 .grade{color:var(--muted)}
 .breadcrumb{color:var(--faint)}
 
@@ -363,7 +365,7 @@ body:has(.flow-dialog[open]){overflow:hidden}
 
 /* ---------- 순서 잠금 · 안내 토스트 ---------- */
 [data-gated]{opacity:.4!important;cursor:not-allowed!important;filter:grayscale(.5)}
-button[data-gated]::before{content:'🔒 '}
+button[data-gated]::before{content:'';display:inline-block;width:.95em;height:.95em;margin-right:5px;vertical-align:-.12em;background:currentColor;-webkit-mask:var(--icon-lock) center/contain no-repeat;mask:var(--icon-lock) center/contain no-repeat}
 .experiment-switch button.locked{opacity:.55;cursor:not-allowed;border-style:dashed}
 .guide-steps li.locked{opacity:.6}
 .guide-steps li.locked .guide-num{font-size:12px}
@@ -433,12 +435,12 @@ button[data-gated]::before{content:'🔒 '}
 .step-guide.attention{border-color:var(--volt);box-shadow:0 0 0 3px #ffd23f88,0 0 32px #ffd23f66;animation:guide-attn .5s ease-in-out 3 alternate}
 @keyframes guide-attn{from{transform:translateX(0)}to{transform:translateX(6px)}}
 .step-guide.attention li.current{position:relative}
-.step-guide.attention li.current::before{content:'👉';position:absolute;left:-30px;top:50%;font-size:22px;transform:translateY(-50%);animation:guide-point .6s ease-in-out infinite alternate}
+.step-guide.attention li.current::before{content:'▶';color:var(--volt);position:absolute;left:-30px;top:50%;font-size:22px;transform:translateY(-50%);animation:guide-point .6s ease-in-out infinite alternate}
 @keyframes guide-point{from{left:-34px}to{left:-24px}}
 .step-target{position:relative;outline:3px solid var(--volt)!important;outline-offset:3px;box-shadow:0 0 0 6px #ffd23f44,0 0 24px #ffd23f88!important;animation:target-pulse 1s ease-in-out infinite}
 .step-target::after{content:attr(data-target-label);position:absolute;left:50%;top:calc(100% + 8px);z-index:5;transform:translateX(-50%);padding:3px 10px;border-radius:12px;background:var(--volt);color:#2a1600;font-size:13px;font-weight:800;white-space:nowrap;pointer-events:none}
 @keyframes target-pulse{50%{outline-color:#fff}}
-@media(max-width:800px){.step-guide.attention li.current::before{content:'👇';left:auto;right:12px;top:-6px;transform:none;animation:none}}
+@media(max-width:800px){.step-guide.attention li.current::before{content:'▼';left:auto;right:12px;top:-6px;transform:none;animation:none}}
 @media(prefers-reduced-motion:reduce){.step-guide.attention,.step-guide.attention li.current::before,.step-target{animation:none}}
 
 /* ---------- 교사 모드 ---------- */
@@ -483,7 +485,7 @@ button.term:focus-visible{outline:2px solid var(--current);outline-offset:2px}
 .concept-sequence .sticky.peeled{cursor:default}
 .concept-sequence .sticky.peeled .sticky-word{visibility:visible;animation:sticky-reveal 1s ease-out}
 .concept-sequence .sticky-note{position:absolute;inset:-3px -4px;display:flex;align-items:flex-start;justify-content:center;border-radius:2px;background:linear-gradient(180deg,#ffe98a,#ffd54a);font-size:15px;line-height:1;white-space:nowrap;overflow:visible;box-shadow:0 3px 8px #0006;transform:rotate(-1.5deg);transform-origin:top left;transition:transform 1s cubic-bezier(.3,.7,.4,1),opacity 1s,filter .3s}
-.concept-sequence .sticky-note .pin{margin-top:-9px;font-style:normal;filter:drop-shadow(0 2px 2px #0007)}
+.concept-sequence .sticky-note .pin{display:block;width:12px;height:12px;margin-top:-5px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ff9c9c,#d62828 55%,#7a0f0f);box-shadow:0 2px 3px #0008}
 .concept-sequence .sticky:nth-child(2n) .sticky-note{transform:rotate(1.2deg)}
 .concept-sequence .sticky-note::after{content:'';position:absolute;right:0;bottom:0;border:6px solid transparent;border-right-color:#e8b923;border-bottom-color:#e8b923}
 .concept-sequence .sticky:hover:not(.peeled) .sticky-note{transform:rotate(-4deg) translateY(-2px)}
@@ -548,7 +550,7 @@ button.term:focus-visible{outline:2px solid var(--current);outline-offset:2px}
 .part-tag span{padding:2px 10px;border-radius:999px;background:var(--current);color:#04121f;font-size:13px}
 #saved-observation{white-space:pre-line}
 
-/* ---------- 내 메모(왼쪽 아래 단추나 머리글의 ‘📝 메모’로 여닫는 메모장) ----------
+/* ---------- 내 메모(왼쪽 아래 단추나 머리글의 ‘메모’로 여닫는 메모장) ----------
    오른쪽 아래에는 Netlify 배지가 떠서 겹치므로 왼쪽 아래에 둬요. */
 .memo-toggle{position:fixed;left:18px;bottom:calc(18px + env(safe-area-inset-bottom));z-index:55;display:flex;align-items:center;gap:6px;padding:12px 18px;border-radius:999px;border:1px solid var(--volt);background:#16264f;color:#fff;font:inherit;font-size:16px;font-weight:700;box-shadow:0 8px 24px #0009;cursor:pointer}
 .memo-toggle:hover,.memo-toggle.on{background:#1d3166;box-shadow:0 8px 24px #0009,0 0 0 3px #ffd23f44}
@@ -576,5 +578,10 @@ button.term:focus-visible{outline:2px solid var(--current);outline-offset:2px}
 /* ---------- 머리글의 메모 단추 ---------- */
 .memo-head-btn{height:36px;padding:0 12px;border-radius:18px;border:1px solid var(--volt);background:#16264f;color:#fff;font:inherit;font-size:14px;font-weight:700;white-space:nowrap;cursor:pointer}
 .memo-head-btn:hover,.memo-head-btn[aria-expanded=true]{box-shadow:0 0 0 3px #ffd23f44}
-/* 휴대폰처럼 좁은 화면에서는 머리글이 넘치지 않게 숨기고, 왼쪽 아래 ‘📝 내 메모’ 단추를 써요. */
+/* 휴대폰처럼 좁은 화면에서는 머리글이 넘치지 않게 숨기고, 왼쪽 아래 ‘내 메모’ 단추를 써요. */
 @media(max-width:600px){.memo-head-btn{display:none}}
+
+/* 선 아이콘(src/icons.js): 글자 크기와 색을 따라요. */
+.icon{width:1.1em;height:1.1em;vertical-align:-.18em;flex:none}
+.memo-toggle .icon,.memo-head-btn .icon,.theme-toggle .icon{margin-right:2px}
+.guide-num .icon{width:14px;height:14px;vertical-align:-2px}

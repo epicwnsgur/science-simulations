@@ -75,7 +75,7 @@ function stepMotor(dt) {
   if (!on) omega *= Math.exp(-dt * 1.2);
   angle += omega * dt;
   turns += Math.abs(omega * dt) / (2 * Math.PI);
-  if (on && turns > 1 && !seen.spin) { seen.spin = true; toast('🌀 코일이 회전해요!'); }
+  if (on && turns > 1 && !seen.spin) { seen.spin = true; toast('코일이 회전해요!'); }
   // 빠르게 돌던 방향이 반대로 바뀌면 회전 방향을 비교한 것으로 봐요.
   if (on && Math.abs(omega) > 1) {
     const sign = Math.sign(omega);
@@ -116,15 +116,15 @@ function stepSimple(dt) {
   const torque = simpleMotorTorque(phase, stripping, magnet, V);
   phaseOmega += (torque * 6 - phaseOmega * .9) * dt;
   phase += phaseOmega * dt;
-  if (on && stripping === 'half' && Math.abs(phaseOmega) > 4 && !seen.simpleSpin) { seen.simpleSpin = true; toast('🎉 간이 전동기가 돌아가요!'); burst($('#simple-fx'), 400, 196, '#ffd166', 18); }
-  if (on && stripping === 'full') { fullTime += dt; if (fullTime > 2.5 && Math.abs(phaseOmega) < 1 && !seen.fullStuck) { seen.fullStuck = true; toast('🤔 양쪽을 모두 벗기니 흔들리다 멈춰요'); } }
+  if (on && stripping === 'half' && Math.abs(phaseOmega) > 4 && !seen.simpleSpin) { seen.simpleSpin = true; toast('간이 전동기가 돌아가요!'); burst($('#simple-fx'), 400, 196, '#ffd166', 18); }
+  if (on && stripping === 'full') { fullTime += dt; if (fullTime > 2.5 && Math.abs(phaseOmega) < 1 && !seen.fullStuck) { seen.fullStuck = true; toast('양쪽을 모두 벗기니 흔들리다 멈춰요'); } }
 }
 function paintSimple() {
   const contact = on && simpleMotorContact(phase, stripping);
   const ry = Math.abs(Math.cos(phase)) * 62 + 3;
   const front = Math.sin(phase) > 0;
   $('#ring').innerHTML = `${contact ? `<ellipse cx="400" cy="196" rx="104" ry="${ry.toFixed(1)}" stroke="#ffb36b" stroke-width="14" fill="none" opacity=".45" filter="url(#glow-strong)"/>` : ''}<path d="M290 196 H296 M504 196 H510" stroke="#c46f2c" stroke-width="4"/><ellipse cx="400" cy="196" rx="104" ry="${ry.toFixed(1)}" stroke="url(#copper)" stroke-width="${front ? 7 : 5}" fill="none"/><path d="M500 196 h14" stroke="${stripping === 'half' ? (Math.cos(phase) > 0 ? '#f7c08a' : '#7a2e12') : '#f7c08a'}" stroke-width="6"/>`;
-  setText('#contact-label', on ? (contact ? '⚡ 전류가 흘러요' : '전류가 흐르지 않아요') : '');
+  setText('#contact-label', on ? (contact ? '전류가 흘러요' : '전류가 흐르지 않아요') : '');
   $('#contact-label').style.fill = contact ? '#ffd166' : '#8f9bc4';
   setText('#neo-label', magnet > 0 ? 'N' : 'S');
 }
@@ -140,16 +140,16 @@ function paintSpeed() {
 function renderControls() {
   const common = `<div role="group" aria-label="전압"><span class="group-label">전지</span>${VOLTS.map((v, i) => `<button data-v="${i}" aria-pressed="${i === vIndex}">${v} V</button>`).join('')}</div>`;
   if (mode === 'motor') {
-    $('#controls').innerHTML = `${common}<div role="group" aria-label="바꾸기"><button id="flip-current">⇅ 전류의 방향 바꾸기</button><button id="flip-magnet">🧲 자석의 극 바꾸기</button></div>`;
+    $('#controls').innerHTML = `${common}<div role="group" aria-label="바꾸기"><button id="flip-current">⇅ 전류의 방향 바꾸기</button><button id="flip-magnet">자석의 극 바꾸기</button></div>`;
     $('#flip-current').onclick = () => { current *= -1; toast('⇅ 전지를 반대로 연결했어요'); renderText(); };
   } else {
-    $('#controls').innerHTML = `${common}<div role="group" aria-label="에나멜 벗기기"><span class="group-label">에나멜</span><button data-strip="half" aria-pressed="${stripping === 'half'}">한쪽은 반만 벗김</button><button data-strip="full" aria-pressed="${stripping === 'full'}">양쪽 모두 완전히 벗김</button></div><div role="group"><button id="flip-magnet">🧲 자석 뒤집기</button><button id="nudge">👆 코일 살짝 밀기</button></div>`;
+    $('#controls').innerHTML = `${common}<div role="group" aria-label="에나멜 벗기기"><span class="group-label">에나멜</span><button data-strip="half" aria-pressed="${stripping === 'half'}">한쪽은 반만 벗김</button><button data-strip="full" aria-pressed="${stripping === 'full'}">양쪽 모두 완전히 벗김</button></div><div role="group"><button id="flip-magnet">자석 뒤집기</button><button id="nudge">코일 살짝 밀기</button></div>`;
     $$('[data-strip]').forEach(b => b.onclick = () => { stripping = b.dataset.strip; fullTime = 0; phaseOmega = 0; renderControls(); });
     $('#nudge').onclick = () => { phaseOmega += 3 * (magnet || 1); };
   }
-  $('#flip-magnet').onclick = () => { magnet *= -1; toast('🧲 자석의 극을 바꾸었어요'); renderText(); };
+  $('#flip-magnet').onclick = () => { magnet *= -1; toast('자석의 극을 바꾸었어요'); renderText(); };
   $$('[data-v]').forEach(b => b.onclick = () => { vIndex = +b.dataset.v; renderControls(); });
-  $('#actions').innerHTML = `<button id="switch-btn" class="primary" aria-pressed="${on}">${on ? '⏹ 전류 끊기' : '▶ 전류 흘리기'}</button>`;
+  $('#actions').innerHTML = `<button id="switch-btn" class="primary" aria-pressed="${on}">${on ? '■ 전류 끊기' : '▶ 전류 흘리기'}</button>`;
   $('#switch-btn').onclick = () => { on = !on; turns = 0; lastSign = 0; fullTime = 0; renderControls(); };
   renderText();
 }

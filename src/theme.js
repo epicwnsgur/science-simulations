@@ -2,6 +2,7 @@
 // 고른 테마는 이 브라우저에 기억해서 다른 실험·목록 페이지에서도 그대로 써요(이름 같은 개인정보는 아니에요).
 // 밝은 테마의 색은 theme-light.css(build/light-theme.mjs가 만들어요)에 있고, <html data-theme="light">일 때만 적용돼요.
 // 페이지마다 <head>의 짧은 스크립트가 그림을 그리기 전에 data-theme을 먼저 정해서, 화면이 번쩍이지 않아요.
+import { icon } from './icons.js';
 const KEY = 'theme';
 const META = { dark: '#080b16', light: '#fff4f8' };
 
@@ -11,7 +12,7 @@ export const themeButtonHTML = () => '<button type="button" class="theme-toggle"
 function render() {
   const light = currentTheme() === 'light';
   document.querySelectorAll('[data-theme-toggle]').forEach(b => {
-    b.innerHTML = light ? '<span aria-hidden="true">🌙</span> 어두운 테마' : '<span aria-hidden="true">🌸</span> 밝은 테마';
+    b.innerHTML = light ? `${icon('moon')} 어두운 테마` : `${icon('sun')} 밝은 테마`;
     b.setAttribute('aria-label', light ? '어두운 테마로 바꾸기 (지금: 밝은 테마)' : '밝은 테마로 바꾸기 (지금: 어두운 테마)');
     b.title = light ? '어두운 테마로 바꾸기' : '밝은 테마로 바꾸기';
   });

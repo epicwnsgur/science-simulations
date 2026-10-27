@@ -117,7 +117,7 @@ function paint(dt) {
     if (mode === 'measure' && closedTime > HEAT_SECONDS && !warned) {
       // 스위치를 오래 닫아 두면 니크롬선이 뜨거워져요. 까닭까지 5초 동안 크게 보여 줘요(스위치를 열었다 다시 닫으면 또 알려 줘요).
       warned = true;
-      stageAlert('<b>🔥 니크롬선이 뜨거워지고 있어요!</b><p>전류가 오래 흐르면 니크롬선이 뜨거워져요. 뜨거워지면 저항이 달라져서 측정값이 바뀌고, 손을 데일 수도 있어요.</p><p class="stage-alert-do">👉 값을 읽었으면 바로 <b>스위치를 열어요.</b> 꼭 필요할 때만 스위치를 닫아요.</p>');
+      stageAlert('<b>니크롬선이 뜨거워지고 있어요!</b><p>전류가 오래 흐르면 니크롬선이 뜨거워져요. 뜨거워지면 저항이 달라져서 측정값이 바뀌고, 손을 데일 수도 있어요.</p><p class="stage-alert-do">값을 읽었으면 바로 <b>스위치를 열어요.</b> 꼭 필요할 때만 스위치를 닫아요.</p>');
     }
   }
 }
@@ -172,7 +172,7 @@ function toggleSwitch() {
   if (closed && mode === 'material') {
     const isNew = !tested.has(material);
     tested.add(material); paintClassify();
-    if (isNew) { burst($('#fx'), MATERIALS[material].conductor ? 570 : 700, 140, MATERIALS[material].conductor ? '#ffd166' : '#9fb3ff'); toast(MATERIALS[material].conductor ? `💡 ${MATERIALS[material].label}: 전류가 잘 흘러요` : `🚫 ${MATERIALS[material].label}: 전류가 거의 흐르지 않아요`); }
+    if (isNew) { burst($('#fx'), MATERIALS[material].conductor ? 570 : 700, 140, MATERIALS[material].conductor ? '#ffd166' : '#9fb3ff'); toast(MATERIALS[material].conductor ? `${MATERIALS[material].label}: 전류가 잘 흘러요` : `${MATERIALS[material].label}: 전류가 거의 흐르지 않아요`); }
   }
   renderControls();
 }
@@ -183,7 +183,7 @@ function record() {
   records[wire][voltage] = value; fresh = [wire, voltage];
   paintGraph();
   burst($('#graph-fx'), 20 + voltage * 50, 280 - value * .6, wire === 'long' ? '#ff7eb6' : '#ffd166');
-  if (isNew && [1, 2, 3, 4].every(v => records[wire][v] !== undefined)) toast(`📈 ${WIRES[wire].label} 측정 완료!`);
+  if (isNew && [1, 2, 3, 4].every(v => records[wire][v] !== undefined)) toast(`${WIRES[wire].label} 측정 완료!`);
   renderText();
 }
 function renderText() {

@@ -1,4 +1,4 @@
-// 교사 모드: 실험 첫 화면 위쪽의 ‘👩‍🏫 교사용’ 단추 → 비밀번호를 넣으면 켜져요.
+// 교사 모드: 실험 첫 화면 위쪽의 ‘교사용’ 단추 → 비밀번호를 넣으면 켜져요.
 // 켜지면 예상·관찰·설명 단계를 자유롭게 오가고, 복습·실험 순서 잠금·다음 실험 잠금이 모두 풀려요(src/poe-flow.js).
 // 이 탭을 닫으면 꺼져요(sessionStorage). 다른 실험으로 옮겨 가도 같은 탭이면 켜진 채로 있어요.
 // 비밀번호는 글자 그대로 두지 않고 SHA-256 값만 두어요. 다만 화면 코드는 누구나 내려받을 수 있어서,
@@ -20,11 +20,11 @@ export async function checkTeacherPassword(text) {
 
 export function mountTeacherMode(bar, { onChange }) {
   bar.insertAdjacentHTML('beforeend', `
-    <button type="button" class="teacher-btn" id="teacher-btn" aria-haspopup="dialog">👩‍🏫 교사용</button>
+    <button type="button" class="teacher-btn" id="teacher-btn" aria-haspopup="dialog">교사용</button>
     <p class="teacher-status" id="teacher-status" role="status" aria-live="polite"></p>
     <dialog id="teacher-dialog" class="flow-dialog teacher-dialog" aria-labelledby="teacher-title">
       <form id="teacher-form" class="flow-dialog-body" novalidate>
-        <h2 id="teacher-title">👩‍🏫 교사 모드</h2>
+        <h2 id="teacher-title">교사 모드</h2>
         <label for="teacher-pass">비밀번호</label>
         <input id="teacher-pass" type="password" inputmode="numeric" autocomplete="off" maxlength="30">
         <p class="teacher-error" id="teacher-error" role="alert"></p>
@@ -35,9 +35,9 @@ export function mountTeacherMode(bar, { onChange }) {
   const input = dialog.querySelector('#teacher-pass'), error = dialog.querySelector('#teacher-error');
   function render() {
     document.body.classList.toggle('teacher-on', teacherMode.on);
-    btn.textContent = teacherMode.on ? '교사 모드 끄기' : '👩‍🏫 교사용';
+    btn.textContent = teacherMode.on ? '교사 모드 끄기' : '교사용';
     btn.setAttribute('aria-pressed', String(teacherMode.on));
-    status.textContent = teacherMode.on ? '👩‍🏫 교사 모드 · 단계 이동과 실험 순서 잠금이 모두 풀려 있어요.' : '';
+    status.textContent = teacherMode.on ? '교사 모드 · 단계 이동과 실험 순서 잠금이 모두 풀려 있어요.' : '';
     status.hidden = !teacherMode.on;
   }
   function set(on) {

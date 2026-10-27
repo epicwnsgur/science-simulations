@@ -55,7 +55,7 @@ export function mountReportSubmit(container, { slug, report, check, onSubmitted 
       <p class="submit-status" role="status" aria-live="polite"></p>
     </form>
     <section class="submit-done" hidden aria-labelledby="done-title" tabindex="-1">
-      <h3 id="done-title">✔ 보고서 제출 완료</h3>
+      <h3 id="done-title">✓ 보고서 제출 완료</h3>
       <p class="done-message"></p>
       <p class="done-time"></p>
       <button class="primary big" type="button" disabled>제출 완료</button>
@@ -90,7 +90,7 @@ export function mountReportSubmit(container, { slug, report, check, onSubmitted 
       const a = plain(first.value), b = plain(again.value), same = a !== '' && a === b;
       const out = form.querySelector(`.submit-match[data-for="${name}"]`);
       const differs = b !== '' && !same && (!a.startsWith(b) || b.length >= a.length);
-      out.textContent = same ? '✔ 같아요' : differs ? `✖ 위의 ${name === 'id' ? '학번' : '이름'}과 달라요` : '';
+      out.textContent = same ? '✓ 같아요' : differs ? `✕ 위의 ${name === 'id' ? '학번' : '이름'}과 달라요` : '';
       out.dataset.state = same ? 'done' : differs ? 'error' : '';
       again.setAttribute('aria-invalid', String(differs));
       ready &&= same;

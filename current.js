@@ -186,10 +186,10 @@ function choosePair(side, key) {
   const left = pairOf(pick);
   if (left[2] === key) {
     matched.add(key); justMatched = key; pick = null;
-    toast(`🔗 ${left[1]} ↔ ${left[3]}: ${left[4]}`);
+    toast(`${left[1]} ↔ ${left[3]}: ${left[4]}`);
     burst($('#fx'), 400, 220, PAIR_COLORS[key], 14);
   } else {
-    toast(`🤔 ${left[1]}과(와) ${pairOf(key)[3]}은(는) 짝이 아니에요. ${left[1]}은(는) 회로에서 어떤 일을 하는지 떠올려 봐요.`);
+    toast(`${left[1]}과(와) ${pairOf(key)[3]}은(는) 짝이 아니에요. ${left[1]}은(는) 회로에서 어떤 일을 하는지 떠올려 봐요.`);
     pick = null;
   }
   renderControls(); renderPairMarks();
@@ -293,12 +293,12 @@ function touch() {
       setTimeout(() => {
         if (lights) {
           flash = 1; burst($('#neon-fx'), BULB.x, BULB.y, '#ffb36b', 18); arc($('#neon-fx'), BULB.x - 6, BULB.y, BULB.x + 6, BULB.y, '#ffb36b');
-          if (firstLight) toast('✨ 네온전구에 불이 켜졌어요!');
+          if (firstLight) toast('네온전구에 불이 켜졌어요!');
         } else toast('불빛이 보이지 않아요. 더 여러 번 문질러 볼까요?');
       }, instantLessons.matches ? 0 : 420);
       charge = 0; discharged = true;
     } else if (discharged) {
-      if (!seen.noLight && seen.lit) { seen.noLight = true; toast('🔍 다시 대니 불이 켜지지 않아요'); }
+      if (!seen.noLight && seen.lit) { seen.noLight = true; toast('다시 대니 불이 켜지지 않아요'); }
     }
   }
   renderControls();
@@ -320,16 +320,16 @@ function stepCircuit(now, dt) {
       if (crossed(u0, u1, U_OUT)) outCount++;
     }
     batteryTime += dt;
-    if (batteryTime > 1.5 && !seen.battery) { seen.battery = true; toast('💡 전자가 한 방향으로 이동해요'); }
+    if (batteryTime > 1.5 && !seen.battery) { seen.battery = true; toast('전자가 한 방향으로 이동해요'); }
   }
   water.step(dt, pump ? .07 * pumpLevel : 0, 0);
   if (pump) {
     wheelAngle += dt * 140 * pumpLevel; impellerAngle += dt * 520 * pumpLevel; pumpTime += dt;
-    if (pumpTime > 1.5 && !seen.pump) { seen.pump = true; toast('🌊 펌프가 물을 높은 곳으로 끌어올리니, 높은 곳의 물이 낮은 곳으로 흐르며 물레방아를 돌려요'); }
+    if (pumpTime > 1.5 && !seen.pump) { seen.pump = true; toast('펌프가 물을 높은 곳으로 끌어올리니, 높은 곳의 물이 낮은 곳으로 흐르며 물레방아를 돌려요'); }
   }
   if (battery && pump && cells === 2 && pumpLevel === 2) {
     strongTime += dt;
-    if (strongTime > 1.5 && !seen.strong) { seen.strong = true; toast('⚡ 전압이 커지면 전구가 더 밝아지고, 높이 차가 커지면 물이 더 빨리 흘러요!'); renderText(); }
+    if (strongTime > 1.5 && !seen.strong) { seen.strong = true; toast('전압이 커지면 전구가 더 밝아지고, 높이 차가 커지면 물이 더 빨리 흘러요!'); renderText(); }
   } else strongTime = 0;
   water3d?.update(dt, { on: pump, level: pumpLevel, matched, flash: justMatched });
   justMatched = null;
@@ -360,7 +360,7 @@ function renderControls() {
     // 짝 찾기: 왼쪽(전기 회로)에서 하나, 오른쪽(수로 모형)에서 하나
     const leftBtn = ([k, name, w]) => `<button data-pair-left="${k}" class="${matched.has(w) ? 'paired' : ''}" aria-pressed="${pick === k}" ${matched.has(w) ? `disabled style="--pair:${PAIR_COLORS[w]}"` : ''}>${name}</button>`;
     const rightBtn = w => { const [, , , name] = pairOf(w); return `<button data-pair-right="${w}" class="${matched.has(w) ? 'paired' : ''}" ${matched.has(w) ? `disabled style="--pair:${PAIR_COLORS[w]}"` : ''}>${name}</button>`; };
-    $('#actions').innerHTML = `<div class="pair-area" id="pair-area"><p class="pair-title">🔗 짝 찾기: 전기 회로의 무엇이 수로 모형의 무엇과 닮았을까요? <small>왼쪽에서 하나, 오른쪽에서 하나를 차례로 눌러요 (${matched.size} / ${PAIRS.length})</small></p>
+    $('#actions').innerHTML = `<div class="pair-area" id="pair-area"><p class="pair-title">짝 찾기: 전기 회로의 무엇이 수로 모형의 무엇과 닮았을까요? <small>왼쪽에서 하나, 오른쪽에서 하나를 차례로 눌러요 (${matched.size} / ${PAIRS.length})</small></p>
       <div class="pair-row"><span class="group-label">전기 회로</span>${PAIRS.map(leftBtn).join('')}</div>
       <div class="pair-row"><span class="group-label">수로 모형</span>${RIGHT_ORDER.map(rightBtn).join('')}</div></div>`;
     $('#battery-btn').onclick = () => { battery = !battery; batteryTime = 0; renderControls(); };
