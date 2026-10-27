@@ -62,6 +62,7 @@ export const SCENES = {
   'electric-current': {
     // 실제 실험: 털가죽으로 플라스틱 접시를 문지른 뒤, 그 털가죽과 접시를 바닥에 놓고 손잡이(빨대)가 달린 알루미늄 접시를 하나씩 올려요.
     // 한 알루미늄 접시에 붙인 네온전구의 다른 끝을 반대쪽 알루미늄 접시에 대요. 털가죽은 하나예요.
+    // 네온전구의 다른 끝(도선)은 전구에 붙은 채로, 전구 끝을 축으로 내려가 접시에 닿아요(따로 떨어져 움직이지 않아요).
     main: {
       svg: `<path d="M0 132 H320" stroke="#5a4a36" stroke-width="10"/>
         <ellipse cx="80" cy="124" rx="58" ry="9" fill="#e8ecf2"/>${label(80, 146, '플라스틱 접시')}${label(240, 146, '털가죽')}
@@ -69,12 +70,12 @@ export const SCENES = {
         ${label(160, 14, '알루미늄 접시(손잡이는 빨대)', 10)}
         <g data-o="al"><ellipse cx="80" cy="74" rx="46" ry="8" fill="#d8dde6" stroke="#fff"/><path d="M80 66 V30" stroke="#8fb5d6" stroke-width="5"/><ellipse cx="240" cy="74" rx="46" ry="8" fill="#d8dde6" stroke="#fff"/><path d="M240 66 V30" stroke="#8fb5d6" stroke-width="5"/>
           <path d="M112 72 Q132 44 148 48" stroke="#c9d1db" stroke-width="2" fill="none"/><rect x="148" y="42" width="28" height="12" rx="6" fill="#cfe8ff55" stroke="#cfe8ff"/>${label(162, 38, '네온전구', 10)}
-          <g data-o="tip"><path d="M176 48 Q186 52 190 60" stroke="#c9d1db" stroke-width="2" fill="none"/><circle cx="190" cy="60" r="3" fill="#c9d1db"/></g></g>
+          <g data-o="tip" style="transform-box:view-box;transform-origin:176px 48px"><path d="M176 48 Q192 34 204 36" stroke="#c9d1db" stroke-width="2" fill="none"/><circle cx="204" cy="36" r="3" fill="#c9d1db"/></g></g>
         <g data-o="next" class="pv-off"><rect x="96" y="4" width="128" height="44" rx="8" fill="#0d1430" stroke="#5e6a92"/>${label(160, 22, '전기 회로', 11, '#ffd166')}${label(160, 40, '수로 모형', 11, '#7fd6ff')}</g>`,
       steps: [
         h => h.move('fur', [[0, 0], [-150, 6], [-120, 6], [-160, 6], [-120, 6], [-160, 6], [0, 0]], 3000),
         h => h.move('al', [[0, 0], [0, 40]], 1600),
-        h => { h.move('al', [[0, 40], [0, 40]], 10); h.move('tip', [[0, 0], [14, 14]], 1600, 300); h.ask(194, 76, 1700); },
+        h => { h.move('al', [[0, 40], [0, 40]], 10); h.move('tip', [[0, 0, 0, 1], [0, 0, 66, 1.07]], 1600, 300); h.ask(220, 60, 1700); },
         h => h.show('next', 600),
       ],
     },

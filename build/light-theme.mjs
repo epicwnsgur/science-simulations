@@ -6,10 +6,12 @@
 // - 전하(+빨강·−파랑), 자석(N 빨강·S 파랑) 같은 과학의 약속 색은 색상(hue)을 바꾸지 않아요.
 // - 실험 무대(그림·3D)는 그림의 색이 잘 보이도록 바꾸지 않아요.
 // 손으로 다듬은 부분(제목 글씨, 실험 무대 테두리 등)은 맨 아래 MANUAL에 써요.
+// 봄 장식(벚꽃·매화 가지, 흰머리오목눈이·박새, 떨어지는 꽃잎)은 build/spring-deco.mjs가 그려요(SPRING).
 import postcss from 'postcss';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
+import { headerBranch, petalTile, blossomIcon, dataUri } from './spring-deco.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 export const SOURCES = ['theme-electric.css', 'readable.css', 'induction.css', 'theme-space.css', 'home.css', 'unit-electric.css', 'unit-space.css'];
@@ -22,9 +24,13 @@ const VARS = {
   '--current': '#d6336c', '--current-2': '#e64980', '--volt': '#c2410c', '--volt-2': '#f76707',
   '--north': '#e03131', '--south': '#1c7ed6', '--ok': '#0c8a5a', '--nebula': '#9c36b5',
   '--glow-c': '0 0 0 3px #d6336c22,0 4px 14px #d6336c26', '--glow-v': '0 0 0 3px #c2410c22,0 4px 14px #f7670726',
+  // 낱말 뜻 형광펜: 벚꽃 분홍
+  '--mark': 'rgba(255,170,200,.42)', '--mark-strong': 'rgba(255,140,180,.6)', '--mark-line': '#e64980',
 };
 // 별과 우주 단원은 분홍에 보라(라벤더)를 더해요.
-const SPACE_VARS = { ...VARS, '--bg': '#fbf5ff', '--panel-2': '#f8f0ff', '--line': '#e9d5f5', '--line-2': '#d4b0ea', '--current': '#c2255c', '--current-2': '#9c36b5', '--volt': '#b35c00', '--volt-2': '#e8590c' };
+const SPACE_VARS = { ...VARS, '--bg': '#fbf5ff', '--panel-2': '#f8f0ff', '--line': '#e9d5f5', '--line-2': '#d4b0ea', '--current': '#c2255c', '--current-2': '#9c36b5', '--volt': '#b35c00', '--volt-2': '#e8590c',
+  // 별과 우주의 형광펜: 라벤더 빛 분홍
+  '--mark': 'rgba(214,170,255,.42)', '--mark-strong': 'rgba(200,150,255,.6)', '--mark-line': '#9c36b5' };
 const ACCENT_VARS = /var\(--(current|current-2|volt|volt-2|ok|north|south|nebula)\)/;
 // 실험 무대 안(그림·3D·미리 보기 그림)은 그대로 둬요.
 const SKIP_SELECTOR = /\.stage|#scene|\.pv-scene|\.lab3d|#leads|#crossings|\.water-box|\.hero-field|\.photo-card|\.sky-|\.star-viewer|canvas/;
@@ -142,10 +148,28 @@ export function buildLightTheme() {
 }
 
 // 손으로 다듬은 부분
+// 봄 장식: 꾸밈이라 누를 수 없고(pointer-events:none), 좁은 화면에서는 가지를 작게 하거나 숨겨요.
+// 떨어지는 꽃잎은 아주 천천히 움직이고, ‘동작 줄이기’를 켠 기기에서는 멈춰 있어요.
+const SPRING = `/* ---------- 봄 장식: 벚꽃·매화·흰머리오목눈이·박새 ---------- */
+${P} body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;background-image:${dataUri(petalTile())};background-size:280px 280px;opacity:.75;animation:petal-fall 60s linear infinite}
+@keyframes petal-fall{from{background-position:0 0}to{background-position:140px 560px}}
+${P} .intro,${P} .hero{position:relative}
+${P} .intro::after,${P} .hero::after{content:'';position:absolute;right:-8px;top:-18px;width:372px;height:132px;pointer-events:none;background:${dataUri(headerBranch())} no-repeat right top/contain}
+${P} .hero::after{top:6px}
+${P} .unit-electric .hero-field,${P} .unit-space .hero-field{top:140px;opacity:.55}
+${P} .poe-kicker::before{content:'';display:inline-block;width:1.15em;height:1.15em;margin-right:6px;vertical-align:-3px;background:${dataUri(blossomIcon())} no-repeat center/contain}
+${P} .memo-toggle .memo-dot{background:#e64980}
+${P} .intro>div{padding-right:340px}
+@media(max-width:1000px){${P} .intro::after,${P} .hero::after{width:250px;height:89px;opacity:.85}${P} .intro>div{padding-right:220px}}
+@media(max-width:620px){${P} .intro::after,${P} .hero::after{display:none}${P} .intro>div{padding-right:0}}
+@media(prefers-reduced-motion:reduce){${P} body::before{animation:none}}
+@media print{${P} body::before,${P} .intro::after,${P} .hero::after{display:none}}
+`;
 const MANUAL = `/* ---------- 손으로 다듬은 부분 ---------- */
-${P}{color:var(--ink);background:#fff4f8}
-${P} body{background:radial-gradient(900px 500px at 85% -10%,#ffd6e7aa,transparent 60%),radial-gradient(700px 420px at -10% 30%,#f3d9ff88,transparent 60%),radial-gradient(600px 400px at 60% 110%,#ffe3d1aa,transparent 60%),#fff4f8;background-attachment:fixed}
-${P} body.lab-space{background:radial-gradient(1000px 520px at 78% -12%,#e9d5ffaa,transparent 62%),radial-gradient(800px 480px at -8% 22%,#ffd6e799,transparent 60%),#fbf5ff;background-attachment:fixed}
+/* 바탕은 html에 칠하고 body는 비워 둬요. 그래야 떨어지는 꽃잎 층(body::before, z-index −1)이 바탕 위·내용 아래에 보여요. */
+${P}{color:var(--ink);background:radial-gradient(900px 500px at 85% -10%,#ffd6e7aa,transparent 60%),radial-gradient(700px 420px at -10% 30%,#f3d9ff88,transparent 60%),radial-gradient(600px 400px at 60% 110%,#ffe3d1aa,transparent 60%),#fff4f8;background-attachment:fixed}
+${P}:has(body.lab-space){background:radial-gradient(1000px 520px at 78% -12%,#e9d5ffaa,transparent 62%),radial-gradient(800px 480px at -8% 22%,#ffd6e799,transparent 60%),#fbf5ff;background-attachment:fixed}
+${P} body,${P} body.lab-space{background:transparent}
 ${P} .intro h1,${P} h1,${P} body.lab-space .intro h1,${P} body.lab-space h1{background:linear-gradient(100deg,#5c1f4a 0%,#a61e4d 45%,#e64980 75%,#f76707 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 ${P} body.lab-space .intro h1,${P} body.lab-space h1{background-image:linear-gradient(100deg,#4a1d6b 0%,#862e9c 45%,#d6336c 80%,#e8590c 100%)}
 ${P} header::after{background:linear-gradient(90deg,transparent,#f06595,#cc5de8,#ff922b,transparent);background-size:200% 100%}
@@ -164,7 +188,7 @@ ${P} .folder-face,${P} .unit-electric .active-folder .folder-face,${P} .unit-spa
 ${P} .folder-tab{background:#ffe3ee;border-color:#f0bcd3;color:#a61e4d}
 ${P} .experiment-art img,${P} .electroscope-art{filter:drop-shadow(0 10px 14px #d6336c33)}
 ${P} .theme-toggle{background:#fff;border-color:#e8b0c9;color:#a61e4d}
-`;
+${SPRING}`;
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   writeFileSync(join(root, 'theme-light.css'), buildLightTheme());

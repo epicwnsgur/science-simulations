@@ -391,7 +391,7 @@ flow = setupPOEFlow({
     lead: '하나의 물체를 서로 다른 위치에서 보면 물체가 보이는 방향이 달라져요. 시차 측정 판의 두 구멍으로 별 모형 (가)와 (나)를 번갈아 볼 거예요.<br>별 모형 (가)는 구멍에서 가깝고, (나)는 더 멀리 있어요.',
     illustration: `<svg viewBox="0 0 520 250" role="img" aria-label="두 구멍과 가까운 별 모형 (가), 먼 별 모형 (나)가 있는 시차 측정 판"><rect width="520" height="250" rx="12" fill="#0a0d22"/><rect x="150" y="16" width="220" height="220" rx="8" fill="#efe6cf"/><text x="260" y="40" text-anchor="middle" font-size="14" fill="#5a4a2a">① ② ③ ④ ⑤ ⑥ ⑦ ⑧ ⑨ ⑩ ⑪</text><path d="${starPath(260, 150, 12)}" fill="#ffd84a" stroke="#7a5a00"/><text x="278" y="155" font-size="15" fill="#5a4a2a">(가)</text><path d="${starPath(252, 90, 10)}" fill="#ffe98f" stroke="#7a5a00"/><text x="268" y="95" font-size="15" fill="#5a4a2a">(나)</text><circle cx="238" cy="222" r="6" fill="#2a2418"/><circle cx="282" cy="222" r="6" fill="#2a2418"/><text x="200" y="244" font-size="12" fill="#cbd8ff">왼쪽 구멍</text><text x="280" y="244" font-size="12" fill="#cbd8ff">오른쪽 구멍</text></svg>`,
     question: '두 구멍으로 번갈아 볼 때, 별 모형 (가)와 (나) 중 시차(보이는 방향이 달라지는 정도)가 더 큰 것은 무엇일까요?',
-    choices: ['가까이 있는 별 모형 (가)의 시차가 더 클 것 같아요.', '멀리 있는 별 모형 (나)의 시차가 더 클 것 같아요.', '두 별 모형의 시차가 같을 것 같아요.', '아직 잘 모르겠어요.'],
+    choices: ['가까이 있는 별 모형 (가)의 시차가 더 클 것 같아요.', '멀리 있는 별 모형 (나)의 시차가 더 클 것 같아요.', '두 별 모형의 시차가 같을 것 같아요.'],
     placeholder: '눈앞에 손가락을 세우고 한쪽 눈씩 번갈아 감으며 볼 때를 떠올려 보세요. 손가락이 가까울 때와 멀 때는 어떻게 달랐나요?',
   },
   observe: {

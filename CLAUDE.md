@@ -15,3 +15,10 @@
 
 - `npm test`(단위 검사), `npm run build`
 - `npx playwright test`(화면 검사, perf 포함)
+
+## 새 실험을 만들 때 함께 지켜요
+
+- 학습 흐름은 꼭 `setupPOEFlow`(src/poe-flow.js)로 만들어요. 그래야 공통 기능이 저절로 들어가요: 복습, 미리 보기, 예상의 ‘기타(직접 쓰기)’, 📝 메모(머리글 + 왼쪽 아래), 관찰 칸 나누기(`observe.parts`), 포스트잇, 테마.
+- 예상 보기에 ‘아직 잘 모르겠어요’는 넣지 않아요(‘기타’가 대신해요).
+- 공통 CSS를 고치면 `node build/light-theme.mjs`로 밝은 테마를 다시 만들어요.
+

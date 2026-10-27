@@ -186,7 +186,7 @@ flow = setupPOEFlow({
     lead: '패러데이는 자석 주변에 놓인 전선에 전류를 흘려주면 전선이 회전한다는 것을 알아냈어요.<br>말굽자석 사이에 코일(전기 그네)을 매달고 전류를 흘려 볼 거예요.',
     illustration: `<svg viewBox="0 0 520 250" role="img" aria-label="말굽자석 사이에 매달린 코일"><rect width="520" height="250" rx="12" fill="#121a33"/><path d="M120 30 H400" stroke="#c9d0e6" stroke-width="6"/><path d="M240 30 V150 M300 30 V150" stroke="#d8dde3" stroke-width="2"/><path d="M230 110 H310 V190 H230Z" stroke="#c46f2c" stroke-width="7" fill="none"/><rect x="200" y="150" width="170" height="18" fill="#3a6fd8"/><rect x="200" y="200" width="170" height="18" fill="#e04848"/><path d="M370 159 C420 159 420 209 370 209" stroke="#b9bfcc" stroke-width="16" fill="none"/></svg>`,
     question: '스위치를 눌러 코일에 전류를 흘리면 코일은 어떻게 될까요?',
-    choices: ['코일이 한쪽으로 움직일 것 같아요.', '코일이 자석에 붙어 버릴 것 같아요.', '코일은 움직이지 않을 것 같아요.', '아직 잘 모르겠어요.'],
+    choices: ['코일이 한쪽으로 움직일 것 같아요.', '코일이 자석에 붙어 버릴 것 같아요.', '코일은 움직이지 않을 것 같아요.'],
     placeholder: '앞 시간에 배운 전류가 흐르는 코일 주위의 자기장을 떠올려 보세요.',
   },
   observe: {

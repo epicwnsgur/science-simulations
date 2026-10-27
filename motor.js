@@ -223,7 +223,7 @@ flow = setupPOEFlow({
     lead: '전기 그네에서 자기장 속 코일에 전류가 흐르면 힘을 받아 움직였어요.<br>이번에는 두 자석 사이에 코일을 놓고, 코일이 축을 중심으로 돌 수 있게 했어요.',
     illustration: `<svg viewBox="0 0 520 250" role="img" aria-label="두 자석 사이의 코일"><rect width="520" height="250" rx="12" fill="#121a33"/><rect x="40" y="60" width="110" height="130" fill="#3a6fd8"/><text x="95" y="140" text-anchor="middle" font-size="40" font-weight="800" fill="#fff">S</text><rect x="370" y="60" width="110" height="130" fill="#e04848"/><text x="425" y="140" text-anchor="middle" font-size="40" font-weight="800" fill="#fff">N</text><path d="M180 140 L340 110" stroke="#c46f2c" stroke-width="9" stroke-linecap="round"/><circle cx="260" cy="125" r="6" fill="#d8dde3"/><rect x="215" y="200" width="90" height="26" rx="5" fill="#c46f2c"/></svg>`,
     question: '코일에 전류를 흘리면 코일은 어떻게 움직일까요?',
-    choices: ['한 방향으로 계속 회전할 것 같아요.', '조금 돌다가 멈출 것 같아요.', '앞뒤로 흔들리기만 할 것 같아요.', '움직이지 않을 것 같아요.', '아직 잘 모르겠어요.'],
+    choices: ['한 방향으로 계속 회전할 것 같아요.', '조금 돌다가 멈출 것 같아요.', '앞뒤로 흔들리기만 할 것 같아요.', '움직이지 않을 것 같아요.'],
     placeholder: '전기 그네에서 전류의 방향을 바꾸었을 때 힘의 방향이 어떻게 되었는지 떠올려 보세요.',
   },
   observe: {

@@ -12,6 +12,9 @@ import { previewOf } from './previews.js';
 import { sceneOf, playStep } from './preview-scenes.js';
 const $ = selector => document.querySelector(selector);
 export const MIN_CHARS = 20;
+// 예상의 ‘기타(직접 쓰기)’ 칸: 보기 대신 쓰는 짧은 예상이라 10자 이상이에요(그렇게 생각한 까닭은 따로 20자 이상 써요).
+export const OTHER_MIN_CHARS = 10;
+const OTHER_LABEL = '기타: 다른 생각이 있어요 (직접 쓰기)';
 const STAGES = ['predict', 'observe', 'explain'];
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 
@@ -83,7 +86,9 @@ export function setupPOEFlow(config) {
         ${glossary}
       </div>
       <form id="prediction-form" class="poe-form">
-        <fieldset><legend></legend><div id="prediction-choices"></div></fieldset>
+        <fieldset><legend></legend><div id="prediction-choices"></div>
+          <div class="other-box" hidden><label class="writing-label" for="prediction-other">✏️ 보기와 다른 내 생각(예상)을 직접 써 주세요.</label><textarea id="prediction-other" rows="2" maxlength="300" data-min="${OTHER_MIN_CHARS}" placeholder="예: ○○이 △△ 쪽으로 움직일 것 같아요."></textarea><p class="char-count" data-for="prediction-other" aria-live="polite"></p></div>
+        </fieldset>
         <label class="writing-label" for="prediction-reason">${L.reasonLabel}</label>
         <textarea id="prediction-reason" rows="3" maxlength="1200" required></textarea><p class="char-count" data-for="prediction-reason" aria-live="polite"></p><p class="autosave-note" aria-hidden="true"></p>
         <p class="poe-hint">${L.predictNote}</p>
@@ -239,7 +244,10 @@ export function setupPOEFlow(config) {
     $('.prediction-illustration').innerHTML = i.predict.illustration;
     renderPreview();
     $('#prediction-form legend').textContent = `1. ${i.predict.question}`;
-    $('#prediction-choices').innerHTML = i.predict.choices.map((label, n) => `<label class="prediction-choice"><input type="radio" name="prediction" value="${n}" required${(e.prediction?.index ?? e.choice) === n ? ' checked' : ''}><span>${label}</span></label>`).join('');
+    // 보기 맨 끝에는 언제나 ‘기타(직접 쓰기)’가 있어요. 고르면 아래에 내 예상을 직접 쓰는 칸이 열려요.
+    $('#prediction-choices').innerHTML = [...i.predict.choices, OTHER_LABEL].map((label, n) => `<label class="prediction-choice${n === i.predict.choices.length ? ' other-choice' : ''}"><input type="radio" name="prediction" value="${n}" required${(e.prediction?.index ?? e.choice) === n ? ' checked' : ''}><span>${label}</span></label>`).join('');
+    $('#prediction-other').value = e.prediction ? e.prediction.other ?? '' : e.otherText ?? '';
+    syncOther();
     $('#prediction-reason').placeholder = i.predict.placeholder;
     $('#prediction-reason').value = e.prediction?.reason ?? e.reason;
     renderParts();
@@ -552,7 +560,7 @@ export function setupPOEFlow(config) {
   // 쓰는 중인 글(아직 저장 버튼을 누르지 않은 글)도 바로바로 기억해 둡니다.
   function keepDrafts() {
     const e = exp();
-    if (!e.prediction) { e.reason = $('#prediction-reason').value; const c = document.querySelector('input[name="prediction"]:checked'); e.choice = c ? +c.value : null; }
+    if (!e.prediction) { e.reason = $('#prediction-reason').value; e.otherText = $('#prediction-other').value; const c = document.querySelector('input[name="prediction"]:checked'); e.choice = c ? +c.value : null; }
     e.observations = partAreas().map(el => el.value);
     e.observation = e.observations.join('\n');
     e.explanation = $('#explanation-record').value;
@@ -564,7 +572,15 @@ export function setupPOEFlow(config) {
     blockPaste(el, { allow: () => teacherMode.on, onBlocked: () => toast(PASTE_MESSAGE) });
   }
   document.querySelectorAll('.poe-form textarea').forEach(wireWriting);
-  $('#prediction-form').addEventListener('change', keepDrafts);
+  $('#prediction-form').addEventListener('change', () => { syncOther(); keepDrafts(); });
+  // ‘기타’를 골랐는지, 고른 예상의 글(기타는 ‘기타: 직접 쓴 글’)
+  const isOther = () => +document.querySelector('input[name="prediction"]:checked')?.value === info().predict.choices.length;
+  function syncOther() {
+    const on = isOther(), box = $('.other-box');
+    box.hidden = !on; $('#prediction-other').required = on;
+    if (on && !exp().prediction && document.activeElement?.name === 'prediction') $('#prediction-other').focus({ preventScroll: true });
+  }
+  const chosenText = () => isOther() ? `기타: ${$('#prediction-other').value.trim()}` : document.querySelector('input[name="prediction"]:checked').nextElementSibling.textContent;
   // 예상은 저장하면 고칠 수 없으므로, 저장하기 전에 확인 창으로 한 번 더 읽어 보게 해요.
   const confirmBox = $('#prediction-confirm');
   const openDialog = d => { if (d.showModal) d.showModal(); else d.setAttribute('open', ''); };
@@ -574,9 +590,9 @@ export function setupPOEFlow(config) {
     if (exp().prediction) return changeStage('observe');
     // 교사 모드: 예상을 쓰지 않아도 관찰하기로 넘어가요(학생 기록은 저장하지 않아요).
     if (teacherMode.on && meaningfulLength($('#prediction-reason').value) < MIN_CHARS) return changeStage('observe');
+    if (isOther() && !requireWriting('#prediction-other')) return;
     if (!requireWriting('#prediction-reason')) return;
-    const checked = document.querySelector('input[name="prediction"]:checked');
-    $('#confirm-choice').textContent = checked.nextElementSibling.textContent;
+    $('#confirm-choice').textContent = chosenText();
     $('#confirm-reason').textContent = $('#prediction-reason').value.trim();
     openDialog(confirmBox);
     $('#confirm-prediction').focus();
@@ -586,7 +602,7 @@ export function setupPOEFlow(config) {
     const e = exp(), checked = document.querySelector('input[name="prediction"]:checked');
     closeDialog(confirmBox);
     if (!e.prediction && checked) {
-      e.prediction = { index: +checked.value, choice: checked.nextElementSibling.textContent, reason: $('#prediction-reason').value.trim() };
+      e.prediction = { index: +checked.value, choice: chosenText(), reason: $('#prediction-reason').value.trim(), ...(isOther() ? { other: $('#prediction-other').value.trim() } : {}) };
       fill();
     }
     changeStage('observe');
