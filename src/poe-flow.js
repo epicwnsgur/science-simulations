@@ -6,7 +6,9 @@ import { enableGlossary } from './glossary.js';
 import { teacherMode, mountTeacherMode } from './teacher-mode.js';
 import { modelOf } from './teaching-models.js';
 import { draftStore, pruneDrafts, KEEP_HOURS } from './draft-store.js';
-import { blockPaste, PASTE_MESSAGE, writingProblem, meaningfulLength } from './text-guard.js';
+import { blockPaste, PASTE_MESSAGE, writingProblem, meaningfulLength, hasBlank, ownLength, FRAME_OWN_MIN } from './text-guard.js';
+import { SUPPORTS } from './supports.js';
+import { mountHelp, mountChallenge } from './scaffold-ui.js';
 import { mountMemo } from './memo.js';
 import { icon } from './icons.js';
 import { previewOf } from './previews.js';
@@ -33,6 +35,8 @@ const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 // 교사 모드(src/teacher-mode.js, 비밀번호): 단계를 자유롭게 오가고 순서 잠금이 모두 풀려요. 학생 기록 검사도 건너뛰어요.
 // 주요 과학 낱말은 눌러서 뜻을 볼 수 있어요(src/glossary.js).
 // config.model: 교수·학습 모형('poe' 기본, 'generative' 발생 학습, 'far' 비유 활용). 단계 이름과 안내 문구가 바뀌어요(src/teaching-models.js).
+// 수준별 지원(src/supports.js, 화면은 src/scaffold-ui.js): 글 칸마다 ‘막히면 도움 받기’(힌트·낱말 상자·문장 틀)와 개념 정리 아래 ‘도전 과제(선택)’.
+//   실험 하나짜리 흐름에서 SUPPORTS[slug](또는 config.supports)가 있을 때만 나와요.
 export function setupPOEFlow(config) {
   const L = modelOf(config.model);
   const experiments = config.experiments ?? [{ id: 'main', name: '', predict: config.predict, observe: config.observe, explain: config.explain }];
@@ -58,6 +62,11 @@ export function setupPOEFlow(config) {
   const partsOf = i => i.observe.parts ?? [{ label: i.observe.recordLabel, placeholder: i.observe.placeholder }];
   const partAreas = () => [...document.querySelectorAll('#observation-parts textarea')];
   const observationsOf = e => e.observations ?? [e.observation ?? ''];
+  // 수준별 지원: 글 칸(id)마다 힌트·낱말·문장 틀
+  const supports = multi ? null : config.supports ?? SUPPORTS[slug] ?? null;
+  const supportFor = el => !supports ? null : el.id === 'prediction-reason' ? supports.reason : el.id === 'explanation-record' ? supports.explain
+    : el.id.startsWith('observation-record') ? supports.observe?.[el.id === 'observation-record' ? 0 : +el.id.split('-').pop() - 1] : null;
+  const frameFor = el => supportFor(el)?.frame ?? '';
 
   const intro = $('.intro');
   intro.querySelector('p').textContent = multi ? L.introMulti(experiments.length) : L.intro;
@@ -150,6 +159,15 @@ export function setupPOEFlow(config) {
   `);
   $('#simulation-mount').append(workspace);
   $('#concept-activities').append(vocabulary, mission);
+  // 글 칸 아래 ‘막히면 도움 받기’: 본 힌트 수는 임시 저장에 함께 기억해요.
+  const helpKey = id => `${state.current}:${id}`;
+  const helpOf = el => supportFor(el) && mountHelp(el, supportFor(el), {
+    getShown: () => state.help?.[helpKey(el.id)] ?? 0,
+    setShown: n => { (state.help ??= {})[helpKey(el.id)] = n; save(); },
+  });
+  const helps = [helpOf($('#prediction-reason')), helpOf($('#explanation-record'))].filter(Boolean);
+  let partHelps = [];
+  const renderHelps = () => [...helps, ...partHelps].forEach(h => h.render());
   $('#reset').setAttribute('aria-label', '실험만 초기화');
   $('#reset').innerHTML = '↻ <span>실험 초기화</span>';
 
@@ -194,6 +212,14 @@ export function setupPOEFlow(config) {
   renderStickies();
 
   const resetConceptQuiz = mountConceptQuiz(mission, config.quiz ?? CONCEPT_QUIZZES[slug], { saved: state.quiz, onChange: quiz => { state.quiz = quiz; save(); } });
+  // 도전 과제(선택): 퀴즈 아래. 풀지 않아도 제출할 수 있고, 결과는 보고서 미리보기·PDF에만 넣어요(선생님 시트에는 보내지 않아요).
+  let challenge = null;
+  if (supports?.challenge) {
+    const box = document.createElement('section');
+    box.className = 'challenge'; box.id = 'challenge'; box.setAttribute('aria-labelledby', 'challenge-title');
+    $('#concept-activities').append(box);
+    challenge = mountChallenge(box, supports.challenge, { saved: state.challenge, onChange: c => { state.challenge = c; save(); }, onPasteBlocked: text => toast(text) });
+  }
   const submit = mountReportSubmit($('#report-submit'), {
     slug,
     report: () => {
@@ -204,7 +230,7 @@ export function setupPOEFlow(config) {
       // 예전 Apps Script도 읽을 수 있도록 실험별 답을 한 묶음으로도 함께 보내요.
       const joined = key => multi ? sections.map(s => `[${s.name}] ${s[key]}`).join('\n') : sections[0][key];
       // fieldLabels: 모형에 맞는 칸 이름(새 Apps Script는 시트 머리글에 써요. 예전 Apps Script는 무시하고 ‘예상·관찰·설명’으로 저장해요).
-      return { lab: slug, title: labTitle, model: L.id, fieldLabels: L.fields, sections, prediction: joined('prediction'), reason: joined('reason'), observation: joined('observation'), explanation: joined('explanation') };
+      return { lab: slug, title: labTitle, model: L.id, fieldLabels: L.fields, sections, prediction: joined('prediction'), reason: joined('reason'), observation: joined('observation'), explanation: joined('explanation'), challenge: challenge?.summary() ?? null };
     },
     check: () => {
       const left = stickies.length - peeled().length;
@@ -215,7 +241,7 @@ export function setupPOEFlow(config) {
       }
       for (const [i, e] of state.exps.entries()) {
         const where = multi ? `실험 ${i + 1}(${experiments[i].name})의 ` : '';
-        const problem = writingProblem(e.explanation, { min: MIN_CHARS, others: [e.prediction?.reason, e.saved] }) || writingProblem(`${e.prediction?.reason ?? ''} ${e.saved}`);
+        const problem = writingProblem(e.explanation, { min: MIN_CHARS, others: [e.prediction?.reason, e.saved], frame: supports?.explain?.frame }) || writingProblem(`${e.prediction?.reason ?? ''} ${e.saved}`);
         if (problem) return where + problem;
       }
       return '';
@@ -330,6 +356,7 @@ export function setupPOEFlow(config) {
     if (locked) { $('#prediction-form fieldset').disabled = true; $('#prediction-reason').readOnly = true; }
     $('#reveal-concepts').disabled = locked;
     document.body.classList.toggle('report-locked', locked);
+    renderHelps();
   }
   function selectExperiment(n, stage) {
     if (!experimentOpen(n)) return toast(`실험 ${n}(${experiments[n - 1].name})을 설명까지 마치면 다음 실험이 열려요.`);
@@ -524,17 +551,23 @@ export function setupPOEFlow(config) {
   // 글자 수는 저장 검사와 똑같이 셉니다(src/text-guard.js의 meaningfulLength: 공백·문장 부호는 세지 않아요). 안내가 ✓이면 저장도 돼요.
   const countChars = el => meaningfulLength(el.value);
   const minOf = el => +(el.dataset.min || MIN_CHARS);
+  // 문장 틀을 쓴 칸은 빈칸(___)을 모두 채우고, 틀에 있던 말을 빼고도 FRAME_OWN_MIN자 이상 써야 해요(저장 검사와 같아요).
   function showCount(el) {
     const n = countChars(el), min = minOf(el), out = document.querySelector(`.char-count[data-for="${el.id}"]`);
     if (!out) return;
-    out.textContent = n >= min ? `✓ ${n}자 · 좋아요!` : `${n} / ${min}자 · ${min - n}자 더 써 주세요 (공백·문장 부호는 세지 않아요)`;
-    out.classList.toggle('enough', n >= min);
+    const frame = frameFor(el), own = frame ? ownLength(el.value, frame) : n;
+    const ok = n >= min && own >= FRAME_OWN_MIN && !hasBlank(el.value);
+    out.textContent = hasBlank(el.value) ? '문장 틀의 빈칸(___)을 내 말로 채워 주세요'
+      : n < min ? `${n} / ${min}자 · ${min - n}자 더 써 주세요 (공백·문장 부호는 세지 않아요)`
+      : frame && own < FRAME_OWN_MIN ? `틀에 있던 말을 빼고 내가 쓴 글자 ${own} / ${FRAME_OWN_MIN}자 · 빈칸을 ${FRAME_OWN_MIN - own}자 더 자세히 채워 주세요`
+      : `✓ ${n}자 · 좋아요!`;
+    out.classList.toggle('enough', ok);
   }
   // 같은 글이면 안 되는 앞 칸: 관찰은 예상한 까닭과, 설명은 예상한 까닭·관찰과 달라야 해요.
   const earlierWriting = el => { const e = exp(); return el.id.startsWith('observation-record') ? [e.prediction?.reason ?? e.reason] : el.id === 'explanation-record' ? [e.prediction?.reason ?? e.reason, e.saved] : []; };
   function requireWriting(target) {
     const el = typeof target === 'string' ? $(target) : target;
-    el.setCustomValidity(writingProblem(el.value, { min: minOf(el), others: earlierWriting(el) }));
+    el.setCustomValidity(writingProblem(el.value, { min: minOf(el), others: earlierWriting(el), frame: frameFor(el) }));
     return el.reportValidity();
   }
   // 관찰 기록: 실험에 활동이 여럿이면(observe.parts) 활동마다 칸을 나눠 써요. 실험을 나누는 것이 아니라 관찰 기록만 나눠요.
@@ -550,9 +583,11 @@ export function setupPOEFlow(config) {
         return `<div class="observation-part${many ? ' many' : ''}">${many ? `<p class="part-tag"><span>관찰 ${n + 1}</span> ${p.title}</p>` : ''}<label class="writing-label" for="${id}">${p.label}</label><textarea id="${id}" rows="3" maxlength="1500" required data-min="${MIN_CHARS}" placeholder="${escapeAttr(p.placeholder)}"></textarea><p class="char-count" data-for="${id}" aria-live="polite"></p></div>`;
       }).join('') + '<p class="autosave-note" aria-hidden="true"></p>';
       partAreas().forEach(wireWriting);
+      partHelps = partAreas().map(helpOf).filter(Boolean);
     }
     const values = observationsOf(exp());
     partAreas().forEach((el, n) => { el.value = values[n] ?? ''; showCount(el); });
+    partHelps.forEach(h => h.render());
   }
   const savedObservation = () => {
     const parts = partsOf(info()), areas = partAreas();
@@ -668,7 +703,7 @@ export function setupPOEFlow(config) {
     state = fresh(); if (keepReview) state.reviewed = true; save();
     document.querySelector('.draft-banner')?.remove();
     renderStickies(); previewKey = '';
-    resetConceptQuiz(); submit.reset();
+    resetConceptQuiz(); challenge?.reset(); submit.reset();
     for (const id of ['prediction-form', 'observation-form', 'explanation-form']) $(`#${id}`).reset();
     lastProgress = null; partsFor = -1;
     fill(); config.onRestart?.(); config.onExperimentChange?.(experiments[0].id, 0); changeStage('predict', true); refreshReview();

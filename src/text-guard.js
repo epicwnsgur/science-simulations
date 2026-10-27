@@ -49,13 +49,26 @@ function repeatedText(s) {
 }
 const same = (a, b) => { const k = t => String(t ?? '').replace(/\s/g, ''); return k(a) !== '' && k(a) === k(b); };
 
+// 문장 틀(src/supports.js의 frame, 글 칸 아래 ‘도움 받기’): 빈칸(___)이 남아 있으면 저장하지 않아요.
+// 틀에 미리 적힌 말은 학생이 쓴 말이 아니므로, 틀의 말을 뺀 ‘내가 쓴 글자 수’(ownLength)가 FRAME_OWN_MIN자 이상이어야 해요.
+export const FRAME_OWN_MIN = 10;
+export const hasBlank = text => /_{2,}/.test(String(text ?? ''));
+export function ownLength(text, frame) {
+  let rest = String(text ?? '');
+  for (const piece of String(frame ?? '').split(/_{2,}/).map(p => p.trim()).filter(Boolean)) rest = rest.replace(piece, ' ');
+  return meaningfulLength(rest);
+}
+
 // 글을 살펴 고칠 점이 있으면 안내 글을, 괜찮으면 ''를 돌려줘요.
-// min: 뜻 있는 글자 수의 최소, others: 같은 글이면 안 되는 다른 칸의 글들.
-export function writingProblem(text, { min = 0, others = [] } = {}) {
+// min: 뜻 있는 글자 수의 최소, others: 같은 글이면 안 되는 다른 칸의 글들, frame: 이 칸의 문장 틀(있으면).
+export function writingProblem(text, { min = 0, others = [], frame = '' } = {}) {
   if (hasBadWords(text)) return '바르지 않은 말이 있어요. 바른 말로 고쳐 써 주세요.';
   if (!min) return '';
+  if (hasBlank(text)) return '문장 틀의 빈칸(___)을 내 말로 채워 주세요.';
   const n = meaningfulLength(text);
   if (n < min) return `내 생각을 ${min}자 이상 써 주세요. (지금 ${n}자 · 공백과 문장 부호, ‘ㅋㅋ’ 같은 글자는 세지 않아요)`;
+  const own = frame ? ownLength(text, frame) : n;
+  if (frame && own < FRAME_OWN_MIN) return `문장 틀의 빈칸을 내 말로 더 채워 주세요. (틀에 있던 말을 빼고 내가 쓴 글자 ${own}자 · ${FRAME_OWN_MIN}자 이상)`;
   if (repetitive(text)) return '같은 말을 여러 번 되풀이했어요. 내 생각을 뜻이 통하는 문장으로 써 주세요.';
   if (others.some(o => same(text, o))) return '앞에서 쓴 글과 똑같아요. 이 칸의 질문에 맞게 새로 써 주세요.';
   return '';

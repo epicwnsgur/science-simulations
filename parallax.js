@@ -284,7 +284,7 @@ function renderStars(dt) {
     <text x="30" y="328" class="card-big">${s.name} <tspan class="card-small">${s.con}</tspan></text>
     <text x="30" y="356" class="card-text">거리: ${fmtLy(s.dist)} (약 ${s.dist < 10 ? s.dist.toFixed(1) : Math.round(s.dist)} pc)</text>
     <text x="30" y="382" class="card-text">연주 시차: ${far ? '0.01″보다 작아요(너무 작아요)' : `약 ${fmtArcsec(p)}`}</text>
-    <text x="30" y="408" class="card-text" style="fill:${far ? '#ff9aa6' : '#9dffb0'}">${far ? '100 pc보다 멀어 연주 시차로 거리를 알기 어려워요' : '연주 시차를 재어 거리를 알 수 있어요'}</text>`);
+    <text x="30" y="408" class="card-text" style="fill:${far ? '#ff9aa6' : '#9dffb0'}">${far ? '100 pc보다 멀어 지구에서 연주 시차를 재기 어려워요' : '연주 시차를 재어 거리를 알 수 있어요'}</text>`);
   // 거리 자: 고른 적이 있는 별은 점으로, 지금 고른 별은 이름과 함께 표시해요.
   const marks = [...viewedStars].map(k => `<circle cx="${rulerX(STARS[k].dist).toFixed(1)}" r="${k === starKey ? 6.5 : 4}" fill="${k === starKey ? '#ffcf6e' : '#cfe0ff'}"/>`).join('');
   setHTML('#ruler', `<rect x="-16" y="-46" width="${RULER.w + 30}" height="78" rx="12" fill="#0a0d22d9" stroke="#2d3566"/>
@@ -411,7 +411,7 @@ flow = setupPOEFlow({
       ['시차', '관측자의 위치에 따라 물체가 보이는 방향이 달라지는 정도를 <b>시차</b>라고 해요. 시차의 크기는 두 관측 지점과 물체가 이루는 각도로 나타내요.'],
       ['거리와 시차', '관측자와 물체 사이의 <b class="subj">거리가 멀수록 시차는</b> <b>작아지고</b>, 가까울수록 시차는 커져요. 가까운 별 모형 (가)의 시차가 먼 별 모형 (나)보다 컸어요.'],
       ['연주 시차', '지구가 공전하면 6개월 간격으로 관측하는 위치가 달라져 별이 보이는 방향이 달라져요. 이때 측정한 시차의 1/2을 <b>연주 시차</b>라고 해요. 지구와 가까이 있는 별일수록 연주 시차가 커요.'],
-      ['연주 시차와 별까지의 거리', '별은 아주 멀리 있어서 연주 시차가 매우 작으므로 단위로 ″(초)를 써요(1° = 3600″). 연주 시차가 1″인 별까지의 거리를 <b>1 pc(파섹)</b>이라고 하고, 1 pc은 약 3.26 광년이에요. <b class="subj">100 pc보다 먼 별은</b> 연주 시차가 너무 작아 연주 시차로 거리를 <b>알기 어려워요</b>.'],
+      ['연주 시차와 별까지의 거리', '별은 아주 멀리 있어서 연주 시차가 매우 작으므로 단위로 ″(초)를 써요(1° = 3600″). 연주 시차가 1″인 별까지의 거리를 <b>1 pc(파섹)</b>이라고 하고, 1 pc은 약 3.26 광년이에요. <b class="subj">100 pc보다 먼 별은</b> 지구에서 연주 시차로 거리를 <b>알기 어려워요</b>. 연주 시차가 너무 작기 때문이에요.'],
     ],
     note: '지구가 공전하지 않는다면 6개월이 지나도 관측 위치가 같아서 별이 보이는 방향이 달라지지 않으므로 연주 시차가 생기지 않아요.',
   },

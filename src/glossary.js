@@ -62,7 +62,7 @@ export const TERMS = {
 // 뒤에 이런 글자가 붙으면 다른 낱말이라 뜻 풀이를 붙이지 않아요(예: 전자석, 전자레인지).
 const NOT_BEFORE = { '전자': '석레기', '전류': '계', '전압': '계', '저항': '기', '은하': '수계단', '성단': '원' };
 const HANGUL = /[가-힣]/;
-const SKIP = 'button, input, textarea, select, a, svg, label.prediction-choice, label.toggle, .term, .term-pop, #stage-state, #readout, .flow-toast, .term-buttons, #term-definition, script, style, .char-count, .autosave-note, .part-tag';
+const SKIP = 'button, input, textarea, select, a, svg, label.prediction-choice, label.toggle, .term, .term-pop, #stage-state, #readout, .flow-toast, .term-buttons, #term-definition, script, style, .char-count, .autosave-note, .part-tag, .help-bar';
 const ORDER = Object.keys(TERMS).sort((a, b) => b.length - a.length);
 
 // 글 속에서 처음 나오는 낱말 찾기(낱말 앞이 다른 한글이면 낱말의 일부라서 건너뛰어요. 예: ‘부도체’ 안의 ‘도체’).
