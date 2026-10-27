@@ -41,7 +41,13 @@ const LABS = [
     for (const v of ['top', 'side', 'sun']) await page.locator(`[data-gview="${v}"]`).click();
     await page.locator('#tab-band').click(); await page.locator('[data-band="center"]').click(); await page.locator('[data-band="anti"]').click();
     await page.locator('#tab-objects').click();
-    for (const [i, kind] of ['open', 'globular', 'emission', 'reflection', 'dark'].entries()) {
+    // 1단계 성단(산개·구상) → 2단계 성운(방출·반사·암흑)
+    for (const [i, kind] of ['open', 'globular'].entries()) {
+      if (i) await page.locator('#obj-next').click();
+      await page.locator(`[data-kind="${kind}"]`).click();
+    }
+    await page.locator('[data-round="1"]').click();
+    for (const [i, kind] of ['emission', 'reflection', 'dark'].entries()) {
       if (i) await page.locator('#obj-next').click();
       await page.locator(`[data-kind="${kind}"]`).click();
     }
@@ -195,6 +201,11 @@ test('우리은하: 사진을 잘못 분류하면 힌트를 주고, 성단·성�
   await expect(page.locator('#obj-card')).toContainText('파란색을 띠는 고온의 별이 많아요');
   await page.locator('[data-obj="1"]').click(); await page.locator('[data-kind="globular"]').click();
   await expect(page.locator('#obj-card')).toContainText('구상 성단');
+  // 1단계에서는 성단 두 가지 단추만, 2단계에서는 성운 세 가지 단추만 나와요.
+  await expect(page.locator('[data-kind]')).toHaveCount(2);
+  await page.locator('[data-round="1"]').click();
+  await expect(page.locator('[data-kind]')).toHaveCount(3);
+  await expect(page.locator('#obj-card')).toContainText('방출·반사·암흑');
 });
 
 test('우주 팽창: 풍선을 더 불면 모든 붙임딱지 사이가 멀어지고, 붙임딱지 크기는 그대로', async ({ page }) => {

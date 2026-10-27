@@ -7,6 +7,8 @@ import { teacherMode, mountTeacherMode } from './teacher-mode.js';
 import { modelOf } from './teaching-models.js';
 import { draftStore, pruneDrafts, KEEP_HOURS } from './draft-store.js';
 import { blockPaste, PASTE_MESSAGE, writingProblem, meaningfulLength } from './text-guard.js';
+import { CHALLENGES } from './challenges.js';
+import { mountChallenge } from './challenge-ui.js';
 import { mountMemo } from './memo.js';
 import { icon } from './icons.js';
 import { previewOf } from './previews.js';
@@ -33,6 +35,7 @@ const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 // 교사 모드(src/teacher-mode.js, 비밀번호): 단계를 자유롭게 오가고 순서 잠금이 모두 풀려요. 학생 기록 검사도 건너뛰어요.
 // 주요 과학 낱말은 눌러서 뜻을 볼 수 있어요(src/glossary.js).
 // config.model: 교수·학습 모형('poe' 기본, 'generative' 발생 학습, 'far' 비유 활용). 단계 이름과 안내 문구가 바뀌어요(src/teaching-models.js).
+// 도전 과제(선택, src/challenges.js): 개념 정리의 퀴즈 아래에 나와요. 실험 하나짜리 흐름에서 CHALLENGES[slug](또는 config.challenge)가 있을 때만 나와요.
 export function setupPOEFlow(config) {
   const L = modelOf(config.model);
   const experiments = config.experiments ?? [{ id: 'main', name: '', predict: config.predict, observe: config.observe, explain: config.explain }];
@@ -194,6 +197,15 @@ export function setupPOEFlow(config) {
   renderStickies();
 
   const resetConceptQuiz = mountConceptQuiz(mission, config.quiz ?? CONCEPT_QUIZZES[slug], { saved: state.quiz, onChange: quiz => { state.quiz = quiz; save(); } });
+  // 도전 과제(선택): 퀴즈 아래. 풀지 않아도 제출할 수 있고, 결과는 보고서 미리보기·PDF에만 넣어요(선생님 시트에는 보내지 않아요).
+  let challenge = null;
+  const challengeData = multi ? null : config.challenge ?? CHALLENGES[slug];
+  if (challengeData) {
+    const box = document.createElement('section');
+    box.className = 'challenge'; box.id = 'challenge'; box.setAttribute('aria-labelledby', 'challenge-title');
+    $('#concept-activities').append(box);
+    challenge = mountChallenge(box, challengeData, { saved: state.challenge, onChange: c => { state.challenge = c; save(); }, onPasteBlocked: text => toast(text) });
+  }
   const submit = mountReportSubmit($('#report-submit'), {
     slug,
     report: () => {
@@ -204,7 +216,7 @@ export function setupPOEFlow(config) {
       // 예전 Apps Script도 읽을 수 있도록 실험별 답을 한 묶음으로도 함께 보내요.
       const joined = key => multi ? sections.map(s => `[${s.name}] ${s[key]}`).join('\n') : sections[0][key];
       // fieldLabels: 모형에 맞는 칸 이름(새 Apps Script는 시트 머리글에 써요. 예전 Apps Script는 무시하고 ‘예상·관찰·설명’으로 저장해요).
-      return { lab: slug, title: labTitle, model: L.id, fieldLabels: L.fields, sections, prediction: joined('prediction'), reason: joined('reason'), observation: joined('observation'), explanation: joined('explanation') };
+      return { lab: slug, title: labTitle, model: L.id, fieldLabels: L.fields, sections, prediction: joined('prediction'), reason: joined('reason'), observation: joined('observation'), explanation: joined('explanation'), challenge: challenge?.summary() ?? null };
     },
     check: () => {
       const left = stickies.length - peeled().length;
@@ -668,7 +680,7 @@ export function setupPOEFlow(config) {
     state = fresh(); if (keepReview) state.reviewed = true; save();
     document.querySelector('.draft-banner')?.remove();
     renderStickies(); previewKey = '';
-    resetConceptQuiz(); submit.reset();
+    resetConceptQuiz(); challenge?.reset(); submit.reset();
     for (const id of ['prediction-form', 'observation-form', 'explanation-form']) $(`#${id}`).reset();
     lastProgress = null; partsFor = -1;
     fill(); config.onRestart?.(); config.onExperimentChange?.(experiments[0].id, 0); changeStage('predict', true); refreshReview();

@@ -585,3 +585,32 @@ button.term:focus-visible{outline:2px solid var(--current);outline-offset:2px}
 .icon{width:1.1em;height:1.1em;vertical-align:-.18em;flex:none}
 .memo-toggle .icon,.memo-head-btn .icon,.theme-toggle .icon{margin-right:2px}
 .guide-num .icon{width:14px;height:14px;vertical-align:-2px}
+
+/* ---------- 도전 과제(선택, src/challenge-ui.js) ---------- */
+.challenge{margin-top:32px;padding:22px 22px 14px;border-radius:14px;border:1px dashed var(--volt);background:linear-gradient(180deg,#14183a,#0d1430)}
+.challenge-tag{display:inline-flex;align-items:center;gap:4px}
+.challenge h2{margin:6px 0 8px;font-size:22px;color:var(--ink)}
+.challenge .challenge-intro{margin:0;font-size:15px;line-height:1.7;color:var(--muted)}
+.challenge-item{margin-top:20px}
+.challenge-item h3{margin:0 0 10px;font-size:18px;line-height:1.6;color:var(--ink)}
+.challenge-number{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+.challenge-number input{width:150px;padding:10px 12px;border-radius:8px;border:1px solid var(--line-2);background:#070c22;color:var(--ink);font:inherit;font-size:17px}
+.challenge-number input:focus{outline:2px solid var(--current)}
+.challenge-number input.right{border:2px solid var(--ok)}
+.challenge-number input.wrong{border:2px solid #ff6b7a}
+.challenge-unit{font-weight:700;color:var(--ink)}
+.challenge .challenge-feedback{margin:8px 0 0;font-size:15px;line-height:1.7;color:var(--muted)}
+.challenge-feedback:empty{display:none}
+.challenge .challenge-feedback.right{color:#7dffb0}
+.challenge .challenge-feedback.hint{color:#ffe08a}
+.challenge .challenge-feedback.wrong{color:#ffc2c9}
+.challenge-think{margin-top:24px}
+.challenge-think h3{margin:0 0 6px;font-size:18px;color:var(--ink)}
+.challenge-think textarea{display:block;width:100%;min-height:90px;padding:12px;border-radius:8px;border:1px solid var(--line-2);background:#070c22;color:var(--ink);font:inherit;font-size:16px;line-height:1.7;resize:vertical}
+.challenge-think textarea:focus{outline:2px solid var(--current)}
+.challenge-foot{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-top:16px}
+.challenge .challenge-score{margin:0;font-weight:700;color:var(--volt)}
+.lab-readable .challenge .challenge-intro,.lab-readable .challenge .challenge-feedback{font-size:calc(16px * var(--fs))}
+.lab-readable .challenge-item h3,.lab-readable .challenge-think h3{font-size:calc(18px * var(--fs))}
+@media(max-width:600px){.challenge{padding:18px 14px 12px}.challenge-foot button{width:100%}}
+@media print{.challenge{display:none!important}}

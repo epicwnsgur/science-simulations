@@ -263,6 +263,23 @@ html[data-theme=light] .memo-saved{color:var(--muted)}
 html[data-theme=light] .other-box{background:#fceef4;border:1px dashed var(--current)}
 html[data-theme=light] .memo-head-btn{border:1px solid var(--volt);background:#f7d0e0;color:#38192d}
 html[data-theme=light] .memo-head-btn:hover,html[data-theme=light] .memo-head-btn[aria-expanded=true]{box-shadow:0 0 0 3px #ffd23f44}
+html[data-theme=light] .challenge{border:1px dashed var(--volt);background:linear-gradient(180deg,#fadee9,#fbe8f0)}
+html[data-theme=light] .challenge h2{color:var(--ink)}
+html[data-theme=light] .challenge .challenge-intro{color:var(--muted)}
+html[data-theme=light] .challenge-item h3{color:var(--ink)}
+html[data-theme=light] .challenge-number input{border:1px solid var(--line-2);background:#fdf4f8;color:var(--ink)}
+html[data-theme=light] .challenge-number input:focus{outline:2px solid var(--current)}
+html[data-theme=light] .challenge-number input.right{border:2px solid var(--ok)}
+html[data-theme=light] .challenge-number input.wrong{border:2px solid #ff6b7a}
+html[data-theme=light] .challenge-unit{color:var(--ink)}
+html[data-theme=light] .challenge .challenge-feedback{color:var(--muted)}
+html[data-theme=light] .challenge .challenge-feedback.right{color:#00c24c}
+html[data-theme=light] .challenge .challenge-feedback.hint{color:#ad5c00}
+html[data-theme=light] .challenge .challenge-feedback.wrong{color:#411016}
+html[data-theme=light] .challenge-think h3{color:var(--ink)}
+html[data-theme=light] .challenge-think textarea{border:1px solid var(--line-2);background:#fdf4f8;color:var(--ink)}
+html[data-theme=light] .challenge-think textarea:focus{outline:2px solid var(--current)}
+html[data-theme=light] .challenge .challenge-score{color:var(--volt)}
 /* readable.css */
 html[data-theme=light] .lab-readable{--faint:#8f6683;--muted:#6f4462}
 html[data-theme=light] .lab-now{color:var(--volt)}

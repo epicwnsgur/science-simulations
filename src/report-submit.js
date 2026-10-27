@@ -152,7 +152,7 @@ export function mountReportSubmit(container, { slug, report, check, onSubmitted 
         const controller = new AbortController(), timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
         try {
           // 글자(text/plain)로 보내면 사전 확인 요청 없이 Apps Script 웹 앱에 바로 전달돼요.
-          const response = await fetch(url, { method: 'POST', body: JSON.stringify({ ...snapshot, submissionId: store.submissionId }), signal: controller.signal });
+          const response = await fetch(url, { method: 'POST', body: JSON.stringify({ ...sheetData(snapshot), submissionId: store.submissionId }), signal: controller.signal });
           result = await response.json();
         } catch {
           // 요청은 갔지만 답을 못 받았을 수도 있어요. 다시 보내도 같은 제출 ID라서 두 번 저장되지 않아요.
@@ -220,6 +220,14 @@ export function mountReportSubmit(container, { slug, report, check, onSubmitted 
   };
 }
 
+// 선생님 시트로 보내는 내용: 도전 과제(선택) 결과는 미리보기·PDF에만 넣고 시트로는 보내지 않아요(시트 칸을 바꾸지 않도록).
+const sheetData = ({ challenge, ...rest }) => rest;
+
+// 도전 과제(선택) 결과: 문제마다 해결 여부와 내 답, 생각 더하기 글.
+function challengeRows(c, row) {
+  return [...c.items.map((it, n) => row(`도전 ${n + 1}`, `${it.result}${it.mine ? ` · 내 답: ${it.mine}` : ''}`, it.question)), ...(c.thinkQuestion ? [row('생각 더하기', c.think, c.thinkQuestion)] : [])].join('');
+}
+
 // 보고서의 네 칸. 수업 모형에 따라 이름만 달라요(src/teaching-models.js의 fields). 이름이 없으면 예상·관찰·설명이에요.
 const FIELDS = ['prediction', 'reason', 'observation', 'explanation'];
 const DEFAULT_LABELS = { prediction: '예상', reason: '예상한 까닭', observation: '관찰', explanation: '설명' };
@@ -235,6 +243,7 @@ function printHTML(r, submitted) {
     <div class="print-head"><p class="print-kicker">과학 탐구 보고서</p><h1>${escape(r.title)}</h1><p class="print-date">작성일 ${today}${submitted ? ` · 선생님께 제출함 ${stamp(submitted.at)}` : ''}</p></div>
     <dl class="print-info">${info('학년', id && `${Number(id[0])}학년`)}${info('반', id && `${Number(id.slice(1, 3))}반`)}${info('번호', id && `${Number(id.slice(3))}번`)}${info('이름', escape(r.name))}</dl>
     ${r.sections.map((s, i) => `<section class="print-section"><h2>${multi ? `실험 ${i + 1}. ${escape(s.name)}` : '탐구 기록'}</h2><dl>${FIELDS.map(k => item(labelOf(r, k), s[k], s.questions?.[k])).join('')}</dl></section>`).join('')}
+    ${r.challenge ? `<section class="print-section"><h2>도전 과제 (선택)</h2><dl>${challengeRows(r.challenge, (label, value, question) => item(label, value, question))}</dl></section>` : ''}
     ${r.feedback ? `<section class="print-section"><h2>시뮬레이션 사용 후기</h2><dl>${item('후기', r.feedback)}</dl></section>` : ''}
     <p class="print-foot">준혁T의 과학 실험실 · ${r.fieldLabels ? FIELDS.map(k => labelOf(r, k)).filter((_, i) => i !== 1).join(' → ') : '예상 → 관찰 → 설명'}</p>`;
 }
@@ -246,5 +255,6 @@ function previewHTML(r) {
     <section><h3>기본 정보</h3><dl class="preview-grid">${row('학년', `${Number(id[0])}학년`)}${row('반', `${Number(id.slice(1, 3))}반`)}${row('번호', `${Number(id.slice(3))}번`)}${row('이름', r.name)}</dl></section>
     ${r.sections.map((s, i) => `<section><h3>${multi ? `실험 ${i + 1}. ${escape(s.name)}` : '탐구 기록'}</h3><dl>${FIELDS.map(k => row(labelOf(r, k), s[k], s.questions?.[k])).join('')}</dl></section>`).join('')}
     <section><h3>퀴즈 결과</h3><p class="poe-hint">퀴즈는 스스로 확인하는 활동이라 보고서에 넣지 않아요.</p></section>
+    ${r.challenge ? `<section><h3>도전 과제 (선택)</h3><p class="poe-hint">도전 과제 결과는 PDF 보고서에만 들어가요. 선생님 시트로는 보내지 않아요.</p><dl>${challengeRows(r.challenge, (label, value, question) => row(label, value, question))}</dl></section>` : ''}
     <section><h3>시뮬레이션 사용 후기</h3><dl>${row('후기', r.feedback)}</dl></section>`;
 }

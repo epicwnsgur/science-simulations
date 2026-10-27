@@ -284,13 +284,13 @@ function renderStars(dt) {
     <text x="30" y="328" class="card-big">${s.name} <tspan class="card-small">${s.con}</tspan></text>
     <text x="30" y="356" class="card-text">거리: ${fmtLy(s.dist)} (약 ${s.dist < 10 ? s.dist.toFixed(1) : Math.round(s.dist)} pc)</text>
     <text x="30" y="382" class="card-text">연주 시차: ${far ? '0.01″보다 작아요(너무 작아요)' : `약 ${fmtArcsec(p)}`}</text>
-    <text x="30" y="408" class="card-text" style="fill:${far ? '#ff9aa6' : '#9dffb0'}">${far ? '100 pc보다 멀어 연주 시차로 거리를 알기 어려워요' : '연주 시차를 재어 거리를 알 수 있어요'}</text>`);
+    <text x="30" y="408" class="card-text" style="fill:${far ? '#ff9aa6' : '#9dffb0'}">${far ? '100 pc보다 멀어 지구에서 연주 시차를 재기 어려워요' : '연주 시차를 재어 거리를 알 수 있어요'}</text>`);
   // 거리 자: 고른 적이 있는 별은 점으로, 지금 고른 별은 이름과 함께 표시해요.
   const marks = [...viewedStars].map(k => `<circle cx="${rulerX(STARS[k].dist).toFixed(1)}" r="${k === starKey ? 6.5 : 4}" fill="${k === starKey ? '#ffcf6e' : '#cfe0ff'}"/>`).join('');
   setHTML('#ruler', `<rect x="-16" y="-46" width="${RULER.w + 30}" height="78" rx="12" fill="#0a0d22d9" stroke="#2d3566"/>
     <rect x="${rulerX(100)}" y="-6" width="${RULER.w - rulerX(100)}" height="12" fill="#ff9aa633"/><text x="${RULER.w}" y="-30" text-anchor="end" class="ruler-tick" style="fill:#ff9aa6">100 pc 넘으면 재기 어려움</text>
     <path d="M0 0 H${RULER.w}" stroke="#8fd3ff" stroke-width="2"/>${[1, 10, 100].map(v => `<path d="M${rulerX(v)} -6 V6" stroke="#8fd3ff"/><text x="${rulerX(v)}" y="22" text-anchor="middle" class="ruler-tick">${v} pc</text>`).join('')}
-    <text x="0" y="-30" class="ruler-tick">별까지의 거리 (눈금은 10배씩)</text>${marks}<text x="${rulerX(s.dist).toFixed(1)}" y="-12" text-anchor="middle" class="ruler-label">${s.name}</text>`);
+    <text x="0" y="-30" class="ruler-tick">별까지의 거리 (한 칸에 10배씩)</text>${marks}<text x="${rulerX(s.dist).toFixed(1)}" y="-12" text-anchor="middle" class="ruler-label">${s.name}</text>`);
 }
 
 /* ---------- 조작 단추 ---------- */
@@ -344,7 +344,7 @@ function renderText() {
   setHTML('#readout', `<table class="data-table"><tr><th>별 모형</th><th>왼쪽</th><th>오른쪽</th><th>시차</th></tr>${rows}</table>
     <table class="data-table"><tr><th>공전 모형</th><th>보이는 위치 변화</th></tr><tr><td>별 X</td><td>${recorded.B ? '크다' : ''}</td></tr><tr><td>별 Y</td><td>${recorded.B ? '작다' : ''}</td></tr></table>
     ${real ? `<table class="data-table"><tr><th>별</th><th>거리</th><th>연주 시차</th></tr>${real}</table>` : ''}`);
-  setText('#model-note', `시차 측정 판은 교과서 277쪽 탐구 활동을 그대로 옮겼어요. 지구의 공전 모형은 보기 쉽게 별 X와 별 Y를 아주 가깝게 두고 각도를 크게 과장했어요(실제 연주 시차는 1″보다 작아요).${use3d ? ' 3D 화면을 끌어 돌려 보고, ‘위에서’를 누르면 교과서 그림처럼 볼 수 있어요.' : ''} 배경의 별은 실제 밤하늘(여름철 은하수 부근)의 별 위치·밝기·색으로 그렸어요. 지구의 공전 궤도는 원처럼 그렸지만, 실제로는 원에 아주 가까운 타원이에요.`);
+  setText('#model-note', `시차 측정 판은 교과서의 탐구 활동을 그대로 옮겼어요. 지구의 공전 모형은 보기 쉽게 별 X와 별 Y를 아주 가깝게 두고 각도를 크게 과장했어요(실제 연주 시차는 1″보다 작아요).${use3d ? ' 3D 화면을 끌어 돌려 보고, ‘위에서’를 누르면 교과서 그림처럼 볼 수 있어요.' : ''} 배경의 별은 실제 밤하늘(여름철 은하수 부근)의 별 위치·밝기·색으로 그렸어요. 지구의 공전 궤도는 원처럼 그렸지만, 실제로는 원에 아주 가까운 타원이에요. ‘실제 별의 연주 시차’의 거리 자는 한 칸 갈 때마다 거리가 10배(1 pc → 10 pc → 100 pc)가 되게 그렸어요. 별들의 거리 차이가 너무 커서, 보통 자처럼 그리면 가까운 별들이 한 점에 몰리기 때문이에요.`);
   setText('#discovery', '2013년에 발사된 가이아 우주 망원경은 지구와 함께 태양 둘레를 돌며 수많은 별의 위치를 아주 정밀하게 되풀이해 재어, 연주 시차로 별까지의 거리를 알아내고 있어요. 공기의 방해가 없는 우주에서 재기 때문에 100 pc보다 훨씬 먼 별의 연주 시차도 잴 수 있어요.');
 }
 
@@ -411,7 +411,7 @@ flow = setupPOEFlow({
       ['시차', '관측자의 위치에 따라 물체가 보이는 방향이 달라지는 정도를 <b>시차</b>라고 해요. 시차의 크기는 두 관측 지점과 물체가 이루는 각도로 나타내요.'],
       ['거리와 시차', '관측자와 물체 사이의 <b class="subj">거리가 멀수록 시차는</b> <b>작아지고</b>, 가까울수록 시차는 커져요. 가까운 별 모형 (가)의 시차가 먼 별 모형 (나)보다 컸어요.'],
       ['연주 시차', '지구가 공전하면 6개월 간격으로 관측하는 위치가 달라져 별이 보이는 방향이 달라져요. 이때 측정한 시차의 1/2을 <b>연주 시차</b>라고 해요. 지구와 가까이 있는 별일수록 연주 시차가 커요.'],
-      ['연주 시차와 별까지의 거리', '별은 아주 멀리 있어서 연주 시차가 매우 작으므로 단위로 ″(초)를 써요(1° = 3600″). 연주 시차가 1″인 별까지의 거리를 <b>1 pc(파섹)</b>이라고 하고, 1 pc은 약 3.26 광년이에요. <b class="subj">100 pc보다 먼 별은</b> 연주 시차가 너무 작아 연주 시차로 거리를 <b>알기 어려워요</b>.'],
+      ['연주 시차와 별까지의 거리', '별은 아주 멀리 있어서 연주 시차가 매우 작으므로 단위로 ″(초)를 써요(1° = 3600″). 연주 시차가 1″인 별까지의 거리를 <b>1 pc(파섹)</b>이라고 하고, 1 pc은 약 3.26 광년이에요. <b class="subj">100 pc보다 먼 별은</b> 지구에서 연주 시차로 거리를 <b>알기 어려워요</b>. 연주 시차가 너무 작기 때문이에요.'],
     ],
     note: '지구가 공전하지 않는다면 6개월이 지나도 관측 위치가 같아서 별이 보이는 방향이 달라지지 않으므로 연주 시차가 생기지 않아요.',
   },
