@@ -20,5 +20,5 @@
 
 - 학습 흐름은 꼭 `setupPOEFlow`(src/poe-flow.js)로 만들어요. 그래야 공통 기능이 저절로 들어가요: 복습, 미리 보기, 예상의 ‘기타(직접 쓰기)’, 📝 메모(머리글 + 왼쪽 아래), 관찰 칸 나누기(`observe.parts`), 포스트잇, 테마.
 - 예상 보기에 ‘아직 잘 모르겠어요’는 넣지 않아요(‘기타’가 대신해요).
-- 공통 CSS를 고치면 `node build/light-theme.mjs`로 밝은 테마를 다시 만들어요.
+- 공통 CSS를 고치면 `node build/light-theme.mjs`로 밝은 테마를, `node build/dark-deco.mjs`로 어두운 테마 장식을 다시 만들어요(`npm test`가 최신인지 확인해요).
 
