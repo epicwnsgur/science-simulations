@@ -1,4 +1,4 @@
-// 어두운 테마의 우주 장식: 블랙홀(가르강튀아 느낌), 우주선(인듀어런스호 느낌), 화성(마션 느낌), 반짝이는 별, 별똥별.
+// 어두운 테마의 우주 장식: 블랙홀(첫 화면의 은하 그림과 같은 라벤더·크림빛), 반짝이는 별, 별똥별.
 // 색(테마 변수)은 그대로 두고 그림만 더해요. 실행: node build/dark-deco.mjs → theme-dark-deco.css
 // (src/light-theme.test.js가 theme-dark-deco.css가 최신인지 확인해요.)
 // 모든 규칙은 html:not([data-theme=light]) 아래에만 걸려 밝은 테마에는 나오지 않아요.
@@ -20,42 +20,26 @@ let rand = seeded(20261027);
 // 반짝이는 별(네 갈래 빛)
 const sparkle = (x, y, r, c = '#ffffff') => `<path d="M${x} ${f(y - r)} Q${f(x + r * .18)} ${f(y - r * .18)} ${f(x + r)} ${y} Q${f(x + r * .18)} ${f(y + r * .18)} ${x} ${f(y + r)} Q${f(x - r * .18)} ${f(y + r * .18)} ${f(x - r)} ${y} Q${f(x - r * .18)} ${f(y - r * .18)} ${x} ${f(y - r)}Z" fill="${c}"/>`;
 
-// 블랙홀: 검은 그림자, 그 둘레를 휘어 감싼 빛의 고리(중력 렌즈), 앞을 가로지르는 납작한 강착 원반.
+// 블랙홀: 첫 화면의 큰 은하 그림(home.css의 .galaxy)과 같은 라벤더·크림빛으로 그려요.
+// 검은 그림자(가운데), 그 둘레의 가는 크림빛 고리, 비스듬히 누운 라벤더빛 원반, 은은한 보랏빛 번짐.
 export function blackHole(cx, cy, r) {
   const id = `bh${Math.round(cx)}`;
   return `<defs>
-<radialGradient id="${id}g"><stop offset=".35" stop-color="#ff9a3c" stop-opacity=".55"/><stop offset=".7" stop-color="#ff6a2a" stop-opacity=".14"/><stop offset="1" stop-color="#ff6a2a" stop-opacity="0"/></radialGradient>
-<linearGradient id="${id}d" x1="0" x2="1"><stop offset="0" stop-color="#ffb35c" stop-opacity="0"/><stop offset=".22" stop-color="#ffcf8a"/><stop offset=".5" stop-color="#fff4dc"/><stop offset=".78" stop-color="#ffcf8a"/><stop offset="1" stop-color="#ffb35c" stop-opacity="0"/></linearGradient>
-<filter id="${id}b" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="${f(r * .12)}"/></filter></defs>
-<circle cx="${cx}" cy="${cy}" r="${f(r * 2.6)}" fill="url(#${id}g)"/>
-<ellipse cx="${cx}" cy="${cy}" rx="${f(r * 3.4)}" ry="${f(r * .32)}" fill="none" stroke="url(#${id}d)" stroke-width="${f(r * .3)}" filter="url(#${id}b)" opacity=".85"/>
-<circle cx="${cx}" cy="${cy}" r="${f(r * 1.32)}" fill="none" stroke="#ffc884" stroke-width="${f(r * .34)}" filter="url(#${id}b)" opacity=".9"/>
-<circle cx="${cx}" cy="${cy}" r="${f(r * 1.06)}" fill="none" stroke="#fff3d8" stroke-width="${f(r * .07)}"/>
-<circle cx="${cx}" cy="${cy}" r="${r}" fill="#000"/>
-<path d="M${f(cx - r * 3.4)} ${cy} A${f(r * 3.4)} ${f(r * .32)} 0 0 0 ${f(cx + r * 3.4)} ${cy}" fill="none" stroke="url(#${id}d)" stroke-width="${f(r * .34)}"/>
-<path d="M${f(cx - r * 3.1)} ${f(cy + r * .05)} A${f(r * 3.1)} ${f(r * .26)} 0 0 0 ${f(cx + r * 3.1)} ${f(cy + r * .05)}" fill="none" stroke="#fff8ea" stroke-width="${f(r * .07)}" opacity=".8"/>`;
+<radialGradient id="${id}g"><stop offset=".3" stop-color="#c4a2ef" stop-opacity=".42"/><stop offset=".65" stop-color="#8b72c9" stop-opacity=".14"/><stop offset="1" stop-color="#8b72c9" stop-opacity="0"/></radialGradient>
+<radialGradient id="${id}d"><stop offset=".42" stop-color="#f3dfc1" stop-opacity="0"/><stop offset=".5" stop-color="#f3dfc1" stop-opacity=".9"/><stop offset=".62" stop-color="#b79fed" stop-opacity=".7"/><stop offset=".85" stop-color="#8b72c9" stop-opacity=".22"/><stop offset="1" stop-color="#8b72c9" stop-opacity="0"/></radialGradient>
+<filter id="${id}b" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="${f(r * .1)}"/></filter></defs>
+<circle cx="${cx}" cy="${cy}" r="${f(r * 2.8)}" fill="url(#${id}g)"/>
+<g transform="rotate(-18 ${cx} ${cy})">
+<ellipse cx="${cx}" cy="${cy}" rx="${f(r * 3.2)}" ry="${f(r * 1.05)}" fill="url(#${id}d)" filter="url(#${id}b)"/>
+<circle cx="${cx}" cy="${cy}" r="${f(r * 1.12)}" fill="none" stroke="#ffe3c7" stroke-width="${f(r * .1)}" opacity=".85" filter="url(#${id}b)"/>
+<circle cx="${cx}" cy="${cy}" r="${r}" fill="#070913"/>
+<path d="M${f(cx - r * 2.25)} ${f(cy + r * .1)} A${f(r * 2.25)} ${f(r * .74)} 0 0 0 ${f(cx + r * 2.25)} ${f(cy + r * .1)}" fill="none" stroke="#f3dfc1" stroke-width="${f(r * .16)}" opacity=".75" filter="url(#${id}b)"/></g>`;
 }
-// 바퀴 모양 우주선: 가운데 고리를 따라 작은 모듈 12개가 둘러 있어요.
-export function ringShip(cx, cy, r, tilt = -18) {
-  const mods = Array.from({ length: 12 }, (_, i) => `<rect x="${f(-r * .2)}" y="${f(-r - r * .16)}" width="${f(r * .4)}" height="${f(r * .32)}" rx="${f(r * .06)}" fill="${i % 3 ? '#c9d2e6' : '#e8edf8'}" stroke="#7f8aa6" stroke-width=".5" transform="rotate(${i * 30})"/>`).join('');
-  return `<g transform="translate(${cx} ${cy}) rotate(${tilt}) scale(1 .55)"><circle r="${r}" fill="none" stroke="#9aa6c4" stroke-width="${f(r * .1)}"/>${mods}<path d="M${-r} 0H${r}M0 ${-r}V${r}" stroke="#8b96b3" stroke-width="${f(r * .05)}"/><circle r="${f(r * .22)}" fill="#dfe6f5" stroke="#7f8aa6" stroke-width=".6"/></g><circle cx="${f(cx + r * .9)}" cy="${f(cy - r * .2)}" r="1.2" fill="#7fe7ff"/>`;
-}
-// 화성: 붉은 행성, 어두운 협곡 무늬, 흰 극관, 얇은 대기 빛.
-export function mars(cx, cy, r) {
-  return `<defs><radialGradient id="mars" cx=".35" cy=".32" r=".8"><stop offset="0" stop-color="#ffb07a"/><stop offset=".45" stop-color="#e0683a"/><stop offset=".85" stop-color="#8e3418"/><stop offset="1" stop-color="#4a1a0c"/></radialGradient>
-<clipPath id="marsclip"><circle cx="${cx}" cy="${cy}" r="${r}"/></clipPath></defs>
-<circle cx="${cx}" cy="${cy}" r="${f(r * 1.08)}" fill="#ff8a5c" opacity=".16"/>
-<circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#mars)"/>
-<g clip-path="url(#marsclip)" fill="#7a2c14" opacity=".55"><path d="M${f(cx - r * .9)} ${f(cy + r * .05)} C${f(cx - r * .4)} ${f(cy - r * .1)} ${f(cx + r * .1)} ${f(cy + r * .2)} ${f(cx + r * .8)} ${f(cy + r * .02)} L${f(cx + r * .8)} ${f(cy + r * .12)} C${f(cx + r * .1)} ${f(cy + r * .3)} ${f(cx - r * .4)} ${f(cy)} ${f(cx - r * .9)} ${f(cy + r * .16)}Z"/>
-<ellipse cx="${f(cx + r * .3)}" cy="${f(cy + r * .5)}" rx="${f(r * .32)}" ry="${f(r * .14)}"/><ellipse cx="${f(cx - r * .45)}" cy="${f(cy - r * .4)}" rx="${f(r * .2)}" ry="${f(r * .1)}"/></g>
-<ellipse cx="${f(cx - r * .1)}" cy="${f(cy - r * .88)}" rx="${f(r * .32)}" ry="${f(r * .1)}" fill="#fff4ec" opacity=".85" clip-path="url(#marsclip)"/>`;
-}
-// 제목 오른쪽 그림: 블랙홀, 우주선, 화성, 별.
 export function headerSpace() {
   rand = seeded(20261027);
-  const stars = Array.from({ length: 26 }, () => `<circle cx="${f(rand() * 372)}" cy="${f(rand() * 132)}" r="${f(.5 + rand() * 1)}" fill="${['#ffffff', '#cfe0ff', '#ffe9c4'][Math.floor(rand() * 3)]}" opacity="${f(.4 + rand() * .6)}"/>`).join('');
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 372 132">${stars}${sparkle(60, 20, 5)}${sparkle(214, 112, 4, '#ffe9c4')}${sparkle(352, 18, 3.5, '#cfe0ff')}
-${blackHole(118, 66, 18)}${ringShip(244, 34, 15)}${mars(320, 86, 26)}</svg>`;
+  const stars = Array.from({ length: 26 }, () => `<circle cx="${f(rand() * 372)}" cy="${f(rand() * 132)}" r="${f(.5 + rand() * 1)}" fill="${['#ffffff', '#e6dcff', '#ffe9c4'][Math.floor(rand() * 3)]}" opacity="${f(.4 + rand() * .6)}"/>`).join('');
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 372 132">${stars}${sparkle(120, 22, 4.5)}${sparkle(352, 104, 3.5, '#e6dcff')}
+${blackHole(262, 64, 20)}</svg>`;
 }
 // 바탕에 까는 별 무늬: 크기가 다른 두 장(300, 470)을 겹쳐 이어 붙여서 같은 무늬가 되풀이되는 것이 잘 보이지 않아요.
 export function starTile(size = 300, count = 34, sparkles = []) {
