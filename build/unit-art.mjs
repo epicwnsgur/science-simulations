@@ -109,7 +109,7 @@ function unit7(t) {
   const compass = `<circle cx="330" cy="92" r="22" fill="${L ? '#fffaf2' : '#0d1a3a'}" stroke="${L ? '#b98c78' : '#7fe7ff'}" stroke-width="2.2" ${p.glow}/>${[0, 90, 180, 270].map(a => `<path d="M330 72 v4" stroke="${p.line}" stroke-width="1.6" transform="rotate(${a} 330 92)"/>`).join('')}<path d="M330 92 L334 92 L330 76 L326 92Z" fill="${p.red}" transform="rotate(28 330 92)"/><path d="M330 92 L334 92 L330 108 L326 92Z" fill="${L ? '#c9c9d6' : '#cfe0ff'}" transform="rotate(28 330 92)"/><circle cx="330" cy="92" r="2.2" fill="${p.line}"/>`;
   return wrap(t, `${wire}${bulb}${compass}${L ? greatTit(206, 43, .72, 1) + longTailedTit(318, 36, .62, -1) : ''}`);
 }
-/* ---------- VIII. 별과 우주: 밝은 테마는 초승달·별·망원경, 어두운 테마는 블랙홀·우주선·화성 ---------- */
+/* ---------- VIII. 별과 우주: 밝은 테마는 초승달·별·망원경, 어두운 테마는 블랙홀 ---------- */
 function unit8(t) {
   if (t === 'dark') return headerSpace();
   const star = (x, y, r) => `<path d="M${x} ${y - r} L${f(x + r * .3)} ${f(y - r * .3)} L${x + r} ${y} L${f(x + r * .3)} ${f(y + r * .3)} L${x} ${y + r} L${f(x - r * .3)} ${f(y + r * .3)} L${x - r} ${y} L${f(x - r * .3)} ${f(y - r * .3)}Z" fill="#ffd98a"/>`;
