@@ -1,92 +1,26 @@
 import { test, expect } from '@playwright/test';
-import { openObserveUnlocked, peelAll } from './poe-helpers.js';
+import { peelAll } from './poe-helpers.js';
 
-// 수준별 지원(src/supports.js, src/scaffold-ui.js): 글 칸 아래 ‘막히면 도움 받기’와 개념 정리 아래 ‘도전 과제(선택)’
+// 도전 과제(선택, src/challenges.js, src/challenge-ui.js): 개념 정리의 퀴즈 아래
 const OHM = '/simulations/ohms-law/';
 const LABS = ['electric-current', 'ohms-law', 'series-parallel', 'coil-magnetic-field', 'electric-swing', 'electric-motor',
   'stellar-parallax', 'star-brightness', 'star-color', 'milky-way', 'expanding-universe'];
 const startAt = (page, slug, exp) => page.addInitScript(([k, v]) => { if (!sessionStorage.getItem(k)) sessionStorage.setItem(k, v); },
   [`poe:${slug}`, JSON.stringify({ current: 0, reviewed: true, onReview: false, reviewAnswers: [], quiz: null, locked: false, exps: [exp] })]);
-const PREDICT = { stage: 'predict', reached: 0, prediction: null, choice: null, reason: '', observation: '', saved: '', observed: false, explanation: '', explained: false };
 const DONE = { stage: 'explain', reached: 2, prediction: { index: 0, choice: '전류의 세기도 2배, 3배로 커질 것 같아요.', reason: '수로 모형에서 펌프를 세게 하면 물도 세게 흘렀으니까요.' }, choice: null, reason: '', observation: '', saved: '전압을 높일수록 전류계의 값이 커졌어요. 2 V에서 100 mA였어요.', observed: true, explanation: '저항이 일정하면 전류의 세기는 전압에 비례해서 전압이 2배면 전류도 2배예요.', explained: true };
 
-test('도움 받기: 힌트는 하나씩 열리고, 낱말을 누르면 글 칸에 들어가며, 문장 틀의 빈칸을 채워야 저장됨', async ({ page }) => {
-  await startAt(page, 'ohms-law', PREDICT);
-  await page.goto(OHM);
-  const help = page.locator('[data-help-for="prediction-reason"]'), box = page.locator('#prediction-reason');
-  await expect(help).toBeVisible();
-  await expect(help.locator('.help-hints li')).toHaveCount(0);
-  // ① 힌트: 누를 때마다 하나씩 더 보여요.
-  await help.locator('[data-help="hint"]').click();
-  await expect(help.locator('.help-hints li')).toHaveCount(1);
-  await expect(help.locator('[data-help="hint"]')).toContainText('힌트 2 보기');
-  await help.locator('[data-help="hint"]').click();
-  await expect(help.locator('.help-hints li')).toHaveCount(2);
-  await expect(help.locator('[data-help="hint"]')).toBeDisabled();
-  // ③ 문장 틀: 넣으면 첫 빈칸이 골라져 있어요.
-  await help.locator('[data-help="frame"]').click();
-  await expect(box).toHaveValue(/^내 예상: .*___.*___/);
-  expect(await box.evaluate(el => el.value.slice(el.selectionStart, el.selectionEnd))).toBe('___');
-  await expect(page.locator('.char-count[data-for="prediction-reason"]')).toContainText('빈칸');
-  // ② 낱말 상자: 고른 빈칸에 낱말이 들어가고, 다음 빈칸이 골라져요.
-  await help.locator('[data-help="words"]').click();
-  await help.locator('.help-chip', { hasText: '2배가 된다' }).click();
-  await expect(box).toHaveValue(/전류의 세기는 2배가 된다\. 그렇게 생각한 까닭은 ___ 때문이다\./);
-  expect(await box.evaluate(el => el.value.slice(el.selectionStart, el.selectionEnd))).toBe('___');
-  // 빈칸이 남아 있으면 저장되지 않아요.
-  await page.locator('input[name="prediction"][value="0"]').check();
-  await page.locator('#start-observation').click();
-  await expect(page.locator('#prediction-confirm')).toBeHidden();
-  expect(await box.evaluate(el => el.validationMessage)).toContain('빈칸');
-  // 빈칸에 한두 글자만 쓰면 ‘내가 쓴 글자’가 모자라요.
-  await box.fill((await box.inputValue()).replace('___', '펌프'));
-  await expect(page.locator('.char-count[data-for="prediction-reason"]')).toContainText('내가 쓴 글자');
-  await page.locator('#start-observation').click();
-  await expect(page.locator('#prediction-confirm')).toBeHidden();
-  expect(await box.evaluate(el => el.validationMessage)).toContain('내가 쓴 글자');
-  // 내 말로 채우면 저장돼요.
-  await box.fill((await box.inputValue()).replace('펌프', '펌프를 세게 하면 물이 더 세게 흐르기'));
-  await expect(page.locator('.char-count[data-for="prediction-reason"]')).toContainText('✓');
-  await page.locator('#start-observation').click();
-  await expect(page.locator('#prediction-confirm')).toBeVisible();
-  await expect(page.locator('#confirm-reason')).toContainText('펌프를 세게 하면 물이 더 세게 흐르기 때문이다.');
-  await page.locator('#confirm-prediction').click();
-  // 예상을 저장하면 그 칸의 도움은 닫혀요(고칠 수 없는 글이라서).
-  await page.locator('[data-goto=predict]').click();
-  await expect(help).toBeHidden();
-});
-
-test('도움 받기: 본 힌트는 새로 고침해도 남고, 관찰 칸마다 따로 있음', async ({ page }) => {
-  await openObserveUnlocked(page, '/simulations/electric-swing/');
-  const bars = page.locator('#observation-parts .help-bar');
-  await expect(bars).toHaveCount(3);
-  await bars.nth(2).locator('[data-help="hint"]').click();
-  await expect(bars.nth(2).locator('.help-hints li')).toHaveCount(1);
-  await expect(bars.nth(0).locator('.help-hints li')).toHaveCount(0);
-  await page.reload();
-  await expect(page.locator('#observation-parts .help-bar').nth(2).locator('.help-hints li')).toHaveCount(1);
-  // 관찰 칸의 낱말은 커서 자리에 띄어 써서 들어가요.
-  const box = page.locator('#observation-record-3');
-  await box.fill('전압을 크게 하자 그네가');
-  await page.locator('#observation-parts .help-bar').nth(2).locator('[data-help="words"]').click();
-  await page.locator('#observation-parts .help-bar').nth(2).locator('.help-chip', { hasText: '더 크게' }).click();
-  await expect(box).toHaveValue('전압을 크게 하자 그네가 더 크게');
-});
-
-test('도움 받기·도전 과제: 11개 실험 모두에 있고, 예상·관찰·설명 칸마다 도움이 있음', async ({ page }) => {
+test('도전 과제: 11개 실험 모두에 있고, 글 칸 아래 도움 막대는 없음', async ({ page }) => {
   test.setTimeout(120000);
   for (const slug of LABS) {
     await startAt(page, slug, { ...DONE, prediction: { ...DONE.prediction, choice: '예상' } });
     await page.goto(`/simulations/${slug}/`);
-    const parts = await page.locator('#observation-parts textarea').count();
-    await expect(page.locator('.help-bar'), slug).toHaveCount(parts + 2);
+    await expect(page.locator('.help-bar'), slug).toHaveCount(0);
     await expect(page.locator('#challenge .challenge-item').first(), slug).toBeVisible();
     await expect(page.locator('#challenge-think'), slug).toBeVisible();
     await page.evaluate(() => sessionStorage.clear());
   }
   // 실험이 여럿인 마찰 전기에는 넣지 않았어요.
   await page.goto('/simulations/friction-electricity/');
-  await expect(page.locator('.help-bar')).toHaveCount(0);
   await expect(page.locator('#challenge')).toHaveCount(0);
 });
 

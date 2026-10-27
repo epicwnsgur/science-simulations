@@ -129,11 +129,11 @@ test('개념 정리: 주요 개념은 포스트잇으로 가려져 있고, 모�
   await page.locator('#submit-report').click();
   await expect(page.locator('.submit-status')).toContainText('포스트잇을 모두 떼어');
   await expect(page.locator('.report-preview')).toBeHidden();
-  await notes.first().click();
+  // 연달아 빠르게 누르면 다음 포스트잇은 바로 떨어지지 않아요(읽을 시간).
+  // 자동 시험에서는 기다리는 시간이 짧아서, 두 포스트잇을 한 번에 이어 눌러 확인해요.
+  await page.evaluate(() => { const s = document.querySelectorAll('.concept-sequence .sticky'); s[0].click(); s[1].click(); });
   await expect(notes.first().locator('.sticky-word')).toBeVisible();
   await expect(notes.first()).toHaveClass(/peeled/);
-  // 연달아 빠르게 누르면 다음 포스트잇은 바로 떨어지지 않아요(읽을 시간).
-  await notes.nth(1).click();
   await expect(notes.nth(1)).not.toHaveClass(/peeled/);
   await expect(page.locator('.flow-toast')).toContainText('먼저 읽어 보세요');
   await expect(notes.first().locator('.sticky-note .pin')).toBeVisible();

@@ -290,7 +290,7 @@ function renderStars(dt) {
   setHTML('#ruler', `<rect x="-16" y="-46" width="${RULER.w + 30}" height="78" rx="12" fill="#0a0d22d9" stroke="#2d3566"/>
     <rect x="${rulerX(100)}" y="-6" width="${RULER.w - rulerX(100)}" height="12" fill="#ff9aa633"/><text x="${RULER.w}" y="-30" text-anchor="end" class="ruler-tick" style="fill:#ff9aa6">100 pc 넘으면 재기 어려움</text>
     <path d="M0 0 H${RULER.w}" stroke="#8fd3ff" stroke-width="2"/>${[1, 10, 100].map(v => `<path d="M${rulerX(v)} -6 V6" stroke="#8fd3ff"/><text x="${rulerX(v)}" y="22" text-anchor="middle" class="ruler-tick">${v} pc</text>`).join('')}
-    <text x="0" y="-30" class="ruler-tick">별까지의 거리 (눈금은 10배씩)</text>${marks}<text x="${rulerX(s.dist).toFixed(1)}" y="-12" text-anchor="middle" class="ruler-label">${s.name}</text>`);
+    <text x="0" y="-30" class="ruler-tick">별까지의 거리 (한 칸에 10배씩)</text>${marks}<text x="${rulerX(s.dist).toFixed(1)}" y="-12" text-anchor="middle" class="ruler-label">${s.name}</text>`);
 }
 
 /* ---------- 조작 단추 ---------- */
@@ -344,7 +344,7 @@ function renderText() {
   setHTML('#readout', `<table class="data-table"><tr><th>별 모형</th><th>왼쪽</th><th>오른쪽</th><th>시차</th></tr>${rows}</table>
     <table class="data-table"><tr><th>공전 모형</th><th>보이는 위치 변화</th></tr><tr><td>별 X</td><td>${recorded.B ? '크다' : ''}</td></tr><tr><td>별 Y</td><td>${recorded.B ? '작다' : ''}</td></tr></table>
     ${real ? `<table class="data-table"><tr><th>별</th><th>거리</th><th>연주 시차</th></tr>${real}</table>` : ''}`);
-  setText('#model-note', `시차 측정 판은 교과서 277쪽 탐구 활동을 그대로 옮겼어요. 지구의 공전 모형은 보기 쉽게 별 X와 별 Y를 아주 가깝게 두고 각도를 크게 과장했어요(실제 연주 시차는 1″보다 작아요).${use3d ? ' 3D 화면을 끌어 돌려 보고, ‘위에서’를 누르면 교과서 그림처럼 볼 수 있어요.' : ''} 배경의 별은 실제 밤하늘(여름철 은하수 부근)의 별 위치·밝기·색으로 그렸어요. 지구의 공전 궤도는 원처럼 그렸지만, 실제로는 원에 아주 가까운 타원이에요.`);
+  setText('#model-note', `시차 측정 판은 교과서의 탐구 활동을 그대로 옮겼어요. 지구의 공전 모형은 보기 쉽게 별 X와 별 Y를 아주 가깝게 두고 각도를 크게 과장했어요(실제 연주 시차는 1″보다 작아요).${use3d ? ' 3D 화면을 끌어 돌려 보고, ‘위에서’를 누르면 교과서 그림처럼 볼 수 있어요.' : ''} 배경의 별은 실제 밤하늘(여름철 은하수 부근)의 별 위치·밝기·색으로 그렸어요. 지구의 공전 궤도는 원처럼 그렸지만, 실제로는 원에 아주 가까운 타원이에요. ‘실제 별의 연주 시차’의 거리 자는 한 칸 갈 때마다 거리가 10배(1 pc → 10 pc → 100 pc)가 되게 그렸어요. 별들의 거리 차이가 너무 커서, 보통 자처럼 그리면 가까운 별들이 한 점에 몰리기 때문이에요.`);
   setText('#discovery', '2013년에 발사된 가이아 우주 망원경은 지구와 함께 태양 둘레를 돌며 수많은 별의 위치를 아주 정밀하게 되풀이해 재어, 연주 시차로 별까지의 거리를 알아내고 있어요. 공기의 방해가 없는 우주에서 재기 때문에 100 pc보다 훨씬 먼 별의 연주 시차도 잴 수 있어요.');
 }
 

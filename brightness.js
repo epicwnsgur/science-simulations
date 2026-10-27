@@ -252,7 +252,7 @@ function renderAbs(dt) {
   // 실제 밤하늘의 시리우스와 미르잠: 10 pc로 옮기면 밝기가 바뀌어요.
   if (cmaProject) setHTML('#cma-stars', ['sirius', 'mirzam'].map(key => { const { s, m } = absState(key), p = cmaProject(s.ra, s.dec); return p ? `<g transform="translate(${(466 + p[0]).toFixed(1)} ${(16 + p[1]).toFixed(1)})">${starGlyph(m, starColor(s.bv))}<text x="${glyphR(m) + 12}" y="${key === 'sirius' ? -8 : 18}" class="sky-label">${s.name} <tspan class="sky-mag">${fmtMag(m)}등급</tspan></text></g>` : ''; }).join(''));
   setText('#cma-title', moveU > .98 ? '두 별을 10 pc에 둔다면' : moveU > 0 ? '10 pc로 옮기는 중…' : '실제 밤하늘(큰개자리)');
-  setHTML('#abs-read', `<text class="panel-text"><tspan x="0" dy="0">${moveU > .98 ? '10 pc에 두면 겉보기 등급 = 절대 등급이에요.' : '지구에서 보이는 밝기 = 겉보기 등급이에요.'}</tspan><tspan x="0" dy="22" class="panel-small">별의 크기는 밝기를 나타내요(실제 크기가 아니에요).</tspan><tspan x="0" dy="20" class="panel-small">거리는 눈금이 10배씩 커지게 줄여 그렸어요.</tspan></text>`);
+  setHTML('#abs-read', `<text class="panel-text"><tspan x="0" dy="0">${moveU > .98 ? '10 pc에 두면 겉보기 등급 = 절대 등급이에요.' : '지구에서 보이는 밝기 = 겉보기 등급이에요.'}</tspan><tspan x="0" dy="22" class="panel-small">별의 크기는 밝기를 나타내요(실제 크기가 아니에요).</tspan><tspan x="0" dy="20" class="panel-small">거리 눈금은 한 칸마다 10배씩 커져요(1 → 10 → 100 pc).</tspan><tspan x="0" dy="20" class="panel-small">별들이 너무 멀리 흩어져 있어 줄여 그렸어요.</tspan></text>`);
 }
 
 /* ---------- 조작 단추 ---------- */

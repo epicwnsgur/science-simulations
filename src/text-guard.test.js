@@ -44,8 +44,7 @@ test('글 거르기: 같은 말을 오타를 섞어 되풀이한 글도 막아�
 
 test('글 거르기: 교과서·실험 화면의 문장(20자 이상)은 되풀이로 걸리지 않아요', () => {
   const files = [...readdirSync('.').filter(f => f.endsWith('.js')), ...readdirSync('src').filter(f => f.endsWith('.js') && !f.includes('test')).map(f => `src/${f}`)];
-  const sentences = files.flatMap(f => [...readFileSync(f, 'utf8').matchAll(/'([^'\n]{25,})'/g)].map(m => m[1].replace(/<[^>]+>/g, '')).filter(t => /[가-힣]{6}/.test(t) && !/[{}$]/.test(t) && !/_{2,}/.test(t)));
-  // 문장 틀(빈칸 ___)은 학생이 채워 쓰는 틀이라 빼고, src/supports.test.js에서 채운 글로 따로 살펴요.
+  const sentences = files.flatMap(f => [...readFileSync(f, 'utf8').matchAll(/'([^'\n]{25,})'/g)].map(m => m[1].replace(/<[^>]+>/g, '')).filter(t => /[가-힣]{6}/.test(t) && !/[{}$]/.test(t)));
   assert.ok(sentences.length > 50);
   for (const t of sentences) if (meaningfulLength(t) >= 20) assert.equal(writingProblem(t, { min: 20 }), '', t);
 });

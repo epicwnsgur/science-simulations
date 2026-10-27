@@ -187,7 +187,7 @@ function renderText() {
     setText('#subguide', '전류의 방향과 세기를 바꾸어 가며 비교해요. 관찰한 뒤에는 바로 손을 떼요.');
     setText('#stage-state', `전류 ${on ? '흐름' : '흐르지 않음'} · ${dirText()} · ${LEVELS[level].label}`);
     setText('#note-title', on ? '나침반 바늘이 가리키는 방향을 살펴보세요' : '스위치를 눌러 전류를 흘려 보세요');
-    setText('#note-text', '258쪽 막대자석 주위의 나침반과 비교해 보세요. 코일의 어느 쪽이 N극처럼 보이나요?');
+    setText('#note-text', '앞에서 본 막대자석 주위의 나침반과 비교해 보세요. 코일의 어느 쪽이 N극처럼 보이나요?');
     setText('#discovery', `전류가 흐르지 않을 때 나침반 바늘은 북쪽(${use3d ? '판 위 흰 화살표 ‘북’ 쪽' : '화면 위'})을 가리켜요.`);
   }
   setHTML('#readout', `<div class="readout-grid"><div class="readout-card"><strong>${mode === 'magnet' ? '관찰 대상' : '전류'}</strong><b>${mode === 'magnet' ? '막대자석' : on ? '흐름' : '멈춤'}</b><small>${mode === 'magnet' ? 'N극 왼쪽 · S극 오른쪽' : dirText()}</small></div><div class="readout-card"><strong>전류의 세기</strong><b>${mode === 'magnet' ? '–' : ['약', '중', '강'][level]}</b><small>${mode === 'magnet' ? '' : LEVELS[level].label}</small></div></div>`);

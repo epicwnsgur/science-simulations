@@ -1,91 +1,9 @@
 import { icon } from './icons.js';
-import { blockPaste, PASTE_MESSAGE, hasBadWords, hasBlank } from './text-guard.js';
+import { blockPaste, PASTE_MESSAGE, hasBadWords } from './text-guard.js';
 
-// 수준별 지원 화면(내용은 src/supports.js).
-// mountHelp: 글 칸 아래 ‘막히면 도움 받기’. ① 힌트를 하나씩 → ② 낱말 상자(누르면 글 칸에 넣어 줘요) → ③ 문장 틀(빈칸 ___을 내 말로 채워요).
-//   스스로 써 보다가 막힐 때 조금씩 도움을 받도록 순서를 정했어요. 문장 틀의 빈칸은 하나씩 골라 주고(‘다음 빈칸’), 빈칸이 남으면 저장되지 않아요.
-// mountChallenge: 개념 정리 아래 ‘도전 과제(선택)’. 틀리면 힌트를 먼저 보여 주고, 한 번 더 틀리면 풀이를 보여 줘요.
+// 도전 과제(선택) 화면(내용은 src/challenges.js): 개념 정리의 퀴즈 아래에 나와요.
+// 틀리면 힌트를 먼저 보여 주고, 한 번 더 틀리면 풀이를 보여 줘요.
 const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const BLANK = /_{2,}/g;
-
-// 글 칸에서 from 뒤의 첫 빈칸을 골라 둬요(없으면 처음부터 다시 찾아요). 고르면 바로 그 자리에 써서 바꿀 수 있어요.
-function selectBlank(area, from = 0) {
-  BLANK.lastIndex = from;
-  let m = BLANK.exec(area.value);
-  if (!m && from) { BLANK.lastIndex = 0; m = BLANK.exec(area.value); }
-  if (!m) return false;
-  area.focus({ preventScroll: true });
-  area.setSelectionRange(m.index, m.index + m[0].length);
-  return true;
-}
-// 글 칸의 커서 자리(고른 빈칸이 있으면 그 자리)에 낱말을 넣어요.
-// 빈칸은 낱말로 그대로 바꾸고(문장 틀의 띄어쓰기를 지켜요), 글 중간에 넣을 때는 앞뒤 낱말과 붙지 않게 띄어 써요.
-function insertWord(area, word) {
-  const start = area.selectionStart ?? area.value.length, end = area.selectionEnd ?? start;
-  const replacedBlank = /^_{2,}$/.test(area.value.slice(start, end));
-  const before = area.value.slice(0, start), after = area.value.slice(end);
-  const text = replacedBlank ? word : `${before && !/[\s(]$/.test(before) ? ' ' : ''}${word}${/^[\p{L}\p{N}]/u.test(after) ? ' ' : ''}`;
-  area.setRangeText(text, start, end, 'end');
-  area.dispatchEvent(new Event('input', { bubbles: true }));
-  if (!(replacedBlank && selectBlank(area, area.selectionEnd))) area.focus({ preventScroll: true });
-}
-
-export function mountHelp(area, support, { getShown = () => 0, setShown = () => {} } = {}) {
-  const hints = support.hints ?? [], words = support.words ?? [];
-  const bar = document.createElement('div');
-  bar.className = 'help-bar';
-  bar.dataset.helpFor = area.id;
-  bar.innerHTML = `<p class="help-title">${icon('hint')} 막히면 도움 받기 <small>먼저 스스로 써 보고, 필요한 만큼만 차례로 눌러요.</small></p>
-    <div class="help-buttons" role="group" aria-label="글쓰기 도움">
-      ${hints.length ? '<button type="button" class="help-btn" data-help="hint"></button>' : ''}
-      ${words.length ? `<button type="button" class="help-btn" data-help="words" aria-expanded="false" aria-controls="${area.id}-words">② 낱말 상자</button>` : ''}
-      ${support.frame ? '<button type="button" class="help-btn" data-help="frame">③ 문장 틀 넣기</button>' : ''}
-      <button type="button" class="help-btn help-next" data-help="blank" hidden>다음 빈칸 고르기 ▶</button>
-    </div>
-    <ol class="help-hints" aria-live="polite"></ol>
-    <div class="help-words" id="${area.id}-words" hidden><p>누르면 글 칸의 커서 자리(고른 빈칸)에 들어가요.</p>${words.map(w => `<button type="button" class="help-chip" data-word="${escape(w)}">${escape(w)}</button>`).join('')}</div>
-    <p class="help-frame-note" hidden>밑줄 빈칸(___)을 내가 관찰하고 생각한 말로 바꿔 써요. 빈칸이 남아 있으면 저장되지 않아요.</p>`;
-  const out = area.parentElement.querySelector(`.char-count[data-for="${area.id}"]`) ?? area;
-  out.after(bar);
-  const q = sel => bar.querySelector(sel);
-
-  function render() {
-    const shown = Math.min(getShown(), hints.length), off = area.readOnly || area.disabled;
-    bar.hidden = off;
-    const hintBtn = q('[data-help="hint"]');
-    if (hintBtn) {
-      hintBtn.disabled = shown >= hints.length;
-      hintBtn.textContent = shown >= hints.length ? `① 힌트를 모두 봤어요 (${hints.length}개)` : `① 힌트 ${shown + 1} 보기 (${shown} / ${hints.length})`;
-    }
-    q('.help-hints').innerHTML = hints.slice(0, shown).map((h, n) => `<li><b>힌트 ${n + 1}</b> ${escape(h)}</li>`).join('');
-    const blanks = hasBlank(area.value);
-    q('[data-help="blank"]').hidden = !blanks;
-    q('.help-frame-note').hidden = !blanks;
-  }
-  bar.addEventListener('click', ev => {
-    const btn = ev.target.closest('button');
-    if (!btn || area.readOnly) return;
-    if (btn.dataset.word) return insertWord(area, btn.dataset.word);
-    const kind = btn.dataset.help;
-    if (kind === 'hint') { setShown(Math.min(getShown() + 1, hints.length)); render(); q('.help-hints li:last-child')?.classList.add('fresh'); }
-    if (kind === 'words') { const box = q('.help-words'); box.hidden = !box.hidden; btn.setAttribute('aria-expanded', String(!box.hidden)); }
-    if (kind === 'frame') {
-      // 이미 넣은 틀에 빈칸이 남아 있으면 다시 넣지 않고 빈칸을 골라 줘요.
-      if (!hasBlank(area.value)) {
-        const end = area.value.trimEnd();
-        area.value = end ? `${end}\n${support.frame}` : support.frame;
-        area.dispatchEvent(new Event('input', { bubbles: true }));
-        // 틀이 길면 글 칸을 늘려 틀 전체가 한눈에 보이게 해요.
-        if (area.scrollHeight > area.clientHeight) area.style.height = `${area.scrollHeight + 4}px`;
-        selectBlank(area, end.length);
-      } else selectBlank(area);
-    }
-    if (kind === 'blank') selectBlank(area, area.selectionEnd);
-  });
-  area.addEventListener('input', render);
-  render();
-  return { render };
-}
 
 // 도전 과제: 객관식(choice)과 숫자로 답하는 문제(number), 그리고 생각을 써 보는 질문(think).
 // saved: { items: [{ tries, answer, solved, revealed }], think }. 보고서(PDF·미리보기)에 결과를 함께 보여 줘요.
