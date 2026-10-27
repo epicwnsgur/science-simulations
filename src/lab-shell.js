@@ -1,6 +1,7 @@
 // 실험 페이지 공통 틀: 머리글, 활동 탭, 무대(SVG), 관찰 기록, 스스로 평가, 핵심 개념을 만듭니다.
 // 각 실험은 내용(config)만 넘기고, 반환된 도우미로 화면을 갱신합니다.
 import '../theme-light.css';
+import '../theme-dark-deco.css';
 import { setupTheme, themeButtonHTML } from './theme.js';
 export const $ = s => document.querySelector(s);
 export const $$ = s => [...document.querySelectorAll(s)];
