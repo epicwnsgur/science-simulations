@@ -28,7 +28,7 @@ test('테마 바꾸기: 단추로 어두운 테마 ↔ 밝은 테마(핑크)를 
   await expect(html).not.toHaveAttribute('data-theme', 'light');
 });
 
-test('메모: 오른쪽 아래 단추로 열고, 쓴 글은 새로 고침해도 남으며, 보고서에는 들어가지 않음', async ({ page }) => {
+test('메모: 왼쪽 아래 단추로 열고, 쓴 글은 새로 고침해도 남으며, 보고서에는 들어가지 않음', async ({ page }) => {
   await openObserveUnlocked(page, OHM);
   const toggle = page.locator('.memo-toggle');
   await expect(toggle).toBeVisible();
@@ -72,4 +72,48 @@ test('글자 수: ‘✔ 좋아요’가 나오면 저장도 돼요(문장 부�
   await expect(page.locator('.char-count[data-for="observation-record"]')).toContainText('✔');
   await page.locator('#to-explanation').click();
   await expect(page.locator('#explain-panel')).toBeVisible();
+});
+
+test('메모: 지금 있는 모든 실험(앞으로 simulations/에 더하는 실험 포함)에 머리글 단추와 왼쪽 아래 단추가 있고, 오른쪽 아래(Netlify 배지 자리)는 비워 둠', async ({ page }) => {
+  test.setTimeout(120000);
+  const { readdirSync } = await import('node:fs');
+  const slugs = readdirSync('simulations');
+  expect(slugs.length).toBeGreaterThan(10);
+  for (const slug of slugs) {
+    await page.goto(`/simulations/${slug}/`);
+    const float = page.locator('.memo-toggle'), head = page.locator('header [data-memo-open]');
+    await expect(float, slug).toBeVisible();
+    await expect(head, slug).toBeVisible();
+    const box = await float.boundingBox(), vw = page.viewportSize().width;
+    expect(box.x + box.width, `${slug}: 오른쪽 아래를 비워 둬요`).toBeLessThan(vw / 2);
+    await head.click();
+    await expect(page.locator('#memo-panel'), slug).toBeVisible();
+    await head.click();
+    await expect(page.locator('#memo-panel'), slug).toBeHidden();
+  }
+});
+
+test('예상: 보기 끝의 ‘기타(직접 쓰기)’를 고르면 내 예상을 직접 쓰고, 그 글이 예상으로 저장됨', async ({ page }) => {
+  await page.addInitScript(() => { if (!sessionStorage.getItem('poe:ohms-law')) sessionStorage.setItem('poe:ohms-law', JSON.stringify({ current: 0, reviewed: true, onReview: false, reviewAnswers: [], quiz: null, locked: false, exps: [{ stage: 'predict', reached: 0, prediction: null, choice: null, reason: '', observation: '', saved: '', observed: false, explanation: '', explained: false }] })); });
+  await page.goto(OHM);
+  await expect(page.locator('.prediction-choice')).toHaveCount(5);
+  await expect(page.locator('.prediction-choice', { hasText: '아직 잘 모르겠어요' })).toHaveCount(0);
+  await expect(page.locator('.other-box')).toBeHidden();
+  await page.locator('.other-choice').click();
+  await expect(page.locator('.other-box')).toBeVisible();
+  await page.locator('#prediction-reason').fill('수로 모형에서 펌프를 세게 해도 물이 끝없이 빨라지지는 않았으니까요.');
+  // 직접 쓰는 칸이 비어 있으면 저장되지 않아요.
+  await page.locator('#start-observation').click();
+  await expect(page.locator('#prediction-confirm')).toBeHidden();
+  await page.locator('#prediction-other').fill('전류가 처음엔 크게 늘다가 나중엔 조금씩 늘 것 같아요.');
+  await page.locator('#start-observation').click();
+  await expect(page.locator('#confirm-choice')).toHaveText('기타: 전류가 처음엔 크게 늘다가 나중엔 조금씩 늘 것 같아요.');
+  await page.locator('#confirm-prediction').click();
+  await expect(page.locator('#observe-panel')).toBeVisible();
+  await expect(page.locator('.prediction-reminder [data-prediction]')).toHaveText('기타: 전류가 처음엔 크게 늘다가 나중엔 조금씩 늘 것 같아요.');
+  // 새로 고침해도 고른 ‘기타’와 쓴 글이 그대로예요.
+  await page.reload();
+  await page.locator('[data-goto=predict]').click();
+  await expect(page.locator('.other-choice input')).toBeChecked();
+  await expect(page.locator('#prediction-other')).toHaveValue('전류가 처음엔 크게 늘다가 나중엔 조금씩 늘 것 같아요.');
 });

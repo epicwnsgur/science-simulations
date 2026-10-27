@@ -4,6 +4,7 @@ body.lab-space{
   --bg:#03040c;--panel:#0a0d1f;--panel-2:#0f1430;--line:#1f2547;--line-2:#2d3566;
   --current:#8fd3ff;--current-2:#6a8cff;--volt:#ffcf6e;--volt-2:#ff9f6e;
   --nebula:#c77dff;--glow-c:0 0 12px #8fd3ff55,0 0 28px #6a8cff33;--glow-v:0 0 12px #ffcf6e66,0 0 28px #ff9f6e33;
+  --mark:rgba(199,125,255,.2);--mark-strong:rgba(199,125,255,.38);--mark-line:rgba(214,170,255,.8);
   background:
     radial-gradient(1200px 520px at 78% -12%,#3b2a7a40,transparent 62%),
     radial-gradient(900px 480px at -8% 22%,#0e5a8a2e,transparent 60%),

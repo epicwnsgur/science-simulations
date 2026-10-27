@@ -233,7 +233,7 @@ flow = setupPOEFlow({
     lead: '맑은 날 불빛이 없는 곳에서 밤하늘을 보면 하늘을 가로지르는 뿌연 띠 모양의 은하수를 볼 수 있어요. 조선 시대의 천문도인 천상열차분야지도에도 은하수가 그려져 있어요.<br>은하수는 무엇이고, 왜 띠 모양으로 보이는지 지금 내 생각을 먼저 꺼내 보세요.',
     illustration: `<svg viewBox="0 0 520 250" role="img" aria-label="산 위 밤하늘을 가로지르는 은하수"><defs><linearGradient id="mw-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#050716"/><stop offset="1" stop-color="#18183a"/></linearGradient><radialGradient id="mw-glow"><stop offset="0" stop-color="#fff3dc" stop-opacity=".55"/><stop offset="1" stop-color="#c9b8ff" stop-opacity="0"/></radialGradient></defs><rect width="520" height="250" rx="12" fill="url(#mw-sky)"/><g transform="rotate(-28 260 125)"><ellipse cx="260" cy="125" rx="300" ry="34" fill="url(#mw-glow)"/><ellipse cx="300" cy="125" rx="90" ry="40" fill="url(#mw-glow)"/><path d="M60 126 C180 118 260 136 460 122" stroke="#05071a" stroke-width="6" opacity=".55" fill="none"/></g>${Array.from({ length: 70 }, (_, i) => `<circle cx="${(i * 137) % 520}" cy="${(i * 59) % 200}" r="${.5 + (i % 4) * .35}" fill="#fff" opacity="${.4 + (i % 3) * .2}"/>`).join('')}<path d="M0 250 L0 200 L80 170 L150 205 L230 160 L310 210 L400 175 L470 200 L520 185 L520 250Z" fill="#05060c"/></svg>`,
     question: '은하수가 밤하늘을 가로지르는 띠 모양으로 보이는 까닭은 무엇이라고 생각하나요?',
-    choices: ['수많은 별이 모인 납작한 원반 안에 우리가 있어서, 원반 쪽을 볼 때 별이 많이 겹쳐 보이기 때문이에요.', '별들이 하늘에 긴 띠 모양으로 한 줄로 늘어서 있기 때문이에요.', '은하수는 별이 아니라 구름이 띠 모양으로 모여 있는 것이기 때문이에요.', '아직 잘 모르겠어요.'],
+    choices: ['수많은 별이 모인 납작한 원반 안에 우리가 있어서, 원반 쪽을 볼 때 별이 많이 겹쳐 보이기 때문이에요.', '별들이 하늘에 긴 띠 모양으로 한 줄로 늘어서 있기 때문이에요.', '은하수는 별이 아니라 구름이 띠 모양으로 모여 있는 것이기 때문이에요.'],
     placeholder: '은하수를 본 경험이나 사진, 1학년 때 배운 태양계를 떠올려 보세요. 은하수는 무엇으로 이루어져 있을까요?',
   },
   observe: {

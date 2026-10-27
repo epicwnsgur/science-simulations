@@ -21,3 +21,13 @@ test('실험 미리 보기: 3~4단계, 학생 말(해요체), 그림의 단계 �
     assert.match(pv.watch, /(지|는지|인지|방향|밝기|되는지)$/, `${slug} 잘 볼 것`);
   }
 });
+
+test('전류와 전압 미리 보기: 네온전구의 다른 끝(도선)은 전구 끝에 붙은 채로 그 점을 축으로 돌아 접시에 닿음(떨어져 움직이지 않음)', () => {
+  const svg = SCENES['electric-current'].main.svg;
+  const tip = svg.match(/<g data-o="tip" style="([^"]*)">(.*?)<\/g>/);
+  assert.ok(tip, '도선 그룹');
+  assert.match(tip[1], /transform-origin:176px 48px/);
+  assert.match(tip[2], /^<path d="M176 48 /, '도선은 전구 끝(176, 48)에서 시작');
+  assert.match(svg, /<rect x="148" y="42" width="28" height="12"/, '전구의 오른쪽 끝이 x 176');
+  assert.match(SCENES['electric-current'].main.steps[2].toString(), /move\('tip', \[\[0, 0, 0, 1\], \[0, 0, \d+/, '옮기지 않고 돌리기만 해요');
+});

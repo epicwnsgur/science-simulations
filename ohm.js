@@ -252,7 +252,7 @@ flow = setupPOEFlow({
     lead: '전원 장치, 스위치, 전류계, 전압계, 니크롬선을 연결한 회로예요.<br>전압을 1 V씩 높이면서 전류의 세기를 측정할 거예요.',
     illustration: `<svg viewBox="0 0 520 250" role="img" aria-label="전원 장치와 니크롬선 회로"><rect width="520" height="250" rx="12" fill="#121a33"/><rect x="30" y="30" width="150" height="80" rx="8" fill="#1d2440" stroke="#8f9bc4"/><text x="105" y="84" text-anchor="middle" font-size="34" font-family="monospace" fill="#ff4d4d">2.0</text><path d="M60 110 V200 H460 V110 H150" stroke="#7d8fbf" stroke-width="4" fill="none"/><path d="M200 200 ${Array.from({ length: 14 }, () => 'q6 -14 12 0').join(' ')}" stroke="#c9b48a" stroke-width="4" fill="none"/><circle cx="420" cy="110" r="30" fill="#f4f1e8"/><text x="420" y="122" text-anchor="middle" font-size="13" fill="#c0392b">mA</text><text x="290" y="235" text-anchor="middle" fill="#aab4d6" font-size="13">니크롬선</text></svg>`,
     question: '전압을 2배, 3배로 높이면 니크롬선에 흐르는 전류의 세기는 어떻게 될까요?',
-    choices: ['전류의 세기도 2배, 3배로 커질 것 같아요.', '전류의 세기가 커지지만 일정한 규칙은 없을 것 같아요.', '전류의 세기는 변하지 않을 것 같아요.', '전류의 세기가 작아질 것 같아요.', '아직 잘 모르겠어요.'],
+    choices: ['전류의 세기도 2배, 3배로 커질 것 같아요.', '전류의 세기가 커지지만 일정한 규칙은 없을 것 같아요.', '전류의 세기는 변하지 않을 것 같아요.', '전류의 세기가 작아질 것 같아요.'],
     placeholder: '선풍기 바람 세기 버튼이나 수로 모형에서 펌프의 역할을 떠올려 보세요.',
   },
   observe: {

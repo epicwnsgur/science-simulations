@@ -352,7 +352,7 @@ flow = setupPOEFlow({
     lead: '허블은 대부분의 외부 은하가 우리은하로부터 멀어지고 있다는 사실을 알아냈어요. 은하들이 멀어진다는 것은 무엇을 의미할까요?<br>우주를 직접 늘려 볼 수는 없으니, <b>풍선 표면을 우주</b>에, <b>풍선에 붙인 붙임딱지를 은하</b>에 비유한 모형으로 알아봐요.',
     illustration: `<svg viewBox="0 0 520 250" role="img" aria-label="은하 붙임딱지 세 개를 붙인 풍선과 펌프"><rect width="520" height="250" rx="12" fill="#0a0d22"/><circle cx="220" cy="118" r="88" fill="url(#balloon2d)"/><path d="M220 206 L212 222 H228Z" fill="#3a4fd8"/><path d="M220 222 C260 240 330 236 372 220" stroke="#1c2442" stroke-width="6" fill="none"/><rect x="372" y="120" width="26" height="100" rx="6" fill="#e04848"/><rect x="383" y="86" width="4" height="36" fill="#c9d1db"/><rect x="368" y="84" width="34" height="6" rx="3" fill="#1c2442"/>${[[190, 90, 1], [240, 70, 2], [252, 130, 3]].map(([x, y, n]) => `<circle cx="${x}" cy="${y}" r="15" fill="#f4f1ea"/><circle cx="${x}" cy="${y}" r="11" fill="#14162e"/><circle cx="${x}" cy="${y}" r="5" fill="#ffe2b0" opacity=".8"/><circle cx="${x + 11}" cy="${y - 11}" r="7" fill="#ffd23f"/><text x="${x + 11}" y="${y - 7}" text-anchor="middle" font-size="10" font-weight="800" fill="#1d1505">${n}</text>`).join('')}<text x="64" y="40" font-size="14" fill="#cbd8ff">풍선 표면 = 우주</text><text x="64" y="62" font-size="14" fill="#cbd8ff">붙임딱지 = 은하</text></svg>`,
     question: '붙임딱지 세 개를 붙인 풍선에 공기를 더 넣으면, 붙임딱지 사이의 거리는 어떻게 될까요?',
-    choices: ['모든 붙임딱지 사이의 거리가 멀어지고, 기준이 되는 특별한 붙임딱지는 없을 것 같아요.', '한 붙임딱지를 중심으로 다른 붙임딱지들만 멀어질 것 같아요.', '붙임딱지 사이의 거리는 변하지 않을 것 같아요.', '아직 잘 모르겠어요.'],
+    choices: ['모든 붙임딱지 사이의 거리가 멀어지고, 기준이 되는 특별한 붙임딱지는 없을 것 같아요.', '한 붙임딱지를 중심으로 다른 붙임딱지들만 멀어질 것 같아요.', '붙임딱지 사이의 거리는 변하지 않을 것 같아요.'],
     placeholder: '풍선에 그림을 그리고 풍선을 불어 본 경험을 떠올려 보세요. 붙임딱지는 풍선 위에서 움직일까요?',
   },
   observe: {

@@ -441,7 +441,7 @@ flow = setupPOEFlow({
     lead: '털가죽으로 문지른 플라스틱 접시와 털가죽 위에 알루미늄 접시를 하나씩 올려놓아요.<br>한 접시에 붙인 네온전구의 다른 끝을 반대쪽 접시에 대 볼 거예요.',
     illustration: `<svg viewBox="0 0 520 250" role="img" aria-label="두 알루미늄 접시와 네온전구"><rect width="520" height="250" rx="12" fill="#121a33"/><ellipse cx="140" cy="190" rx="90" ry="20" fill="#eef3f8"/><ellipse cx="140" cy="176" rx="72" ry="16" fill="#c9d1d9"/><ellipse cx="380" cy="190" rx="92" ry="22" fill="#7a5532"/><ellipse cx="380" cy="176" rx="72" ry="16" fill="#c9d1d9"/><path d="M205 170 C220 120 235 104 240 102" stroke="#d8dde3" stroke-width="2.5" fill="none"/><rect x="240" y="92" width="48" height="20" rx="10" fill="#ff8a3c" opacity=".35" stroke="#e8eef5"/><path d="M288 102 C305 104 315 130 318 160" stroke="#d8dde3" stroke-width="2.5" fill="none"/><text x="264" y="80" text-anchor="middle" fill="#ffd2a8" font-size="15">네온전구</text><text x="140" y="232" text-anchor="middle" fill="#aab4d6" font-size="13">플라스틱 접시</text><text x="380" y="232" text-anchor="middle" fill="#aab4d6" font-size="13">털가죽</text></svg>`,
     question: '네온전구의 끝을 다른 접시에 대면 어떻게 될까요?',
-    choices: ['불이 켜지고 계속 켜져 있을 것 같아요.', '잠깐 불이 켜졌다가 꺼질 것 같아요.', '불이 켜지지 않을 것 같아요.', '아직 잘 모르겠어요.'],
+    choices: ['불이 켜지고 계속 켜져 있을 것 같아요.', '잠깐 불이 켜졌다가 꺼질 것 같아요.', '불이 켜지지 않을 것 같아요.'],
     placeholder: '겨울철 문손잡이를 잡을 때 찌릿했던 경험이나 마찰 전기에서 배운 내용을 떠올려 보세요.',
   },
   observe: {

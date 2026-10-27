@@ -9,7 +9,7 @@ test('밝은 테마(theme-light.css)가 지금 CSS로 만든 것과 같음', () 
 });
 
 test('밝은 테마의 모든 규칙은 html[data-theme=light] 아래에만 걸려 어두운 테마를 바꾸지 않음', () => {
-  const css = readFileSync('theme-light.css', 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/@media[^{]*\{/g, '');
+  const css = readFileSync('theme-light.css', 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/@keyframes[^{]*\{(?:[^{}]*\{[^}]*\})*\s*\}/g, '').replace(/@media[^{]*\{/g, '');
   const selectors = css.split('}').map(r => r.split('{')[0].trim()).filter(Boolean).flatMap(s => s.split(','));
   assert.ok(selectors.length > 100);
   for (const s of selectors) assert.match(s.trim(), /^html\[data-theme=light\]/, s);

@@ -334,7 +334,7 @@ flow = setupPOEFlow({
     lead: '전기난로를 켜면 안쪽 열선이 처음에는 어두운 붉은색이었다가 온도가 높아지면서 밝은 주황색·노란색 쪽으로 바뀌어요.<br>밤하늘의 별도 밝기가 비슷해도 색은 조금씩 달라요. 전갈자리의 안타레스는 붉은색, 드슈바는 청백색으로 보여요.',
     illustration: `<svg viewBox="0 0 520 250" role="img" aria-label="붉은색 별 안타레스와 청백색 별 드슈바"><rect width="520" height="250" rx="12" fill="#050716"/>${Array.from({ length: 40 }, (_, i) => `<circle cx="${(i * 131) % 520}" cy="${(i * 71) % 250}" r="${.6 + (i % 3) * .4}" fill="#fff" opacity=".6"/>`).join('')}<circle cx="170" cy="135" r="60" fill="#ff8a5c" opacity=".2"/><circle cx="170" cy="135" r="26" fill="#ff8a5c"/><circle cx="170" cy="135" r="10" fill="#fff"/><text x="170" y="210" text-anchor="middle" font-size="16" font-weight="700" fill="#ffb59c">안타레스(붉은색)</text><circle cx="360" cy="120" r="50" fill="#a9c4ff" opacity=".2"/><circle cx="360" cy="120" r="20" fill="#bcd2ff"/><circle cx="360" cy="120" r="8" fill="#fff"/><text x="360" y="210" text-anchor="middle" font-size="16" font-weight="700" fill="#cfe0ff">드슈바(청백색)</text></svg>`,
     question: '붉은색으로 보이는 안타레스와 청백색으로 보이는 드슈바 중 표면 온도가 더 높은 별은 어느 것일까요?',
-    choices: ['붉은색인 안타레스의 표면 온도가 더 높을 것 같아요.', '청백색인 드슈바의 표면 온도가 더 높을 것 같아요.', '두 별의 표면 온도는 같을 것 같아요.', '아직 잘 모르겠어요.'],
+    choices: ['붉은색인 안타레스의 표면 온도가 더 높을 것 같아요.', '청백색인 드슈바의 표면 온도가 더 높을 것 같아요.', '두 별의 표면 온도는 같을 것 같아요.'],
     placeholder: '가스레인지 불꽃, 전기난로의 열선, 수도꼭지의 빨간색·파란색 표시 등 생활 속에서 본 색과 온도를 떠올려 보세요.',
   },
   observe: {

@@ -329,7 +329,7 @@ flow = setupPOEFlow({
     lead: '밤하늘의 별은 밝게 빛나는 별도 있고 어두워서 잘 보이지 않는 별도 있어요. 같은 밝기의 가로등이라도 멀리 있으면 어둡게 보이죠.<br>손전등에서 20 cm, 40 cm, 60 cm, 80 cm 떨어진 곳에서 스마트 기기로 빛의 세기를 재 볼 거예요.',
     illustration: `<svg viewBox="0 0 520 250" role="img" aria-label="손전등에서 나온 빛이 퍼져 나가 스마트 기기에 닿는 모습"><rect width="520" height="250" rx="12" fill="#0a0d22"/><path d="M90 118 L430 50 L430 190 L90 132Z" fill="#fff1c4" opacity=".18"/><rect x="30" y="110" width="60" height="30" rx="6" fill="#5a6390"/><ellipse cx="92" cy="125" rx="4" ry="16" fill="#fff8dc"/><rect x="200" y="96" width="34" height="58" rx="6" fill="#111528" stroke="#aab4d6"/><text x="217" y="131" text-anchor="middle" font-size="13" fill="#ffd166">? lx</text><rect x="400" y="96" width="34" height="58" rx="6" fill="#111528" stroke="#aab4d6"/><text x="417" y="131" text-anchor="middle" font-size="13" fill="#ffd166">? lx</text><path d="M92 200 H217 M92 222 H417" stroke="#8fd3ff" marker-end="url(#arrow-head)"/><text x="160" y="195" font-size="13" fill="#cbd8ff">20 cm</text><text x="300" y="217" font-size="13" fill="#cbd8ff">40 cm (2배)</text></svg>`,
     question: '손전등과 스마트 기기 사이의 거리를 20 cm에서 40 cm로 2배 멀리 하면, 빛의 세기는 어떻게 될까요?',
-    choices: ['약 1/2배로 줄어들 것 같아요.', '약 1/4배로 줄어들 것 같아요.', '거의 그대로일 것 같아요.', '아직 잘 모르겠어요.'],
+    choices: ['약 1/2배로 줄어들 것 같아요.', '약 1/4배로 줄어들 것 같아요.', '거의 그대로일 것 같아요.'],
     placeholder: '손전등으로 벽을 비출 때, 멀리서 비추면 빛이 비친 곳의 크기와 밝기가 어땠는지 떠올려 보세요.',
   },
   observe: {

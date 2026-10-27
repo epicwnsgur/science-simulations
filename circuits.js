@@ -193,7 +193,7 @@ flow = setupPOEFlow({
     lead: '전구 1개를 연결한 회로의 밝기를 기준으로,<br>같은 전구 두 개를 직렬연결한 회로와 병렬연결한 회로를 비교할 거예요.',
     illustration: `<svg viewBox="0 0 520 250" role="img" aria-label="직렬연결과 병렬연결 회로"><defs><radialGradient id="p-light"><stop offset="0" stop-color="#fffbe0"/><stop offset="1" stop-color="#ffb627" stop-opacity="0"/></radialGradient></defs><rect width="520" height="250" rx="12" fill="#121a33"/><path d="M40 60 H220 V200 H40 Z" stroke="#7d8fbf" stroke-width="3" fill="none"/>${thumb(90, 60)}${thumb(170, 60)}<text x="130" y="232" text-anchor="middle" fill="#aab4d6" font-size="13">직렬연결</text><path d="M300 50 H480 M300 120 H480 M300 50 V200 H480 V50" stroke="#7d8fbf" stroke-width="3" fill="none"/>${thumb(390, 50)}${thumb(390, 120)}<text x="390" y="232" text-anchor="middle" fill="#aab4d6" font-size="13">병렬연결</text></svg>`,
     question: '전구 1개일 때와 비교하면 각 전구의 밝기는 어떨까요?',
-    choices: ['직렬은 더 어둡고, 병렬은 같을 것 같아요.', '직렬은 같고, 병렬은 더 어두울 것 같아요.', '둘 다 전구 1개일 때보다 어두울 것 같아요.', '둘 다 전구 1개일 때와 같을 것 같아요.', '아직 잘 모르겠어요.'],
+    choices: ['직렬은 더 어둡고, 병렬은 같을 것 같아요.', '직렬은 같고, 병렬은 더 어두울 것 같아요.', '둘 다 전구 1개일 때보다 어두울 것 같아요.', '둘 다 전구 1개일 때와 같을 것 같아요.'],
     placeholder: '초등학교에서 전구를 연결해 본 경험이나 멀티탭을 사용한 경험을 떠올려 보세요.',
   },
   observe: {
