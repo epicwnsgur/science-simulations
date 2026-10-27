@@ -90,6 +90,14 @@ const seenViews = new Set(), seenBands = new Set();
 const answers = {};                // answers[사진] = 'right' | 'wrong'
 const rightKinds = new Set();
 let feedback = null;
+// 성단과 성운은 두 단계로 나눠 분류해요: 1단계 성단(2가지) → 2단계 성운(3가지). 다섯 가지를 한꺼번에 고르지 않게 했어요(교사 의견).
+const ROUNDS = [
+  { name: '1단계 · 성단', kinds: ['open', 'globular'], ask: '이 성단은 산개 성단일까요, 구상 성단일까요?' },
+  { name: '2단계 · 성운', kinds: ['emission', 'reflection', 'dark'], ask: '이 성운은 방출·반사·암흑 성운 중 무엇일까요?' },
+];
+let round = 0;
+const photos = () => CLASSIFY.filter(c => ROUNDS[round].kinds.includes(c[1]));
+const roundDone = r => ROUNDS[r].kinds.every(k => rightKinds.has(k));
 
 /* ---------- 우리은하의 모양 ---------- */
 function setGView(name) {
@@ -127,31 +135,37 @@ function renderBand() {
 
 /* ---------- 성단과 성운 ---------- */
 function showObject(i) {
-  objIndex = (i + CLASSIFY.length) % CLASSIFY.length; feedback = null;
-  $('#obj-photo').setAttribute('href', photoUrl(CLASSIFY[objIndex][0]));
+  const list = photos();
+  objIndex = (i + list.length) % list.length; feedback = null;
+  $('#obj-photo').setAttribute('href', photoUrl(list[objIndex][0]));
   $('#obj-photo').animate?.([{ opacity: .1, transform: 'scale(1.04)' }, { opacity: 1, transform: 'scale(1)' }], { duration: instantLessons.matches ? 0 : 500, easing: 'ease-out' });
   renderControls();
 }
+function chooseRound(r) {
+  round = r; objIndex = 0;
+  showObject(0);
+}
 function classify(kind) {
-  const [key, answer, hint, also = []] = CLASSIFY[objIndex];
+  const [key, answer, hint, also = []] = photos()[objIndex], wasDone = roundDone(0);
   const ok = kind === answer || also.includes(kind);
   if (ok) { answers[key] = 'right'; rightKinds.add(answer); rightKinds.add(kind); }
   else if (answers[key] !== 'right') answers[key] = 'wrong';
   feedback = { ok, kind, text: ok ? `맞아요! ${KINDS[kind].name}: ${KINDS[kind].feature}` : `다시 생각해 봐요. 힌트: ${hint}` };
   toast(ok ? `○ 맞아요! ${PHOTOS[key].name}은(는) ${KINDS[answer].name}${also.length ? ' 등이 함께 있는 천체' : ''}예요` : '× 다시 생각해 봐요. 사진 속 모습을 자세히 보세요');
+  if (!wasDone && roundDone(0)) setTimeout(() => toast('성단 두 가지를 모두 찾았어요! 이제 ‘2단계 · 성운’을 눌러 성운을 분류해요'), 1500);
   renderControls();
 }
 function renderObjects() {
-  const [key, answer, hint] = CLASSIFY[objIndex], p = PHOTOS[key];
+  const list = photos(), [key, answer, hint] = list[objIndex], p = PHOTOS[key];
   const wrap = (t, n) => { const out = []; let line = ''; for (const w of t.split(' ')) { if ((line + ' ' + w).length > n) { out.push(line); line = w; } else line = line ? `${line} ${w}` : w; } return [...out, line]; };
   const fb = feedback ? wrap(feedback.text, 30).map((l, i) => `<tspan x="352" dy="${i ? 20 : 0}">${l}</tspan>`).join('') : '';
-  setHTML('#obj-card', `<text x="352" y="44" class="card-big">${p.name}</text><text x="352" y="70" class="card-small">사진 ${objIndex + 1} / ${CLASSIFY.length} · 사진: ${p.credit}</text>
-    <text x="352" y="110" class="card-text">이 천체는 성단일까요, 성운일까요?</text><text x="352" y="134" class="card-text">아래 단추에서 알맞은 종류를 골라 보세요.</text>
+  setHTML('#obj-card', `<text x="352" y="44" class="card-big">${p.name}</text><text x="352" y="70" class="card-small">${ROUNDS[round].name} · 사진 ${objIndex + 1} / ${list.length} · 사진: ${p.credit}</text>
+    <text x="352" y="110" class="card-text">${ROUNDS[round].ask}</text><text x="352" y="134" class="card-text">아래 단추에서 알맞은 종류를 골라 보세요.</text>
     ${feedback ? `<rect x="344" y="152" width="440" height="${wrap(feedback.text, 30).length * 20 + 26}" rx="10" fill="${feedback.ok ? '#0d3a24' : '#3a1420'}" stroke="${feedback.ok ? '#5fe08a' : '#ff8a9a'}"/><text x="352" y="176" class="card-text" style="font-weight:700">${fb}</text>` : ''}
     ${answers[key] === 'right' && show ? wrap(`관찰: ${hint}`, 34).map((l, i) => `<text x="352" y="${270 + i * 18}" class="card-small">${l}</text>`).join('') : ''}`);
   // 아래쪽 사진 띠: 분류한 사진은 이름표가 붙어요.
-  const D = 764 / CLASSIFY.length, T = D - 6;
-  setHTML('#obj-strip', CLASSIFY.map(([k, a], i) => { const x = 20 + i * D, on = i === objIndex, st = answers[k]; return `<g class="strip-item" data-obj="${i}" role="button" tabindex="0" aria-label="${PHOTOS[k].name} 사진 보기"><image href="${photoUrl(k)}" x="${x.toFixed(1)}" y="338" width="${T.toFixed(1)}" height="${T.toFixed(1)}" preserveAspectRatio="xMidYMid slice"/><rect x="${x.toFixed(1)}" y="338" width="${T.toFixed(1)}" height="${T.toFixed(1)}" rx="6" fill="none" stroke="${on ? '#ffcf6e' : st === 'right' ? '#5fe08a' : '#2d3566'}" stroke-width="${on ? 3 : 1.5}"/><text x="${(x + T / 2).toFixed(1)}" y="${338 + T + 16}" text-anchor="middle" class="strip-label">${st === 'right' ? KINDS[a].name.replace(' ', '') : st === 'wrong' ? '다시!' : '?'}</text></g>`; }).join(''));
+  const D = 764 / CLASSIFY.length, T = D - 6;   // 사진 띠의 크기는 단계와 관계없이 같아요
+  setHTML('#obj-strip', list.map(([k, a], i) => { const x = 20 + i * D, on = i === objIndex, st = answers[k]; return `<g class="strip-item" data-obj="${i}" role="button" tabindex="0" aria-label="${PHOTOS[k].name} 사진 보기"><image href="${photoUrl(k)}" x="${x.toFixed(1)}" y="338" width="${T.toFixed(1)}" height="${T.toFixed(1)}" preserveAspectRatio="xMidYMid slice"/><rect x="${x.toFixed(1)}" y="338" width="${T.toFixed(1)}" height="${T.toFixed(1)}" rx="6" fill="none" stroke="${on ? '#ffcf6e' : st === 'right' ? '#5fe08a' : '#2d3566'}" stroke-width="${on ? 3 : 1.5}"/><text x="${(x + T / 2).toFixed(1)}" y="${338 + T + 16}" text-anchor="middle" class="strip-label">${st === 'right' ? KINDS[a].name.replace(' ', '') : st === 'wrong' ? '다시!' : '?'}</text></g>`; }).join(''));
   $$('[data-obj]').forEach(g => { g.onclick = () => showObject(+g.dataset.obj); g.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); showObject(+g.dataset.obj); } }; });
 }
 
@@ -165,7 +179,8 @@ function renderControls() {
     $$('[data-band]').forEach(b => b.onclick = () => chooseBand(b.dataset.band));
     renderBand();
   } else {
-    $('#controls').innerHTML = `<div role="group" aria-label="천체 종류 고르기" class="kind-group"><span class="group-label">이 천체의 종류는?</span>${Object.entries(KINDS).map(([id, k]) => `<button data-kind="${id}" aria-pressed="${feedback?.kind === id}">${k.name}</button>`).join('')}</div><div role="group" aria-label="사진 넘기기"><button id="obj-prev">◀ 이전 사진</button><button id="obj-next">다음 사진 ▶</button></div>`;
+    $('#controls').innerHTML = `<div role="group" aria-label="분류 단계"><span class="group-label">분류 단계</span>${ROUNDS.map((r, i) => `<button data-round="${i}" aria-pressed="${round === i}">${r.name}${roundDone(i) ? ' ✓' : ''}</button>`).join('')}</div><div role="group" aria-label="천체 종류 고르기" class="kind-group"><span class="group-label">이 천체의 종류는?</span>${ROUNDS[round].kinds.map(id => [id, KINDS[id]]).map(([id, k]) => `<button data-kind="${id}" aria-pressed="${feedback?.kind === id}">${k.name}</button>`).join('')}</div><div role="group" aria-label="사진 넘기기"><button id="obj-prev">◀ 이전 사진</button><button id="obj-next">다음 사진 ▶</button></div>`;
+    $$('[data-round]').forEach(b => b.onclick = () => chooseRound(+b.dataset.round));
     $$('[data-kind]').forEach(b => b.onclick = () => classify(b.dataset.kind));
     $('#obj-prev').onclick = () => showObject(objIndex - 1);
     $('#obj-next').onclick = () => showObject(objIndex + 1);
@@ -187,10 +202,10 @@ function renderText() {
   const T = {
     shape: ['우리은하를 여러 방향에서 살펴보세요.', '‘위에서 보기’와 ‘옆에서 보기’로 우리은하의 모양을 비교하고, ‘태양계 찾기’로 우리가 있는 곳과 우리은하의 크기를 확인해요.'],
     band: ['지구에서 본 은하수는 방향에 따라 어떻게 다를까요?', '실제 밤하늘에서 은하 중심 방향(궁수자리 쪽)과 반대 방향(마차부자리 쪽)의 은하수를 비교해요. 오른쪽 위 지도에서 바라보는 방향을 확인해요.'],
-    objects: ['우리은하를 이루는 성단과 성운의 실제 사진을 분류해 보세요.', '사진을 보고 산개 성단, 구상 성단, 방출 성운, 반사 성운, 암흑 성운 중 알맞은 종류를 골라요. 아래 사진 띠를 눌러 다른 사진으로 갈 수 있어요.'],
+    objects: ['우리은하를 이루는 성단과 성운의 실제 사진을 분류해 보세요.', '1단계에서는 성단 사진을 산개 성단과 구상 성단으로, 2단계에서는 성운 사진을 방출·반사·암흑 성운으로 나눠요. 아래 사진 띠를 눌러 다른 사진으로 갈 수 있어요.'],
   }[tab];
   setText('#guide', T[0]); setText('#subguide', T[1]);
-  setText('#stage-state', tab === 'shape' ? (use3d ? '3D 우리은하 모형 · 끌어서 돌려 보세요' : '우리은하와 닮은 외부 은하 사진') : tab === 'band' ? '실제 밤하늘 · 은하수' : `분류한 사진 ${Object.values(answers).filter(v => v === 'right').length} / ${CLASSIFY.length}`);
+  setText('#stage-state', tab === 'shape' ? (use3d ? '3D 우리은하 모형 · 끌어서 돌려 보세요' : '우리은하와 닮은 외부 은하 사진') : tab === 'band' ? '실제 밤하늘 · 은하수' : `${ROUNDS[round].name} · 분류한 사진 ${photos().filter(([k]) => answers[k] === 'right').length} / ${photos().length}`);
   setText('#note-title', { shape: '우리은하는 어떤 모양일까요?', band: '은하수가 더 밝게 보이는 방향은?', objects: '성단과 성운은 어떻게 다를까요?' }[tab]);
   setText('#note-text', { shape: '우리은하에는 수천억 개의 별이 있어요. 3D 모형에서 노란 별이 모인 중심부와 푸른 별이 많은 나선팔을 찾아보세요.', band: '은하수는 지구에서 보이는 우리은하의 일부예요. 태양계는 납작한 원반 안에 있어서 원반 방향을 보면 수많은 별이 띠처럼 보여요. 은하수 속 어두운 부분은 별이 없는 곳이 아니라, 성간 물질(암흑 성운)이 뒤쪽 별빛을 가려서 어둡게 보이는 곳이에요.', objects: '성단은 별이 무리 지어 있는 것이고, 성운은 별과 별 사이의 가스와 티끌(성간 물질)이 모여 구름처럼 보이는 것이에요.' }[tab]);
   const kindRows = Object.entries(KINDS).map(([id, k]) => `<tr><td>${k.name}</td><td>${rightKinds.has(id) ? '✓' : ''}</td></tr>`).join('');
@@ -220,7 +235,8 @@ function frame(now) {
       ['옆에서 본 우리은하 관찰하기', seenViews.has('side'), '‘옆에서 보기’를 눌러 원반 모양을 확인해요', '[data-gview="side"]'],
       ['태양계의 위치와 우리은하의 크기 확인하기', seenViews.has('sun'), '‘태양계 찾기’를 눌러요', '[data-gview="sun"]'],
       ['은하 중심 방향과 반대 방향의 은하수 비교하기', seenBands.size === 2, '‘태양계에서 본 은하수’ 탭에서 ‘은하 중심 방향’과 ‘은하 중심의 반대 방향’을 차례로 눌러요', '#tab-band'],
-      ['성단과 성운 사진을 다섯 종류로 분류하기', Object.keys(KINDS).every(k => rightKinds.has(k)), '‘성단과 성운’ 탭에서 사진을 보고 알맞은 종류 단추(‘산개 성단’, ‘구상 성단’, ‘방출 성운’, ‘반사 성운’, ‘암흑 성운’)를 눌러요', '#tab-objects'],
+      ['성단 사진을 두 종류로 분류하기(1단계)', roundDone(0), '‘성단과 성운’ 탭에서 사진을 보고 ‘산개 성단’이나 ‘구상 성단’을 눌러요', '#tab-objects'],
+      ['성운 사진을 세 종류로 분류하기(2단계)', roundDone(1), '‘2단계 · 성운’을 누르고 ‘방출 성운’, ‘반사 성운’, ‘암흑 성운’ 중 알맞은 것을 골라요', '[data-round="1"]'],
     ]));
   }
   requestAnimationFrame(frame);
@@ -259,7 +275,7 @@ flow = setupPOEFlow({
   },
   onRestart: () => {
     show = true; $('#show-detail').checked = true;
-    seenViews.clear(); seenBands.clear(); rightKinds.clear(); for (const k of Object.keys(answers)) delete answers[k];
+    seenViews.clear(); seenBands.clear(); rightKinds.clear(); round = 0; objIndex = 0; for (const k of Object.keys(answers)) delete answers[k];
     lab.resetQuiz(); $('#reset').click(); setTab('shape');
   },
 });
