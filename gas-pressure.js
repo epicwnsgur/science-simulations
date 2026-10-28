@@ -255,7 +255,7 @@ function renderControls() {
   if (mode === 'clay') {
     $('#controls').innerHTML = `<div role="group" aria-label="페트병 세우기"><span class="group-label">점토 위에 세우기</span>${Object.keys(STATIONS).map(id => `<button data-setup="${id}" aria-pressed="${!!press[id]}" ${press[id] ? 'disabled' : ''}>${BOTTLE_SETUPS[id].name} 세우기</button>`).join('')}</div>`;
     $('#actions').innerHTML = '';
-    $$('[data-setup]').forEach(b => b.onclick = () => place(b.dataset.setup));
+    $$('#controls [data-setup]').forEach(b => b.onclick = () => place(b.dataset.setup));
   } else if (mode === 'cup') {
     $('#controls').innerHTML = '';
     $('#actions').innerHTML = '<button id="shake" class="primary">컵 흔들기</button>';

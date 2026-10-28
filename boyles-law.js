@@ -118,6 +118,7 @@ function paintGraph() {
 }
 function move(d) { setMl(ml + d); }
 function setMl(v) {
+  if (!Number.isFinite(v)) return;                     // 숫자가 아닌 값은 받지 않아요(부피가 NaN이 되어 화면이 멈추지 않게)
   const next = Math.max(SYRINGE.minMl, Math.min(SYRINGE.maxMl, v));
   if (next !== ml) { ml = next; $('#plunger').setAttribute('aria-valuenow', ml); renderControls(); }
 }
@@ -222,19 +223,19 @@ function renderText() {
 }
 function renderControls() {
   if (mode === 'syringe') {
-    $('#controls').innerHTML = `<div role="group" aria-label="피스톤 움직이기"><span class="group-label">피스톤</span><button data-step="5" ${ml >= SYRINGE.maxMl ? 'disabled' : ''}>당기기 (+5 mL)</button><button data-step="1" ${ml >= SYRINGE.maxMl ? 'disabled' : ''}>+1 mL</button><button data-step="-1" ${ml <= SYRINGE.minMl ? 'disabled' : ''}>−1 mL</button><button data-step="-5" ${ml <= SYRINGE.minMl ? 'disabled' : ''}>밀기 (−5 mL)</button><button id="to-start">30 mL로</button></div>`;
+    $('#controls').innerHTML = `<div role="group" aria-label="피스톤 움직이기"><span class="group-label">피스톤</span><button data-piston="5" ${ml >= SYRINGE.maxMl ? 'disabled' : ''}>당기기 (+5 mL)</button><button data-piston="1" ${ml >= SYRINGE.maxMl ? 'disabled' : ''}>+1 mL</button><button data-piston="-1" ${ml <= SYRINGE.minMl ? 'disabled' : ''}>−1 mL</button><button data-piston="-5" ${ml <= SYRINGE.minMl ? 'disabled' : ''}>밀기 (−5 mL)</button><button id="to-start">30 mL로</button></div>`;
     $('#actions').innerHTML = '<button id="record" class="primary">압력과 부피 기록하기</button>';
-    $$('[data-step]').forEach(b => b.onclick = () => move(+b.dataset.step));
+    $$('#controls [data-piston]').forEach(b => b.onclick = () => move(+b.dataset.piston));
     $('#to-start').onclick = () => setMl(SYRINGE.startMl);
     $('#record').onclick = record;
   } else if (mode === 'particles') {
     $('#controls').innerHTML = `<div role="group" aria-label="외부 압력"><span class="group-label">외부 압력(추)</span>${PRESSURES.map(p => `<button data-ext="${p}" aria-pressed="${ext === p}">${p} 기압</button>`).join('')}</div>`;
     $('#actions').innerHTML = '';
-    $$('[data-ext]').forEach(b => b.onclick = () => setExt(+b.dataset.ext));
+    $$('#controls [data-ext]').forEach(b => b.onclick = () => setExt(+b.dataset.ext));
   } else {
     $('#controls').innerHTML = `<div role="group" aria-label="생활 속 예"><span class="group-label">생활 속 예</span>${Object.entries(LIFE).map(([k, v]) => `<button data-life="${k}" aria-pressed="${life === k}">${v}${lifeSeen.has(k) ? ' ✓' : ''}</button>`).join('')}</div>`;
     $('#actions').innerHTML = `<button id="life-run" class="primary">${{ diver: '기포 내보내기', snack: '산 정상으로 올라가기', chamber: '펌프질하기(공기 빼기)' }[life]}</button>`;
-    $$('[data-life]').forEach(b => b.onclick = () => { life = b.dataset.life; lifeT = 0; lifeRun = false; chamberPumps = 0; renderControls(); });
+    $$('#controls [data-life]').forEach(b => b.onclick = () => { life = b.dataset.life; lifeT = 0; lifeRun = false; chamberPumps = 0; renderControls(); });
     $('#life-run').onclick = runLife;
   }
   renderText();

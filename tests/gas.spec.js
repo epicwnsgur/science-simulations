@@ -42,13 +42,13 @@ test('기체의 압력: 점토가 눌리는 깊이는 (나) > (다) > (가)', as
 test('보일 법칙: 30 mL 1 기압 → 15 mL 2 기압, 압력×부피가 일정하고 입자의 빠르기는 그대로', async ({ page }) => {
   await openObserveUnlocked(page, '/simulations/boyles-law/');
   await page.locator('#record').click();
-  for (let i = 0; i < 3; i++) await page.locator('[data-step="-5"]').click();
-  await expect(page.locator('[data-step="-5"]')).toBeDisabled();
+  for (let i = 0; i < 3; i++) await page.locator('[data-piston="-5"]').click();
+  await expect(page.locator('[data-piston="-5"]')).toBeDisabled();
   await page.waitForTimeout(800);
   await expect(page.locator('#digital')).toHaveText('2.00 기압');
   await page.locator('#record').click();
   await page.locator('#to-start').click();
-  await page.locator('[data-step="5"]').click(); await page.locator('[data-step="5"]').click();
+  await page.locator('[data-piston="5"]').click(); await page.locator('[data-piston="5"]').click();
   await page.locator('#record').click();
   const rows = await page.locator('#readout tr').evaluateAll(trs => trs.slice(1).map(tr => [...tr.cells].map(td => Number(td.textContent))));
   expect(rows.length).toBe(3);
@@ -87,7 +87,7 @@ test('샤를 법칙: 물이 식을수록 부피가 일정하게 작아지고, �
 test('보일 법칙: 처음부터 밀기를 먼저 해도 기록되고, 피스톤을 끌어서도 부피를 바꿀 수 있음', async ({ page }) => {
   await openObserveUnlocked(page, '/simulations/boyles-law/', { observed: false });
   // 예상 질문이 ‘밀기’라서 밀기부터 해도 잠기지 않아요.
-  await page.locator('[data-step="-5"]').click();
+  await page.locator('[data-piston="-5"]').click();
   await page.locator('#record').click();
   await expect(page.locator('#readout')).toContainText('25');
   // 피스톤을 오른쪽으로 끌면 부피가 커지고 압력계 값이 작아져요.
@@ -111,4 +111,22 @@ test('6단원 폴더: 중단원 이름이 한 줄을 다 쓰고, 실험 카드�
   const g2 = await groups[1].boundingBox(), c3 = await cards.nth(2).boundingBox();
   expect(c3.y).toBeGreaterThan(g2.y + g2.height);
   expect(Math.abs(c3.x - list.x)).toBeLessThan(2);
+});
+
+test('보일 법칙: 교사 모드로 단계 단추(예상·관찰)와 미리 보기 단계를 눌러도 피스톤·압력계가 그대로 움직이고 숫자로 기록됨', async ({ page }) => {
+  const errors = []; page.on('pageerror', e => errors.push(e.message));
+  await page.goto('/simulations/boyles-law/');
+  await page.locator('#teacher-btn').click(); await page.locator('#teacher-pass').fill('0421'); await page.locator('#teacher-ok').click();
+  await page.locator('[data-goto="observe"]').click();
+  await page.locator('[data-goto="predict"]').click();
+  for (const s of await page.locator('.preview-step').all()) await s.click();
+  await page.locator('[data-goto="observe"]').click();
+  await expect(page.locator('#digital')).toHaveText('1.00 기압');
+  await page.locator('[data-piston="-5"]').click();
+  await expect(page.locator('#digital')).toHaveText('1.20 기압');
+  await expect(page.locator('#plunger')).toHaveAttribute('transform', /translate\(\d/);
+  await page.locator('#record').click();
+  await expect(page.locator('#readout')).toContainText('1.20');
+  await expect(page.locator('#readout')).not.toContainText('NaN');
+  expect(errors).toEqual([]);
 });

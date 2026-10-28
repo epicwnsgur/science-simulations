@@ -99,9 +99,9 @@ const LABS = [
     await page.locator('#tab-balloon').click(); await page.locator('#show-detail').check(); await page.waitForTimeout(4500);
   }],
   ['/simulations/boyles-law/', '보일 법칙', async page => {
-    for (let i = 0; i < 3; i++) { await page.locator('[data-step="5"]').click(); await page.locator('#record').click(); }
+    for (let i = 0; i < 3; i++) { await page.locator('[data-piston="5"]').click(); await page.locator('#record').click(); }
     await page.locator('#to-start').click();
-    for (let i = 0; i < 3; i++) { await page.locator('[data-step="-5"]').click(); await page.locator('#record').click(); }
+    for (let i = 0; i < 3; i++) { await page.locator('[data-piston="-5"]').click(); await page.locator('#record').click(); }
     await page.locator('#tab-particles').click(); await page.locator('#show-detail').check();
     await page.locator('[data-ext="2"]').click(); await page.waitForTimeout(2500);
     await page.locator('[data-ext="4"]').click(); await page.waitForTimeout(3000);
