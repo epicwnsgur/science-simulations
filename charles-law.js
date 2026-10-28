@@ -284,7 +284,7 @@ function renderControls() {
   } else {
     $('#controls').innerHTML = `<div role="group" aria-label="생활 속 예"><span class="group-label">생활 속 예</span>${Object.entries(LIFE).map(([k, v]) => `<button data-life="${k}" aria-pressed="${life === k}">${v}${lifeSeen.has(k) ? ' ✓' : ''}</button>`).join('')}</div>`;
     $('#actions').innerHTML = `<button id="life-run" class="primary">${{ pingpong: '뜨거운 물에 넣기', bottle: '냉장고에 넣어 두기', balloon: '풍선 속 공기 가열하기' }[life]}</button>`;
-    $$('[data-life]').forEach(b => b.onclick = () => { life = b.dataset.life; lifeT = 0; lifeRun = false; renderControls(); });
+    $$('#controls [data-life]').forEach(b => b.onclick = () => { life = b.dataset.life; lifeT = 0; lifeRun = false; renderControls(); });
     $('#life-run').onclick = runLife;
   }
   renderText();
