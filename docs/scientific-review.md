@@ -314,3 +314,5 @@
 - 고친 것: `induction.css`를 밝은 테마 만들기에서 뺐다(무대 그림만 담은 파일). 다른 실험의 무대 그림은 처음부터 `#scene`·`.stage` 아래라 바뀌지 않았다.
 - 다시 생기지 않게: `src/light-theme.test.js`가 실험 파일 안 SVG 그림 요소의 class 가운데 밝은 테마가 채우기·선 색을 바꾸는 것이 있으면 실패한다(고치기 전 파일로 돌려 실패하는 것을 확인했다).
 
+
+검증 결과(2차 검토와 밝은 테마 고침 뒤): `npm test` 113개 통과, `npx playwright test` 123개(labs + perf) 모두 통과, `npm run build` 성공.
