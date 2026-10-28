@@ -6,7 +6,7 @@ import { enableGlossary } from './glossary.js';
 import { teacherMode, mountTeacherMode } from './teacher-mode.js';
 import { modelOf } from './teaching-models.js';
 import { draftStore, pruneDrafts, KEEP_HOURS } from './draft-store.js';
-import { blockPaste, PASTE_MESSAGE, writingProblem, meaningfulLength } from './text-guard.js';
+import { blockPaste, PASTE_MESSAGE, writingProblem, meaningfulLength, junkProblem } from './text-guard.js';
 import { CHALLENGES } from './challenges.js';
 import { mountChallenge } from './challenge-ui.js';
 import { mountMemo } from './memo.js';
@@ -539,8 +539,10 @@ export function setupPOEFlow(config) {
   function showCount(el) {
     const n = countChars(el), min = minOf(el), out = document.querySelector(`.char-count[data-for="${el.id}"]`);
     if (!out) return;
-    out.textContent = n >= min ? `✓ ${n}자 · 좋아요!` : `${n} / ${min}자 · ${min - n}자 더 써 주세요 (공백·문장 부호는 세지 않아요)`;
-    out.classList.toggle('enough', n >= min);
+    // 뜻 없는 글(자음·모음만 쓴 글자, 잘 쓰지 않는 글자, 덧붙인 글자)은 쓰는 동안 바로 알려 줘요. ✓가 나오면 저장도 돼요.
+    const junk = junkProblem(el.value);
+    out.textContent = junk ? `${n}자 · 고쳐 주세요: ${junk}` : n >= min ? `✓ ${n}자 · 좋아요!` : `${n} / ${min}자 · ${min - n}자 더 써 주세요 (공백·문장 부호, ‘모르겠어요’는 세지 않아요)`;
+    out.classList.toggle('enough', !junk && n >= min);
   }
   // 같은 글이면 안 되는 앞 칸: 관찰은 예상한 까닭과, 설명은 예상한 까닭·관찰과 달라야 해요.
   const earlierWriting = el => { const e = exp(); return el.id.startsWith('observation-record') ? [e.prediction?.reason ?? e.reason] : el.id === 'explanation-record' ? [e.prediction?.reason ?? e.reason, e.saved] : []; };

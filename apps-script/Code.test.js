@@ -264,12 +264,27 @@ test('뜻 없는 설명·바르지 않은 말은 받지 않고, 과학 낱말(�
   for (const explanation of ['ㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋ', '가나다가나다가나다가나다가나다가나다', '아아아아아아아아아아아아아아아아아아아아', '.....']) {
     const res = post(report({ explanation }));
     assert.equal(res.ok, false, explanation);
-    assert.match(res.message, /뜻이 통하는 문장/);
+    assert.match(res.message, /뜻이 통하는 문장|자음이나 모음|같은 글자를 이어서/);
   }
   assert.match(post(report({ observation: '존나 신기했음' })).message, /바르지 않은 말/);
   assert.match(post(report({ name: '병신' })).message, /바르지 않은 말/);
   assert.match(post(report({ feedback: '씨발 어려워' })).message, /바르지 않은 말/);
   assert.equal(post(report({ explanation: '전류의 시발점은 전지예요. 스위치를 열면 불이 꺼져요.' })).ok, true);
+});
+
+test('뜻 없는 글: 화면을 거치지 않고 보내도 예상·관찰·설명의 자음·모음 섞기, 잘 쓰지 않는 글자, 덧붙인 글자는 받지 않아요', () => {
+  const { post, report } = ready();
+  for (const [field, text] of [
+    ['explanation', '잘모루겟야요잘묘루겟어요잫모르ㅛ세ㅛ러료잫모수게ㅛ어려'],
+    ['observation', '[네온전구 켜기] 잘모루갯어요절모루개어요잘모흐겟러젛노루세료'],
+    ['reason', '그냥 잠깐 불이 켜졌다가 꺼질것 같습니당다가가'],
+    ['explanation', '펌프와 전지를 잘 연결을 해야할것 같습니다다다수구 잚ㅁㅁㅁㅁㅁㅁ모르겟어요'],
+  ]) {
+    const res = post(report({ [field]: text }));
+    assert.equal(res.ok, false, text);
+    assert.match(res.message, /자음이나 모음만|잘 쓰지 않는 글자|문장이 끝난 뒤|같은 글자를 이어서/, text);
+  }
+  assert.equal(post(report({ explanation: '왜 그런지 잘 모르겠지만 피스톤을 밀었더니 압력이 2배로 커졌어요.' })).ok, true);
 });
 
 test('한꺼번에 몰려 차례를 오래 기다리면 다시 보내라고(retry) 답하고, 정리는 마지막 제출 때 한 번에 해요', () => {
