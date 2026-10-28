@@ -69,3 +69,18 @@
   from = "/simulations/expanding-universe"
   to = "/simulations/expanding-universe/"
   status = 301
+
+[[redirects]]
+  from = "/simulations/gas-pressure"
+  to = "/simulations/gas-pressure/"
+  status = 301
+
+[[redirects]]
+  from = "/simulations/boyles-law"
+  to = "/simulations/boyles-law/"
+  status = 301
+
+[[redirects]]
+  from = "/simulations/charles-law"
+  to = "/simulations/charles-law/"
+  status = 301

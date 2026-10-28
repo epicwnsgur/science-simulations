@@ -4,12 +4,12 @@ import { peelAll } from './poe-helpers.js';
 // 도전 과제(선택, src/challenges.js, src/challenge-ui.js): 개념 정리의 퀴즈 아래
 const OHM = '/simulations/ohms-law/';
 const LABS = ['electric-current', 'ohms-law', 'series-parallel', 'coil-magnetic-field', 'electric-swing', 'electric-motor',
-  'stellar-parallax', 'star-brightness', 'star-color', 'milky-way', 'expanding-universe'];
+  'stellar-parallax', 'star-brightness', 'star-color', 'milky-way', 'expanding-universe', 'gas-pressure', 'boyles-law', 'charles-law'];
 const startAt = (page, slug, exp) => page.addInitScript(([k, v]) => { if (!sessionStorage.getItem(k)) sessionStorage.setItem(k, v); },
   [`poe:${slug}`, JSON.stringify({ current: 0, reviewed: true, onReview: false, reviewAnswers: [], quiz: null, locked: false, exps: [exp] })]);
 const DONE = { stage: 'explain', reached: 2, prediction: { index: 0, choice: '전류의 세기도 2배, 3배로 커질 것 같아요.', reason: '수로 모형에서 펌프를 세게 하면 물도 세게 흘렀으니까요.' }, choice: null, reason: '', observation: '', saved: '전압을 높일수록 전류계의 값이 커졌어요. 2 V에서 100 mA였어요.', observed: true, explanation: '저항이 일정하면 전류의 세기는 전압에 비례해서 전압이 2배면 전류도 2배예요.', explained: true };
 
-test('도전 과제: 11개 실험 모두에 있고, 글 칸 아래 도움 막대는 없음', async ({ page }) => {
+test('도전 과제: 14개 실험 모두에 있고, 글 칸 아래 도움 막대는 없음', async ({ page }) => {
   test.setTimeout(120000);
   for (const slug of LABS) {
     await startAt(page, slug, { ...DONE, prediction: { ...DONE.prediction, choice: '예상' } });

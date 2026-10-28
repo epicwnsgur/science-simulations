@@ -24,5 +24,6 @@
 - 화면 글에 교과서 쪽수·그림 번호를 쓰지 않아요(출판사마다 달라요).
 - 화면에 그림 에모지(📝 🔒 ⚡ 같은 것)는 쓰지 않아요. 아이콘은 `src/icons.js`의 선 아이콘이나 직접 그린 SVG를 써요(`src/no-emoji.test.js`).
 - 새 단원의 그림은 `build/unit-art.mjs`에 더하고 `node build/unit-art.mjs`로 다시 만들어요.
+- 단원 키는 중2가 `7`·`8`, 중1이 `g1-6`처럼 학년을 붙여 써요(`src/lab-shell.js`의 `UNITS`, 단원 페이지의 `data-unit`, `build/unit-art.mjs`).
 - 공통 CSS를 고치면 `node build/light-theme.mjs`로 밝은 테마를, `node build/dark-deco.mjs`로 어두운 테마 장식을 다시 만들어요(`npm test`가 최신인지 확인해요).
 

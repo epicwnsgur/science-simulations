@@ -3,6 +3,7 @@
 // 그림은 꾸밈이에요. 다만 과학의 약속은 지켜요: 자석 N 빨강·S 파랑, 프리즘을 지난 빛은 빨강이 덜·보라가 더 꺾임,
 // 물 분자는 산소 1개와 수소 2개(굽은 모양), 지층은 아래가 먼저 쌓인 층.
 // 단원 번호는 <body data-unit="7">에서 읽어요(단원 페이지는 HTML에, 실험 페이지는 src/lab-shell.js가 붙여요).
+// 중학교 1학년 단원은 data-unit="g1-6"처럼 학년을 붙여 적어요.
 import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
@@ -121,7 +122,79 @@ ${star(268, 22, 6)}${star(300, 52, 4)}${star(226, 40, 4.5)}${star(360, 100, 4)}
 ${longTailedTit(276, 70, .64, -1)}`);
 }
 
-const UNITS = { 1: unit1, 2: unit2, 3: unit3, 4: unit4, 5: unit5, 6: unit6, 7: unit7, 8: unit8 };
+/* ================= 중학교 1학년(단원 이름 g1-1 … g1-7) ================= */
+/* ---------- I. 과학과 인류의 지속가능한 삶: 지구, 풍력 발전기, 새싹 ---------- */
+function g1unit1(t) {
+  const p = PAL[t], L = t === 'light';
+  const globe = `<circle cx="226" cy="70" r="34" fill="${L ? '#bfe3ff' : '#123a6b'}" stroke="${p.c}" stroke-width="2" ${p.glow}/><path d="M204 52 C214 44 226 48 230 56 C236 66 222 70 216 78 C210 86 200 76 198 66 C197 60 200 55 204 52Z M236 82 C244 76 254 80 256 88 C254 96 244 100 238 96 C232 92 232 86 236 82Z M240 44 C248 42 254 48 252 54 C248 56 242 52 240 44Z" fill="${L ? '#a8dca0' : '#2fbf7a'}"/>`;
+  const turbine = `<path d="M318 120 L322 58 L326 120Z" fill="${L ? '#ffffff' : '#9fb3ff'}" stroke="${p.line}" stroke-width="1.2"/>${[0, 120, 240].map(a => `<path d="M322 58 C318 44 320 30 322 24 C326 32 326 46 322 58Z" fill="${L ? '#ffffff' : '#cfe0ff'}" stroke="${p.line}" stroke-width="1.2" transform="rotate(${a + 15} 322 58)"/>`).join('')}<circle cx="322" cy="58" r="3.4" fill="${p.line}"/>`;
+  const sprout = `<path d="M176 122 V104" stroke="${L ? '#6fae6a' : '#5dffb0'}" stroke-width="2.2"/><path d="M176 108 C168 102 164 96 166 92 C172 94 176 100 176 108Z M176 104 C184 98 190 96 192 98 C188 104 182 106 176 104Z" fill="${L ? '#a8dca0' : '#2fbf7a'}" ${p.glow}/><path d="M164 122 h24" stroke="${L ? '#b98c78' : '#7f8ad6'}" stroke-width="3" stroke-linecap="round"/>`;
+  return wrap(t, `${globe}${turbine}${sprout}${L ? greatTit(276, 104, .62, -1) : ''}`);
+}
+/* ---------- II. 생물의 구성과 다양성: 식물 세포와 동물 세포 ---------- */
+function g1unit2(t) {
+  const p = PAL[t], L = t === 'light';
+  const green = L ? '#9ad9a0' : '#2fbf7a';
+  // 식물 세포: 세포벽(바깥 테두리)과 세포막, 핵, 엽록체, 큰 액포
+  const plant = `<rect x="182" y="34" width="92" height="76" rx="10" fill="${L ? '#eaf8e6' : '#0f2a22'}" stroke="${L ? '#6fae6a' : '#5dffb0'}" stroke-width="3" ${p.glow}/><rect x="188" y="40" width="80" height="64" rx="7" fill="none" stroke="${L ? '#9ad9a0' : '#2f8f6a'}" stroke-width="1.4"/><rect x="214" y="50" width="44" height="40" rx="12" fill="${L ? '#d7f0ff' : '#16304f'}" stroke="${p.c}" stroke-width="1"/><circle cx="200" cy="58" r="8" fill="${p.e}" ${p.glow}/>${[[198, 86], [206, 96], [244, 98], [262, 46], [196, 74]].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="5" ry="3" fill="${green}"/>`).join('')}`;
+  // 동물 세포: 세포벽 없이 둥근 세포막, 핵
+  const animal = `<path d="M300 76 C300 54 318 42 336 46 C356 50 364 70 358 88 C352 106 330 112 314 104 C302 98 300 88 300 76Z" fill="${L ? '#ffeef4' : '#2a1838'}" stroke="${p.a}" stroke-width="2.2" ${p.glow}/><circle cx="330" cy="76" r="9" fill="${p.e}" ${p.glow}/>${[[312, 64], [346, 94], [316, 96]].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="4" ry="2.4" fill="${p.d}"/>`).join('')}`;
+  return wrap(t, `${plant}${animal}${L ? longTailedTit(300, 30, .6, -1) : ''}`);
+}
+/* ---------- III. 열: 온도계와 김이 나는 컵 ---------- */
+function g1unit3(t) {
+  const p = PAL[t], L = t === 'light';
+  const thermo = `<rect x="200" y="22" width="16" height="84" rx="8" fill="${p.glass}" stroke="${p.glassLine}" stroke-width="2"/><circle cx="208" cy="110" r="12" fill="${p.red}" ${p.glow}/><rect x="204" y="52" width="8" height="58" rx="4" fill="${p.red}"/>${[34, 46, 58, 70, 82, 94].map(y => `<path d="M218 ${y} h6" stroke="${p.line}" stroke-width="1.2"/>`).join('')}`;
+  const cup = `<path d="M262 74 h58 l-6 40 a6 6 0 0 1 -6 5 h-34 a6 6 0 0 1 -6 -5z" fill="${L ? '#fff3e4' : '#2a2140'}" stroke="${L ? '#d9a77a' : '#ffb36b'}" stroke-width="2"/><path d="M320 82 c14 0 14 22 -2 22" fill="none" stroke="${L ? '#d9a77a' : '#ffb36b'}" stroke-width="2.4"/><path d="M266 80 h50" stroke="${L ? '#c98a5a' : '#ff9f43'}" stroke-width="3" opacity=".8"/>`;
+  const steam = [276, 292, 306].map((x, i) => `<path d="M${x} 66 c-8 -10 8 -16 0 -26 c-6 -8 4 -14 2 -20" fill="none" stroke="${L ? '#e0c9d6' : '#cfe0ff'}" stroke-width="2.4" stroke-linecap="round" opacity="${.85 - i * .15}" ${p.glow}/>`).join('');
+  return wrap(t, `${thermo}${cup}${steam}${L ? greatTit(344, 60, .6, -1) : ''}`);
+}
+/* ---------- IV. 물질의 상태 변화: 고체(얼음) → 액체(물방울) → 기체(수증기)와 입자 배열 ---------- */
+function g1unit4(t) {
+  const p = PAL[t], L = t === 'light';
+  const dot = (x, y, c) => `<circle cx="${f(x)}" cy="${f(y)}" r="3.2" fill="${c}"/>`;
+  // 고체: 입자가 규칙적으로 빽빽하게 배열돼요.
+  const ice = `<rect x="168" y="48" width="52" height="52" rx="8" fill="${L ? '#e3f4ff' : '#123a6b'}" stroke="${p.c}" stroke-width="2" ${p.glow}/>${[0, 1, 2, 3].flatMap(i => [0, 1, 2, 3].map(j => dot(178 + i * 10.5, 58 + j * 10.5, p.c))).join('')}`;
+  // 액체: 입자가 가까이 있지만 불규칙하게 배열돼요.
+  const drop = `<path d="M262 44 C252 62 244 74 244 86 a18 18 0 0 0 36 0 C280 74 272 62 262 44Z" fill="${L ? '#d6ecff' : '#16304f'}" stroke="${p.c}" stroke-width="2" ${p.glow}/>${[[256, 78], [266, 74], [252, 90], [262, 88], [272, 86], [258, 100], [268, 98]].map(([x, y]) => dot(x, y, p.c)).join('')}`;
+  // 기체: 입자 사이가 멀고 자유롭게 움직여요.
+  const vapor = `${[[316, 52], [344, 40], [356, 76], [326, 92], [306, 74]].map(([x, y]) => dot(x, y, p.c)).join('')}${[[316, 52, 30], [344, 40, 160], [356, 76, 250], [326, 92, 300], [306, 74, 200]].map(([x, y, a]) => `<path d="M${x} ${y} l${f(10 * Math.cos(a * Math.PI / 180))} ${f(10 * Math.sin(a * Math.PI / 180))}" stroke="${p.line}" stroke-width="1.2" opacity=".7"/>`).join('')}`;
+  const arrow = x => `<path d="M${x} 76 h16 m-5 -5 l5 5 l-5 5" fill="none" stroke="${p.line}" stroke-width="2" stroke-linecap="round"/>`;
+  return wrap(t, `${ice}${arrow(224)}${drop}${arrow(284)}${vapor}`);
+}
+/* ---------- V. 힘의 작용: 용수철에 매단 추(탄성력·중력)와 미는 상자(마찰력) ---------- */
+function g1unit5(t) {
+  const p = PAL[t], L = t === 'light';
+  const coil = Array.from({ length: 8 }, (_, i) => `${i ? 'L' : 'M'}${i % 2 ? 214 : 202} ${22 + i * 6}`).join(' ');
+  const spring = `<path d="M186 18 h44" stroke="${p.line}" stroke-width="3" stroke-linecap="round"/><path d="M208 18 V22 ${coil} L208 70" fill="none" stroke="${p.c}" stroke-width="2.2" ${p.glow}/><rect x="194" y="70" width="28" height="24" rx="3" fill="${L ? '#c9a7ff' : '#c77dff'}" ${p.glow}/>`;
+  const arrowV = (x, y1, y2, c) => `<path d="M${x} ${y1} V${y2}" stroke="${c}" stroke-width="2.6" stroke-linecap="round"/><path d="M${x - 5} ${y2 + (y2 > y1 ? -6 : 6)} L${x} ${y2} L${x + 5} ${y2 + (y2 > y1 ? -6 : 6)}" fill="none" stroke="${c}" stroke-width="2.6" stroke-linecap="round"/>`;
+  const forces = `${arrowV(232, 82, 112, p.red)}${arrowV(232, 76, 50, p.b)}`;
+  const box = `<path d="M262 112 H366" stroke="${L ? '#b98c78' : '#7f8ad6'}" stroke-width="3" stroke-linecap="round"/><rect x="292" y="80" width="38" height="32" rx="3" fill="${L ? '#ffd98a' : '#ffd23f'}" opacity=".9" ${p.glow}/><path d="M262 96 H288 m-6 -5 l6 5 l-6 5" fill="none" stroke="${p.a}" stroke-width="2.6" stroke-linecap="round"/><path d="M356 108 H334 m6 -4 l-6 4 l6 4" fill="none" stroke="${p.blue}" stroke-width="2.2" stroke-linecap="round"/>`;
+  return wrap(t, `${spring}${forces}${box}${L ? longTailedTit(326, 52, .6, -1) : ''}`);
+}
+/* ---------- VI. 기체의 성질: 열기구와 피스톤이 달린 주사기 속 기체 입자 ---------- */
+function g1unit6(t) {
+  const p = PAL[t], L = t === 'light';
+  const balloon = `<path d="M306 18 C282 18 270 36 272 54 C274 70 290 82 296 92 H316 C322 82 338 70 340 54 C342 36 330 18 306 18Z" fill="${L ? '#ffc2d4' : '#ff7ab6'}" stroke="${L ? '#d36f96' : '#ffc2df'}" stroke-width="1.6" ${p.glow}/><path d="M306 18 C298 36 298 72 300 92 M306 18 C314 36 314 72 312 92" fill="none" stroke="${L ? '#fff3c4' : '#ffd23f'}" stroke-width="2"/><path d="M298 92 L300 104 M314 92 L312 104" stroke="${p.line}" stroke-width="1.2"/><rect x="298" y="104" width="16" height="11" rx="2" fill="${L ? '#d9a77a' : '#b98c78'}"/><path d="M302 100 c-2 -4 2 -6 0 -10 M310 100 c2 -4 -2 -6 0 -10" fill="none" stroke="${p.d}" stroke-width="1.6" ${p.glow}/>`;
+  // 주사기: 입구를 막은 통 안의 기체 입자(모든 방향으로 움직여요)
+  const parts = [[184, 66, 20], [198, 78, 150], [212, 62, 260], [226, 80, 330], [240, 66, 90], [254, 76, 200]];
+  const syringe = `<rect x="170" y="56" width="98" height="32" rx="4" fill="${p.glass}" stroke="${p.glassLine}" stroke-width="2"/><path d="M160 72 h10" stroke="${p.glassLine}" stroke-width="4" stroke-linecap="round"/><rect x="262" y="58" width="6" height="28" fill="${p.line}"/><path d="M268 72 h20 M288 60 v24" stroke="${p.line}" stroke-width="3" stroke-linecap="round"/>${parts.map(([x, y, a]) => `<circle cx="${x}" cy="${y}" r="3.4" fill="${p.c}" ${p.glow}/><path d="M${x} ${y} l${f(9 * Math.cos(a * Math.PI / 180))} ${f(9 * Math.sin(a * Math.PI / 180))}" stroke="${p.c}" stroke-width="1.2" opacity=".8"/>`).join('')}${[188, 208, 228, 248].map(x => `<path d="M${x} 88 v-5" stroke="${p.line}" stroke-width="1"/>`).join('')}`;
+  return wrap(t, `${syringe}${balloon}${L ? greatTit(214, 112, .58, 1) : ''}`);
+}
+/* ---------- VII. 태양계: 태양과 궤도를 도는 행성 ---------- */
+function g1unit7(t) {
+  const p = PAL[t], L = t === 'light';
+  const sun = `<circle cx="168" cy="70" r="24" fill="${L ? '#ffd98a' : '#ffd23f'}" ${p.glow}/>${L ? '' : '<circle cx="168" cy="70" r="34" fill="#ffd23f" opacity=".14"/>'}`;
+  const orbit = (rx, ry) => `<ellipse cx="168" cy="70" rx="${rx}" ry="${ry}" fill="none" stroke="${p.line}" stroke-width="1" opacity=".55"/>`;
+  const planet = (rx, ry, a, r, c) => { const x = 168 + rx * Math.cos(a), y = 70 + ry * Math.sin(a); return `<circle cx="${f(x)}" cy="${f(y)}" r="${r}" fill="${c}" ${p.glow}/>`; };
+  const saturnX = 168 + 180 * Math.cos(-.32), saturnY = 70 + 52 * Math.sin(-.32);
+  return wrap(t, `${orbit(54, 18)}${orbit(96, 30)}${orbit(140, 42)}${orbit(180, 52)}${sun}
+${planet(54, 18, .9, 3.6, L ? '#c9b8c4' : '#cfd6e6')}${planet(96, 30, -.6, 5, L ? '#7fb8ff' : '#38e1ff')}${planet(140, 42, .35, 4.4, p.red)}
+<circle cx="${f(saturnX)}" cy="${f(saturnY)}" r="7" fill="${p.d}" ${p.glow}/><ellipse cx="${f(saturnX)}" cy="${f(saturnY)}" rx="13" ry="3.6" fill="none" stroke="${L ? '#d9a77a' : '#ffe9c4'}" stroke-width="1.6" transform="rotate(-14 ${f(saturnX)} ${f(saturnY)})"/>`);
+}
+
+const UNITS = { 1: unit1, 2: unit2, 3: unit3, 4: unit4, 5: unit5, 6: unit6, 7: unit7, 8: unit8,
+  'g1-1': g1unit1, 'g1-2': g1unit2, 'g1-3': g1unit3, 'g1-4': g1unit4, 'g1-5': g1unit5, 'g1-6': g1unit6, 'g1-7': g1unit7 };
 export const unitArt = (n, t) => UNITS[n](t);
 
 export function buildUnitArt() {

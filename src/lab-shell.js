@@ -41,11 +41,13 @@ const zoomNow = () => Number(document.documentElement.style.zoom) || 1;
 
 // 실험 페이지 머리글(실험 목록으로 · 메모 · 테마 · 화면 크기 · 글씨 크기 · 학년). 머리글을 넣은 뒤 setupTextSize()를 불러요.
 // 단원: 실험 페이지 위쪽의 ‘← 실험 목록’과 경로 표시에 써요. 새 단원은 UNITS에 더하고 buildLab({ unit })로 골라요.
+// 중학교 1학년 단원은 'g1-6'처럼 학년을 붙여 적어요(단원 그림도 이 이름으로 골라요). grade는 머리글 오른쪽의 학년이에요.
 export const UNITS = {
-  7: { href: '../../grades/middle-school-2/unit-7/', label: 'VII. 전기와 자기' },
-  8: { href: '../../grades/middle-school-2/unit-8/', label: 'VIII. 별과 우주' },
+  7: { href: '../../grades/middle-school-2/unit-7/', label: 'VII. 전기와 자기', grade: '중학교 2학년' },
+  8: { href: '../../grades/middle-school-2/unit-8/', label: 'VIII. 별과 우주', grade: '중학교 2학년' },
+  'g1-6': { href: '../../grades/middle-school-1/unit-6/', label: 'VI. 기체의 성질', grade: '중학교 1학년' },
 };
-export const headerHTML = (unit = 7) => `<header data-unit="${unit}"><a class="brand" href="${UNITS[unit].href}">← 실험 목록</a><div class="header-right"><button type="button" class="memo-head-btn" data-memo-open aria-controls="memo-panel" aria-expanded="false" title="내 메모 열기·닫기">${icon('memo')} 메모</button>${themeButtonHTML()}<div class="page-zoom" role="group" aria-label="화면 크기"><span aria-hidden="true">화면 크기</span><button type="button" data-zoom="-" aria-label="화면 작게" title="화면 작게 (Ctrl −)">－<span class="zoom-word"> 작게</span></button><output class="zoom-value" aria-live="polite">100%</output><button type="button" data-zoom="+" aria-label="화면 크게" title="화면 크게 (Ctrl +)">＋<span class="zoom-word"> 크게</span></button></div><div class="text-size" role="group" aria-label="글씨 크기"><span aria-hidden="true">글씨 크기</span>${TEXT_SIZES.map(([id, label, name]) => `<button type="button" data-text-size="${id}" aria-pressed="false" aria-label="글씨 ${name}" title="글씨 ${name}">${label}</button>`).join('')}</div><span class="grade">중학교 2학년 <i></i> 과학</span></div></header>`;
+export const headerHTML = (unit = 7) => `<header data-unit="${unit}"><a class="brand" href="${UNITS[unit].href}">← 실험 목록</a><div class="header-right"><button type="button" class="memo-head-btn" data-memo-open aria-controls="memo-panel" aria-expanded="false" title="내 메모 열기·닫기">${icon('memo')} 메모</button>${themeButtonHTML()}<div class="page-zoom" role="group" aria-label="화면 크기"><span aria-hidden="true">화면 크기</span><button type="button" data-zoom="-" aria-label="화면 작게" title="화면 작게 (Ctrl −)">－<span class="zoom-word"> 작게</span></button><output class="zoom-value" aria-live="polite">100%</output><button type="button" data-zoom="+" aria-label="화면 크게" title="화면 크게 (Ctrl +)">＋<span class="zoom-word"> 크게</span></button></div><div class="text-size" role="group" aria-label="글씨 크기"><span aria-hidden="true">글씨 크기</span>${TEXT_SIZES.map(([id, label, name]) => `<button type="button" data-text-size="${id}" aria-pressed="false" aria-label="글씨 ${name}" title="글씨 ${name}">${label}</button>`).join('')}</div><span class="grade">${UNITS[unit].grade} <i></i> 과학</span></div></header>`;
 export function setupTextSize() {
   document.body.classList.add('lab-readable');
   // 단원 번호: 단원에 어울리는 제목 옆 그림(theme-unit-art.css)을 골라요.
