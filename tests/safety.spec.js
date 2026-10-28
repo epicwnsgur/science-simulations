@@ -77,7 +77,7 @@ test('뜻 없는 글(ㅋㅋ·되풀이)·바르지 않은 말·앞 칸과 같은
   await finishReview(page);
   await page.locator('input[name="prediction"][value="0"]').check();
   const box = page.locator('#prediction-reason');
-  for (const [text, why] of [['ㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋ', /되풀이|ㅋㅋ/], ['가나다가나다가나다가나다가나다가나다가나다', /되풀이/], ['이거 존나 쉬운 문제 같아요 전류가 커질 것 같아요', /바르지 않은 말/]]) {
+  for (const [text, why] of [['ㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋㅋ', /되풀이|자음이나 모음만/], ['가나다가나다가나다가나다가나다가나다가나다', /되풀이/], ['이거 존나 쉬운 문제 같아요 전류가 커질 것 같아요', /바르지 않은 말/]]) {
     await box.fill(text);
     await page.locator('#start-observation').click();
     await expect(page.locator('#prediction-confirm')).not.toBeVisible();

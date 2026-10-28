@@ -200,6 +200,32 @@ test('서술은 공백을 빼고 20자 이상이어야 다음 단계로 넘어�
   await expect(page.locator('#observe-panel')).toBeVisible();
 });
 
+test('뜻 없는 글(자음·모음 섞기, 잘 쓰지 않는 글자, 문장 뒤 덧붙이기)은 쓰는 동안 바로 알려 주고 저장되지 않음', async ({ page }) => {
+  await page.goto('/simulations/electric-current/');
+  await finishReview(page);
+  await page.locator('input[name="prediction"][value="0"]').check();
+  const count = page.locator('.char-count[data-for="prediction-reason"]');
+  // 학생이 실제로 낸 글(교사 의견)
+  for (const [text, why] of [
+    ['잘모루겟야요잘묘루겟어요잫모르ㅛ세ㅛ러료잫모수게ㅛ어려', /자음이나 모음만/],
+    ['잘모루겟야요잘묘루겟어요잫모르세러료잫모수게어려 전구가', /잘 쓰지 않는 글자/],
+    ['그냥 잠깐 불이 켜졌다가 꺼질것 같습니당다가가', /문장이 끝난 뒤/],
+  ]) {
+    await page.locator('#prediction-reason').fill(text);
+    await expect(count).toContainText('고쳐 주세요');
+    await expect(count).toContainText(why);
+    await expect(count).not.toHaveClass(/enough/);
+    await page.locator('#start-observation').click();
+    await expect(page.locator('#predict-panel')).toBeVisible();
+    await expect(page.locator('#confirm-prediction')).toBeHidden();
+  }
+  await page.locator('#prediction-reason').fill('잠깐 불이 켜졌다가 꺼질 것 같아요. 접시에 모인 전하가 이동하고 나면 더 흐르지 않으니까요.');
+  await expect(count).toHaveClass(/enough/);
+  await page.locator('#start-observation').click();
+  await page.locator('#confirm-prediction').click();
+  await expect(page.locator('#observe-panel')).toBeVisible();
+});
+
 test('스스로 평가: 결과 확인 뒤 옳게 고른 보기는 초록색, 틀리게 고른 보기는 붉은색', async ({ page }) => {
   for (const url of ['/simulations/ohms-law/', '/simulations/electrostatic-induction/']) {
     await page.goto(url);
