@@ -9,7 +9,7 @@ const listJs = dir => readdirSync(dir).filter(f => /\.(js|mjs|css|html)$/.test(f
 const pages = dir => readdirSync(dir, { withFileTypes: true }).flatMap(d => (d.isDirectory() ? pages(`${dir}/${d.name}`) : d.name === 'index.html' ? [`${dir}/${d.name}`] : []));
 
 test('사이트 화면(실험, 공통 코드, CSS, 페이지)에 그림 에모지가 없음', () => {
-  const files = [...listJs('.'), ...listJs('src'), ...listJs('build'), ...pages('grades'), ...pages('simulations')];
+  const files = [...listJs('.'), ...listJs('src'), ...listJs('build'), ...pages('grades'), ...pages('simulations'), ...pages('teacher')];
   assert.ok(files.length > 40);
   for (const f of files) {
     readFileSync(f, 'utf8').split('\n').forEach((line, i) => {

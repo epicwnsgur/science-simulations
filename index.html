@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="/home.css">
   <link rel="stylesheet" href="/theme-light.css">
   <link rel="stylesheet" href="/theme-dark-deco.css">
+  <link rel="stylesheet" href="/teacher.css">
   <script>try{if(localStorage.getItem('theme')==='light')document.documentElement.dataset.theme='light'}catch(e){}</script>
 </head>
 <body>
@@ -39,6 +40,15 @@
             <div class="future-art" aria-hidden="true"><div class="planet"></div><span class="small-star">✧</span></div>
             <div class="folder-copy"><span class="grade">실험 1개 · 준비 중 2개</span><h3>중학교 2학년 과학</h3><p>우리 학년의 실험을 한곳에서 만나 보세요.</p></div>
             <div class="folder-footer">폴더 열기 <span aria-hidden="true">→</span></div>
+          </div>
+        </a>
+        <a class="folder active-folder teacher-folder" href="./teacher/" data-teacher-gate aria-label="교사용 자료 폴더 열기 (교사 모드 비밀번호 필요)">
+          <span class="folder-tab">교사용</span>
+          <div class="folder-face">
+            <div class="folder-top"><span class="subject">교사 모드 전용</span><span class="open-mark" aria-hidden="true">↗</span></div>
+            <div class="teacher-art" aria-hidden="true"><div class="board"></div><span class="lock"><svg viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8.5 10.5V7.5a3.5 3.5 0 0 1 7 0v3"/></svg></span></div>
+            <div class="folder-copy"><span class="grade">비밀번호로 열어요</span><h3>교사용 자료</h3><p>수업에 쓰는 도구를 모아 두었어요.</p></div>
+            <div class="folder-footer">비밀번호 넣고 열기 <span aria-hidden="true">→</span></div>
           </div>
         </a>
       </div>

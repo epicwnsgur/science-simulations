@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#080b16">
+  <title>교사용 자료 · 준혁T의 과학 실험실</title>
+  <link rel="stylesheet" href="/home.css">
+  <link rel="stylesheet" href="/theme-light.css">
+  <link rel="stylesheet" href="/theme-dark-deco.css">
+  <link rel="stylesheet" href="/teacher.css">
+  <script>try{if(localStorage.getItem('theme')==='light')document.documentElement.dataset.theme='light'}catch(e){}try{if(sessionStorage.getItem('poe-teacher')!=='on')document.documentElement.classList.add('teacher-locked')}catch(e){document.documentElement.classList.add('teacher-locked')}</script>
+</head>
+<body class="teacher-page">
+  <a class="skip" href="#tools">도구 목록으로 건너뛰기</a>
+  <div class="cosmos" aria-hidden="true"><div class="stars"></div><div class="galaxy"></div><div class="horizon"></div></div>
+  <header class="site-header"><a class="brand" href="../"><span class="brand-star" aria-hidden="true">✦</span> 준혁T의 과학 실험실</a><a class="nav-link" href="../#experiments">← 첫 화면</a></header>
+  <main>
+    <section class="hero grade-hero" aria-labelledby="welcome">
+      <p class="eyebrow"><span></span> 교사 모드 전용</p>
+      <h1 id="welcome">교사용 자료</h1>
+      <p class="hero-description">수업 시간에 바로 꺼내 쓰는 도구들이에요.</p>
+    </section>
+    <section class="experiments" id="tools" aria-labelledby="tools-title">
+      <div class="section-heading"><div><h2 id="tools-title">수업 도구</h2></div><span class="available tool-count">도구 1개</span></div>
+      <div class="folders">
+        <a class="folder active-folder tool-folder" href="./race-draw/" aria-label="레이싱 번호 뽑기 열기">
+          <span class="folder-tab">도구</span>
+          <div class="folder-face">
+            <div class="folder-top"><span class="subject">무작위 순서 정하기</span><span class="open-mark" aria-hidden="true">↗</span></div>
+            <div class="tool-art" aria-hidden="true">
+              <svg viewBox="0 0 320 165" preserveAspectRatio="xMidYMid slice">
+                <path d="M30 130 C30 40 120 30 170 60 S300 40 290 110 S120 150 30 130Z" fill="none" stroke="#e9edf5" stroke-width="30" opacity=".9"/>
+                <path d="M30 130 C30 40 120 30 170 60 S300 40 290 110 S120 150 30 130Z" fill="none" stroke="#2a2d35" stroke-width="24"/>
+                <g transform="translate(150 128)"><rect x="-3" y="-13" width="6" height="26" fill="#fafafa"/><rect x="-3" y="-13" width="3" height="3" fill="#111"/><rect x="0" y="-10" width="3" height="3" fill="#111"/><rect x="-3" y="-7" width="3" height="3" fill="#111"/><rect x="0" y="-4" width="3" height="3" fill="#111"/><rect x="-3" y="-1" width="3" height="3" fill="#111"/><rect x="0" y="2" width="3" height="3" fill="#111"/><rect x="-3" y="5" width="3" height="3" fill="#111"/><rect x="0" y="8" width="3" height="3" fill="#111"/></g>
+                <g transform="translate(205 131) rotate(-8)"><rect x="-11" y="-5" width="22" height="10" rx="4" fill="#ff3b3b"/><circle r="3.6" fill="#fff"/></g>
+                <g transform="translate(110 134) rotate(4)"><rect x="-11" y="-5" width="22" height="10" rx="4" fill="#2ec4ff"/><circle r="3.6" fill="#fff"/></g>
+                <g transform="translate(78 57) rotate(-35)"><rect x="-11" y="-5" width="22" height="10" rx="4" fill="#ffb703"/><circle r="3.6" fill="#fff"/></g>
+              </svg>
+            </div>
+            <div class="folder-copy"><span class="grade">최대 100명 · 15초 경주</span><h3>레이싱 번호 뽑기</h3><p>번호 차들이 서킷을 달려 들어온 차례대로 순서를 정해요.</p></div>
+            <div class="folder-footer">열기 <span aria-hidden="true">→</span></div>
+          </div>
+        </a>
+      </div>
+    </section>
+  </main>
+  <footer class="site-footer"><span>✦ 준혁T의 과학 실험실</span><p>궁금한 만큼, 더 넓어지는 세상.</p></footer>
+  <script type="module" src="/src/teacher-page.js"></script>
+</body>
+</html>

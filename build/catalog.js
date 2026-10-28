@@ -11,7 +11,8 @@ export function discoverPages(root) {
       else if (e.name === 'index.html') pages.push(relative(root, path).split('\\').join('/'));
     }
   }
-  for (const dir of ['grades', 'simulations']) walk(join(root, dir));
+  // teacher/: 교사용 자료(교사 모드에서만 열려요). 학생 실험 개수에는 세지 않아요.
+  for (const dir of ['grades', 'simulations', 'teacher']) walk(join(root, dir));
   return pages.sort();
 }
 const route = file => '/' + file.replace(/index\.html$/, '');
