@@ -92,11 +92,38 @@ const LABS = [
     await page.locator('#tab-simple').click(); await page.locator('#switch-btn').click(); await page.locator('#nudge').click(); await page.waitForTimeout(2000);
     await page.locator('[data-strip="full"]').click(); await page.locator('#nudge').click(); await page.waitForTimeout(3500);
   }],
+  // 중1 Ⅵ. 기체의 성질
+  ['/simulations/gas-pressure/', '기체의 압력', async page => {
+    for (const s of ['a', 'b', 'c']) { await page.locator(`[data-setup="${s}"]`).click(); await page.waitForTimeout(3300); }
+    await page.locator('#tab-cup').click(); await page.locator('#shake').click(); await page.waitForTimeout(2800);
+    await page.locator('#tab-balloon').click(); await page.locator('#show-detail').check(); await page.waitForTimeout(4500);
+  }],
+  ['/simulations/boyles-law/', '보일 법칙', async page => {
+    for (let i = 0; i < 3; i++) { await page.locator('[data-step="5"]').click(); await page.locator('#record').click(); }
+    await page.locator('#to-start').click();
+    for (let i = 0; i < 3; i++) { await page.locator('[data-step="-5"]').click(); await page.locator('#record').click(); }
+    await page.locator('#tab-particles').click(); await page.locator('#show-detail').check();
+    await page.locator('[data-ext="2"]').click(); await page.waitForTimeout(2500);
+    await page.locator('[data-ext="4"]').click(); await page.waitForTimeout(3000);
+    await page.locator('#tab-life').click(); await page.locator('#life-run').click(); await page.waitForTimeout(3500);
+    await page.locator('[data-life="snack"]').click(); await page.locator('#life-run').click(); await page.waitForTimeout(3500);
+  }],
+  ['/simulations/charles-law/', '샤를 법칙', async page => {
+    await page.locator('#pour').click(); await page.locator('#drop').click(); await page.locator('#fast').click();
+    for (let i = 0; i < 5; i++) { await page.waitForTimeout(1300); await page.locator('#record').click(); }
+    await page.locator('#tab-particles').click(); await page.locator('#show-detail').check();
+    for (let i = 0; i < 3; i++) await page.locator('#heat').click();
+    await page.waitForTimeout(6500);
+    for (let i = 0; i < 4; i++) await page.locator('#cool').click();
+    await page.waitForTimeout(7000);
+    await page.locator('#tab-life').click(); await page.locator('#life-run').click(); await page.waitForTimeout(3500);
+    await page.locator('[data-life="bottle"]').click(); await page.locator('#life-run').click(); await page.waitForTimeout(3500);
+  }],
 ];
 
 for (const [url, concept, run] of LABS) {
   test(`${url} 예상→관찰→설명`, async ({ page }) => {
-    test.setTimeout(45000);
+    test.setTimeout(60000);
     const errors = []; page.on('pageerror', e => errors.push(e.message));
     await page.goto(url);
     // 모든 실험은 실험 전 1분 복습부터 시작하고, 건너뛸 수 없어요.

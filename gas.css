@@ -1,0 +1,12 @@
+/* 중학교 1학년 Ⅵ. 기체의 성질 실험의 무대(그림) 글자. 공통 CSS(theme-electric.css 등)의 선택자는 다시 쓰지 않아요(src/css-scope.test.js). */
+#scene .gas-label{fill:#cfe0ff;font-size:14px;font-weight:600}
+#scene .gas-small{fill:#9fb3d9;font-size:12px}
+#scene .gas-big{fill:#ffffff;font-size:17px;font-weight:700}
+#scene .gas-num{fill:#ffd166;font-size:15px;font-weight:700;font-variant-numeric:tabular-nums}
+#scene .gas-tick{fill:#9fb3d9;font-size:11px;font-variant-numeric:tabular-nums}
+#scene .gas-axis{fill:#cfe0ff;font-size:12px}
+#scene .gas-title{fill:#ffffff;font-size:14px;font-weight:700}
+#scene .gas-hot{fill:#ff9f6b;font-size:14px;font-weight:700}
+#scene .gas-cool{fill:#7fd6ff;font-size:14px;font-weight:700}
+#scene .gas-dial{fill:#3a3f52;font-size:11px;font-weight:600}
+#scene .gas-ink{fill:#5a3a00;font-size:12px;font-weight:700}

@@ -4,7 +4,7 @@ import { beginObservation } from './poe-helpers.js';
 test('학년 폴더와 실험 사이를 이동하고 새로고침 후 목록으로 돌아옴', async ({ page }) => {
   const errors=[];page.on('pageerror',error=>errors.push(error.message));
   await page.goto('/');
-  await expect(page.locator('.available')).toHaveText('폴더 1개 · 실험 13개');
+  await expect(page.locator('.available')).toHaveText('폴더 2개 · 실험 16개');
   await expect(page).toHaveTitle(/준혁T의 과학 실험실/);
   await expect(page.getByRole('heading',{name:'나만의 탐구를 시작해요'})).toBeVisible();
   await expect(page.locator('.future-folder')).toHaveCount(0);

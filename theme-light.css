@@ -306,18 +306,6 @@ html[data-theme=light] .page-zoom .zoom-value{color:var(--ink)}
 html[data-theme=light] .text-size span{color:var(--muted)}
 html[data-theme=light] .text-size button{border:1px solid var(--line-2);background:#fceef4;color:#38192d}
 html[data-theme=light] .text-size button[aria-pressed=true]{background:var(--volt);border-color:var(--volt);color:#ffffff}
-/* induction.css */
-html[data-theme=light] .spoon-body{fill:none;stroke:#944276}
-html[data-theme=light] .part-label{fill:#7a8073}
-html[data-theme=light] .jar{fill:none;stroke:#1d73a5}
-html[data-theme=light] .stopper{fill:#1d6da5;stroke:#2c6f9f}
-html[data-theme=light] .leaf{fill:#935b1a;stroke:#c4a231}
-html[data-theme=light] .scope-labels path{stroke:#7f3965;fill:none}
-html[data-theme=light] .scope-labels text{fill:#6f766a}
-html[data-theme=light] .glove{fill:#38192d;stroke:#6a3055}
-html[data-theme=light] .glove-cuff{fill:#38192d;stroke:#6a3055}
-html[data-theme=light] .glove-line{stroke:#3f1c32;fill:none}
-html[data-theme=light] #charged-object:focus{outline:none}
 /* theme-space.css */
 html[data-theme=light] body.lab-space{--bg:#fbf5ff;--panel:#ffffff;--panel-2:#f8f0ff;--line:#e9d5f5;--line-2:#d4b0ea;--current:#c2255c;--current-2:#9c36b5;--volt:#b35c00;--volt-2:#e8590c;--nebula:#9c36b5;--glow-c:0 0 0 3px #d6336c22,0 4px 14px #d6336c26;--glow-v:0 0 0 3px #c2410c22,0 4px 14px #f7670726;--mark:rgba(214,170,255,.42);--mark-strong:rgba(200,150,255,.6);--mark-line:#9c36b5;background:radial-gradient(1200px 520px at 78% -12%,#f1aac740,transparent 62%),
     radial-gradient(900px 480px at -8% 22%,#f2b2cb2e,transparent 60%),

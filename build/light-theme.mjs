@@ -14,7 +14,9 @@ import { join } from 'node:path';
 import { headerBranch, petalTile, blossomIcon, dataUri } from './spring-deco.mjs';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
-export const SOURCES = ['theme-electric.css', 'readable.css', 'induction.css', 'theme-space.css', 'home.css', 'unit-electric.css', 'unit-space.css'];
+// induction.css(정전기 유도의 쇠숟가락·검전기·장갑 그림)처럼 실험 무대 그림만 담은 CSS는 넣지 않아요.
+// 밝은 테마에서도 무대 바탕은 어두운 그대로라서, 그림 색을 밝은 바탕용(짙은 색)으로 바꾸면 잘 안 보여요.
+export const SOURCES = ['theme-electric.css', 'readable.css', 'theme-space.css', 'home.css', 'unit-electric.css', 'unit-space.css'];
 const P = 'html[data-theme=light]';
 
 // 테마 색 변수: 손으로 고른 핑크 팔레트(분홍 + 자주 + 산호 + 민트).

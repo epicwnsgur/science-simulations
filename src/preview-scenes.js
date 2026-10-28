@@ -234,6 +234,51 @@ export const SCENES = {
       ],
     },
   },
+  // 중학교 1학년 Ⅵ. 기체의 성질
+  'gas-pressure': {
+    // 실제 실험(시뮬레이션과 같음): 물을 담은 페트병 (가)(나)(다)를 점토 위에 세워요. 결과(깊이)는 ‘?’로만 보여 줘요.
+    main: {
+      svg: `${[[60, false, 1], [160, true, 1], [260, true, .5]].map(([x, inv, w], i) => `<g data-o="b${i}"><g transform="translate(${x} ${inv ? 68 : 118}) scale(.42 ${inv ? -.42 : .42})"><path d="M-33 0 V-110 C-33 -134 -14 -140 -12 -150 V-160 H12 V-150 C14 -140 33 -134 33 -110 V0 Z" fill="#dfeffa33" stroke="#cfe6f5" stroke-width="4"/><rect data-o="w${i}" x="-34" y="${inv ? -160 : -150}" width="68" height="${w === 1 ? 150 : 80}" fill="#4fa8ff" opacity=".6"/><rect x="-13" y="-174" width="26" height="14" rx="3" fill="#3f7ad6"/></g></g><rect x="${x - 34}" y="118" width="68" height="12" rx="4" fill="#c99d74"/>${label(x, 146, ['(가)', '(나)', '(다)'][i], 11, '#ffd166')}`).join('')}
+        <g data-o="cup" class="pv-off"><rect x="0" y="0" width="320" height="150" fill="#070b1cf0"/><path d="M110 30 L124 120 H196 L210 30" fill="#dfeffa14" stroke="#cfe6f5" stroke-width="2"/><path d="M110 36 Q160 50 210 36" fill="none" stroke="#dfe5ec" stroke-width="3"/>${[[140, 112, '#ff6b6b'], [158, 112, '#ffd166'], [176, 112, '#5cc8ff'], [148, 98, '#7dffb0'], [166, 98, '#c77dff']].map(([x, y, c]) => `<circle cx="${x}" cy="${y}" r="7" fill="${c}"/>`).join('')}${label(160, 142, '구슬을 넣은 컵', 10)}</g>`,
+      steps: [
+        h => { h.show('w0', 600); h.show('w1', 600, 200); h.show('w2', 600, 400); },
+        h => { h.move('b0', [[0, -24], [0, 0]], 900); h.move('b1', [[0, -24], [0, 0]], 900, 300); h.move('b2', [[0, -24], [0, 0]], 900, 600); },
+        h => { h.ask(60, 104, 300); h.ask(160, 104, 500); h.ask(260, 104, 700); },
+        h => { h.show('cup', 400); h.move('cup', [[0, 0], [-6, 0], [6, 0], [-6, 0], [6, 0], [0, 0]], 1600, 400); h.ask(160, 22, 1700); },
+      ],
+    },
+  },
+  'boyles-law': {
+    // 실제 실험(시뮬레이션과 같음): 피스톤을 30 mL에 맞춘 주사기의 입구에 압력계를 연결하고, 피스톤을 당기거나 밀어요.
+    main: {
+      svg: `<rect x="70" y="58" width="150" height="34" rx="4" fill="#dfeffa22" stroke="#cfe6f5" stroke-width="2"/>${Array.from({ length: 7 }, (_, i) => `<path d="M${90 + i * 20} 92 v-6" stroke="#aab4d6"/>`).join('')}<path d="M60 75 H70" stroke="#cfe6f5" stroke-width="5"/>
+        <g data-o="plunger"><rect x="168" y="60" width="6" height="30" fill="#8f9bc4"/><path d="M174 75 H250 M250 62 V88" stroke="#8f9bc4" stroke-width="5" stroke-linecap="round"/></g>
+        <circle cx="34" cy="75" r="26" fill="#f4f1e6" stroke="#5e6a92" stroke-width="3"/><path d="M34 75 L46 62" stroke="#e04848" stroke-width="3" stroke-linecap="round"/><text x="34" y="96" font-size="9" fill="#3a3f52" text-anchor="middle">기압</text>
+        <text x="145" y="48" font-size="12" fill="#ffd166" text-anchor="middle" data-o="ml">30 mL</text>${label(34, 122, '압력계', 10)}${label(150, 122, '주사기', 10)}
+        <g data-o="graph" class="pv-off"><rect x="226" y="6" width="90" height="70" rx="6" fill="#0a1029" stroke="#2c3966"/><path d="M240 64 H306 M240 64 V14" stroke="#aab4d6"/>${label(273, 74, '압력', 8)}${label(234, 12, '부피', 8)}</g>`,
+      steps: [
+        h => h.pulse(60, 75, 22),
+        h => { h.move('plunger', [[0, 0], [26, 0]], 1600); h.text('ml', ['35 mL', '40 mL', '45 mL'], 500); h.ask(34, 40, 1500); },
+        h => { h.move('plunger', [[0, 0], [-34, 0]], 1600); h.text('ml', ['25 mL', '20 mL', '15 mL'], 500); h.ask(34, 40, 1500); },
+        h => { h.show('graph', 500); h.ask(273, 40, 900); },
+      ],
+    },
+  },
+  'charles-law': {
+    // 실제 실험(시뮬레이션과 같음): 유리병–실리콘 튜브–피펫, 뜨거운 물이 담긴 비커, 온도 센서. 방울이 움직이는 방향은 ‘?’로만 보여 줘요.
+    main: {
+      svg: `<path d="M90 50 V136 H190 V50" fill="none" stroke="#cfe6f5" stroke-width="2"/><g data-o="hot" class="pv-off"><rect x="91" y="72" width="98" height="63" fill="#ff8a5c" opacity=".35"/></g>
+        <rect x="124" y="92" width="28" height="36" rx="5" fill="#dfeffa22" stroke="#cfe6f5" stroke-width="2"/><path d="M138 92 V40 H230" fill="none" stroke="#9fb3d9" stroke-width="4"/>
+        <rect x="230" y="34" width="70" height="12" rx="3" fill="#dfeffa22" stroke="#cfe6f5"/>${Array.from({ length: 6 }, (_, i) => `<path d="M${238 + i * 11} 46 v4" stroke="#aab4d6"/>`).join('')}
+        <g data-o="drop" class="pv-off"><rect x="290" y="36" width="8" height="8" rx="2" fill="#ff6b9a"/></g>
+        <text x="58" y="70" font-size="12" fill="#ffd166" text-anchor="middle" data-o="temp">온도</text><path d="M70 62 L110 100" stroke="#aab4d6"/>${label(140, 148, '5 mL 유리병', 10)}${label(266, 64, '1 mL 피펫', 10)}${label(212, 30, '실리콘 튜브', 9)}`,
+      steps: [
+        h => { h.pulse(138, 40, 16); h.pulse(230, 40, 12, 500); },
+        h => { h.show('hot', 600); h.show('drop', 500, 700); h.pulse(294, 40, 12, 1100); },
+        h => { h.text('temp', ['60 ℃', '50 ℃', '40 ℃', '30 ℃'], 600); h.ask(266, 18, 1900); },
+      ],
+    },
+  },
 };
 
 // ---------- 재생 도우미 ----------
