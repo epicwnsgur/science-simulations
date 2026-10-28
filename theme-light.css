@@ -380,6 +380,8 @@ html[data-theme=light] .empty-unit p{color:#532643}
 html[data-theme=light] .empty-unit a{color:#38192d}
 html[data-theme=light] .site-header .theme-toggle{border:1px solid #f1acc7;background:#fadfea;color:#38192d}
 html[data-theme=light] .site-header .theme-toggle:hover{border-color:#d19eb3}
+html[data-theme=light] .section-group{color:#38192d}
+html[data-theme=light] .section-group::after{background:linear-gradient(90deg,#b499ff66,transparent)}
 /* unit-electric.css */
 html[data-theme=light] .unit-electric{--current:#d6336c;--volt:#c2410c}
 html[data-theme=light] .unit-electric .cosmos{background:radial-gradient(ellipse at 78% 28%,#1e9bff33,transparent 46%),radial-gradient(ellipse at 20% 0,#7b5cff22,transparent 55%)}

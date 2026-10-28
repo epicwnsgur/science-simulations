@@ -8,3 +8,4 @@
 .site-header .nav-link{margin-left:auto}.site-header .theme-toggle{margin-left:18px;height:36px;padding:0 14px;border-radius:18px;border:1px solid #43435f;background:#1c1c30;color:#e6dcff;font:inherit;font-size:13px;font-weight:700;white-space:nowrap;cursor:pointer}.site-header .theme-toggle:hover{border-color:#9b88c6}
 @media(max-width:620px){.site-header .theme-toggle{margin-left:10px;padding:0 10px;font-size:12px}}
 .icon{width:1.1em;height:1.1em;vertical-align:-.18em;flex:none;margin-right:3px}
+.section-group{grid-column:1/-1;margin:18px 0;font-size:13px;color:#d6c8ff;letter-spacing:1px;display:flex;align-items:center;gap:12px}.section-group::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,#b499ff66,transparent)}

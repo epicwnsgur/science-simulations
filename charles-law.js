@@ -225,7 +225,7 @@ function paintLife(dt) {
       <rect x="590" y="70" width="190" height="130" rx="14" fill="#0a1029e6" stroke="#2c3966"/><text x="606" y="98" class="gas-title">냉장고 속 온도</text>
       <text x="606" y="128" class="${u > 0 ? 'gas-cool' : 'gas-label'}">약 ${Math.round(c)} ℃</text><text x="606" y="160" class="gas-small">${u > .95 ? '페트병이 찌그러졌어요.' : u > 0 ? '페트병 속 기체가 식는 중이에요.' : '마개를 꼭 닫은 빈 페트병이에요.'}</text>`;
   } else {
-    const rise = 150 * Math.max(0, (u - .45) / .55), cy = 210 - rise, gone = Math.min(1, u / .45);
+    const rise = 90 * Math.max(0, (u - .45) / .55), cy = 220 - rise, gone = Math.min(1, u / .45);
     const dots = balloonAir.map((p, i) => {
       p.ph += dt * (2 + 4 * u);
       if (p.out && gone > 0) { const y = cy + 92 + gone * (60 + i * 6); return `<circle cx="${(400 + (i - 36) * 12).toFixed(1)}" cy="${y.toFixed(1)}" r="4" fill="#ff9f6b" opacity="${(1 - gone).toFixed(2)}"/>`; }
@@ -320,7 +320,7 @@ function frame(now) {
       ['뜨거운 물에 담그고 글리세롤 떨어뜨리기', phase === 'cooling', '‘뜨거운 물에 담그기’를 누르고 ‘글리세롤 떨어뜨리기’를 눌러요'],
       ['물이 식는 동안 온도와 부피 5번 기록하기', records.length >= 5, '물이 식는 동안 ‘온도와 부피 기록하기’를 다섯 번 눌러요. ‘시간 빠르게’를 써도 돼요', '#record'],
       ['입자 모형: 가열하여 60 ℃ 이상에서 피스톤이 멈출 때까지 보기', heatSeen, '‘입자 모형’ 탭 → ‘가열하기 (+20 ℃)’를 두 번 이상 누르고 피스톤이 멈출 때까지 기다려요', '#tab-particles'],
-      ['입자 모형: 냉각하여 0 ℃에서 피스톤이 멈출 때까지 보기', coolSeen, '‘냉각하기 (−20 ℃)’를 눌러 0 ℃로 낮추고 피스톤이 멈출 때까지 기다려요', '#cool'],
+      ['입자 모형: 냉각하여 0 ℃에서 피스톤이 멈출 때까지 보기', coolSeen, '‘냉각하기 (−20 ℃)’를 눌러 0 ℃로 낮추고 피스톤이 멈출 때까지 기다려요'], // 가열과 냉각은 어느 쪽부터 해도 돼요
       ['입자의 운동과 충돌 살펴보기', particlesDone, '위쪽의 ‘화살표·충돌 보기’를 켜고 온도에 따라 입자의 운동이 어떻게 다른지 봐요', '', '#show-detail'],
       ['생활 속 샤를 법칙 2가지 살펴보기', lifeSeen.size >= 2, '‘생활 속 샤를 법칙’ 탭에서 보기를 골라 단추를 눌러요', '#tab-life'],
     ]));

@@ -83,3 +83,32 @@ test('샤를 법칙: 물이 식을수록 부피가 일정하게 작아지고, �
   const ml = Number((await page.locator('#cyl-panel').textContent()).match(/([\d.]+) mL/)[1]);
   expect(ml).toBeGreaterThan(27); expect(ml).toBeLessThan(30);
 });
+
+test('보일 법칙: 처음부터 밀기를 먼저 해도 기록되고, 피스톤을 끌어서도 부피를 바꿀 수 있음', async ({ page }) => {
+  await openObserveUnlocked(page, '/simulations/boyles-law/', { observed: false });
+  // 예상 질문이 ‘밀기’라서 밀기부터 해도 잠기지 않아요.
+  await page.locator('[data-step="-5"]').click();
+  await page.locator('#record').click();
+  await expect(page.locator('#readout')).toContainText('25');
+  // 피스톤을 오른쪽으로 끌면 부피가 커지고 압력계 값이 작아져요.
+  const box = await page.locator('#plunger').boundingBox();
+  const per = box.width / 196 * 6;                            // 화면에서 1 mL가 차지하는 너비
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2); await page.mouse.down();
+  await page.mouse.move(box.x + box.width / 2 + per * 20, box.y + box.height / 2, { steps: 8 }); await page.mouse.up();
+  await expect(page.locator('#ml-read')).toHaveText(/부피 4[4-6] mL/);
+  await page.locator('#record').click();
+  await expect(page.locator('#readout tr')).toHaveCount(3);
+});
+
+test('6단원 폴더: 중단원 이름이 한 줄을 다 쓰고, 실험 카드는 그 아래 왼쪽부터 놓임', async ({ page }) => {
+  await page.goto('/grades/middle-school-1/unit-6/');
+  const groups = await page.locator('.section-group').all();
+  const cards = page.locator('.folder');
+  const g = await groups[0].boundingBox(), c = await cards.first().boundingBox(), list = await page.locator('.folders').boundingBox();
+  expect(Math.abs(g.width - list.width)).toBeLessThan(2);
+  expect(c.y).toBeGreaterThan(g.y + g.height);
+  expect(Math.abs(c.x - list.x)).toBeLessThan(2);
+  const g2 = await groups[1].boundingBox(), c3 = await cards.nth(2).boundingBox();
+  expect(c3.y).toBeGreaterThan(g2.y + g2.height);
+  expect(Math.abs(c3.x - list.x)).toBeLessThan(2);
+});
