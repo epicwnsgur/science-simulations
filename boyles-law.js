@@ -54,7 +54,7 @@ const scene = `
   <rect x="${BAR.x0}" y="${BAR.y}" width="${SYRINGE.maxMl * BAR.px + 30}" height="44" rx="4" fill="#dfeffa18" stroke="#cfe6f5" stroke-width="2.5"/>
   <g id="syringe-gas"></g>${ticks}
   <text x="${sealX(SYRINGE.maxMl) + 22}" y="${BAR.y + 60}" class="gas-tick">mL</text>
-  <g id="plunger"><rect x="-8" y="${BAR.y + 2}" width="8" height="40" fill="#3a3f52"/><path d="M0 ${BAR.y + 22} H170 M170 ${BAR.y + 2} V${BAR.y + 42}" stroke="#8f9bc4" stroke-width="8" stroke-linecap="round"/></g>
+  <g id="plunger" tabindex="0" role="slider" aria-label="피스톤(끌어서 부피 바꾸기)" aria-valuemin="${SYRINGE.minMl}" aria-valuemax="${SYRINGE.maxMl}" aria-valuenow="${SYRINGE.startMl}" style="cursor:grab;touch-action:none"><rect x="-12" y="${BAR.y - 10}" width="196" height="64" fill="transparent"/><rect x="-8" y="${BAR.y + 2}" width="8" height="40" fill="#3a3f52"/><path d="M0 ${BAR.y + 22} H170 M170 ${BAR.y + 2} V${BAR.y + 42}" stroke="#8f9bc4" stroke-width="8" stroke-linecap="round"/></g>
   <text id="ml-read" x="${BAR.x0 + 10}" y="${BAR.y - 14}" class="gas-num"></text>
   <g id="graph">${graphFrame}<g id="graph-pts"></g></g>
 </g>
@@ -116,9 +116,20 @@ function paintGraph() {
   const curve = records.length >= 6 ? `<path d="M${Array.from({ length: 41 }, (_, i) => { const p = .4 + i * (2.5 - .4) / 40; return `${gx(p).toFixed(1)} ${gy(30 / p).toFixed(1)}`; }).join(' L')}" fill="none" stroke="#7fe7ff" stroke-width="2" stroke-dasharray="5 5" opacity=".8"/>` : '';
   setHTML('#graph-pts', curve + pts);
 }
-function move(d) {
-  ml = Math.max(SYRINGE.minMl, Math.min(SYRINGE.maxMl, ml + d));
-  renderControls();
+function move(d) { setMl(ml + d); }
+function setMl(v) {
+  const next = Math.max(SYRINGE.minMl, Math.min(SYRINGE.maxMl, v));
+  if (next !== ml) { ml = next; $('#plunger').setAttribute('aria-valuenow', ml); renderControls(); }
+}
+// 피스톤을 손가락·마우스로 끌어도 부피가 1 mL씩 바뀌어요(방향키도 돼요).
+{
+  const plunger = $('#plunger'), svgX = e => new DOMPoint(e.clientX, e.clientY).matrixTransform($('#scene').getScreenCTM().inverse()).x;
+  let grab = null;
+  plunger.addEventListener('pointerdown', e => { e.preventDefault(); grab = svgX(e) - sealX(ml); plunger.setPointerCapture(e.pointerId); plunger.style.cursor = 'grabbing'; });
+  plunger.addEventListener('pointermove', e => { if (grab !== null) setMl(Math.round((svgX(e) - grab - BAR.x0) / BAR.px)); });
+  const drop = () => { grab = null; plunger.style.cursor = 'grab'; };
+  plunger.addEventListener('pointerup', drop); plunger.addEventListener('pointercancel', drop);
+  plunger.addEventListener('keydown', e => { const d = { ArrowRight: 1, ArrowUp: 1, ArrowLeft: -1, ArrowDown: -1 }[e.key]; if (d) { e.preventDefault(); move(d); } });
 }
 function record() {
   const atm = readAtm(ml);
@@ -126,7 +137,8 @@ function record() {
   records.push({ ml, atm }); records.sort((a, b) => a.atm - b.atm);
   burst($('#fx'), gx(atm), gy(ml), '#ffd166', 8);
   toast(`압력 ${atm.toFixed(2)} 기압 · 부피 ${ml} mL를 기록했어요`);
-  if (pulled() === 3 && ml > SYRINGE.startMl) toast('피스톤을 당기며 3번 기록했어요. 이제 피스톤을 밀어 보세요');
+  if (pulled() === 3 && ml > SYRINGE.startMl && pushed() < 3) toast('피스톤을 당기며 3번 기록했어요. 이제 피스톤을 밀어 보세요');
+  if (pushed() === 3 && ml < SYRINGE.startMl && pulled() < 3) toast('피스톤을 밀며 3번 기록했어요. 이제 피스톤을 당겨 보세요');
   paintGraph(); renderControls();
 }
 
@@ -195,7 +207,7 @@ function markLife() { if (!lifeSeen.has(life)) { lifeSeen.add(life); toast(`${LI
 /* ---------- 문구와 조작 ---------- */
 function renderText() {
   const T = {
-    syringe: ['주사기의 피스톤을 당기거나 밀면서 압력과 부피를 재어 보세요.', '처음에는 30 mL · 1 기압이에요. 피스톤을 당기며 세 번, 밀며 세 번 ‘압력과 부피 기록하기’를 눌러요. 측정한 점이 그래프에 찍혀요.'],
+    syringe: ['주사기의 피스톤을 밀거나 당기면서 압력과 부피를 재어 보세요.', '처음에는 30 mL · 1 기압이에요. 피스톤을 끌거나 단추로 움직여 밀며 세 번, 당기며 세 번 ‘압력과 부피 기록하기’를 눌러요. 어느 쪽부터 해도 돼요. 측정한 점이 그래프에 찍혀요.'],
     particles: ['외부 압력을 바꾸며 실린더 속 기체 입자를 관찰해 보세요.', '‘2 기압’, ‘4 기압’을 눌러 추를 올려요. 기체의 부피와 피스톤에 부딪히는 횟수가 어떻게 달라지는지 비교해요.'],
     life: ['생활 속에서 보일 법칙을 찾아보세요.', '보기를 골라 단추를 눌러 보고, 기체의 부피가 왜 변하는지 압력으로 생각해 봐요.'],
   }[mode];
@@ -213,7 +225,7 @@ function renderControls() {
     $('#controls').innerHTML = `<div role="group" aria-label="피스톤 움직이기"><span class="group-label">피스톤</span><button data-step="5" ${ml >= SYRINGE.maxMl ? 'disabled' : ''}>당기기 (+5 mL)</button><button data-step="1" ${ml >= SYRINGE.maxMl ? 'disabled' : ''}>+1 mL</button><button data-step="-1" ${ml <= SYRINGE.minMl ? 'disabled' : ''}>−1 mL</button><button data-step="-5" ${ml <= SYRINGE.minMl ? 'disabled' : ''}>밀기 (−5 mL)</button><button id="to-start">30 mL로</button></div>`;
     $('#actions').innerHTML = '<button id="record" class="primary">압력과 부피 기록하기</button>';
     $$('[data-step]').forEach(b => b.onclick = () => move(+b.dataset.step));
-    $('#to-start').onclick = () => { ml = SYRINGE.startMl; renderControls(); };
+    $('#to-start').onclick = () => setMl(SYRINGE.startMl);
     $('#record').onclick = record;
   } else if (mode === 'particles') {
     $('#controls').innerHTML = `<div role="group" aria-label="외부 압력"><span class="group-label">외부 압력(추)</span>${PRESSURES.map(p => `<button data-ext="${p}" aria-pressed="${ext === p}">${p} 기압</button>`).join('')}</div>`;
@@ -235,7 +247,7 @@ function setMode(next) {
 for (const v of ['syringe', 'particles', 'life']) $(`#tab-${v}`).onclick = () => setMode(v);
 $('#show-detail').onchange = e => { show = e.target.checked; cyl.setArrows(show); renderText(); };
 $('#reset').onclick = () => {
-  if (mode === 'syringe') { ml = SYRINGE.startMl; records.length = 0; paintGraph(); }
+  if (mode === 'syringe') { setMl(SYRINGE.startMl); records.length = 0; paintGraph(); }
   if (mode === 'particles') { ext = 1; cyl.setExternal(1); cyl.settle(); }
   if (mode === 'life') { lifeT = 0; lifeRun = false; chamberPumps = 0; }
   renderControls();
@@ -252,8 +264,9 @@ function frame(now) {
     }
     if (mode === 'life') paintLife(dt);
     flow?.update(checklist([
+      // 밀기와 당기기는 어느 쪽부터 해도 돼요(예상 질문이 ‘밀기’라서 밀기를 먼저 두고, 당기기 단추는 잠그지 않아요).
+      ['피스톤을 밀며 압력과 부피 3번 기록하기', pushed() >= 3, '‘밀기 (−5 mL)’를 누른 뒤 ‘압력과 부피 기록하기’를 눌러요. 세 번 해요'],
       ['피스톤을 당기며 압력과 부피 3번 기록하기', pulled() >= 3, '‘당기기 (+5 mL)’를 누른 뒤 ‘압력과 부피 기록하기’를 눌러요. 세 번 해요'],
-      ['피스톤을 밀며 압력과 부피 3번 기록하기', pushed() >= 3, '‘밀기 (−5 mL)’를 누른 뒤 ‘압력과 부피 기록하기’를 눌러요. 세 번 해요', '[data-step="-5"]'],
       ['입자 모형: 외부 압력을 2 기압, 4 기압으로 높이기', extSeen.has(2) && extSeen.has(4), '‘입자 모형’ 탭 → ‘2 기압’을 누르고 피스톤이 멈추면 ‘4 기압’을 눌러요', '#tab-particles'],
       ['피스톤에 부딪히는 횟수 비교하기', particlesDone, '위쪽의 ‘화살표·충돌 보기’를 켜고 외부 압력에 따라 부딪히는 횟수를 비교해요', '', '#show-detail'],
       ['생활 속 보일 법칙 2가지 살펴보기', lifeSeen.size >= 2, '‘생활 속 보일 법칙’ 탭에서 보기를 골라 단추를 눌러요', '#tab-life'],
@@ -294,7 +307,7 @@ flow = setupPOEFlow({
   },
   onRestart: () => {
     show = false; $('#show-detail').checked = false; cyl.setArrows(false);
-    ml = SYRINGE.startMl; records.length = 0; paintGraph();
+    setMl(SYRINGE.startMl); records.length = 0; paintGraph();
     ext = 1; cyl.setExternal(1); cyl.settle(); extSeen = new Set([1]); particleTime = 0; particlesDone = false;
     life = 'diver'; lifeT = 0; lifeRun = false; chamberPumps = 0; lifeSeen.clear();
     lab.resetQuiz(); setMode('syringe');
