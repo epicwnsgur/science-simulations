@@ -14,7 +14,7 @@ test('실험 파일은 공통 화면의 data- 이름(data-step 등)으로 화면
   assert.ok(shared.has('data-step') && shared.has('data-goto'));
   const labs = readdirSync('.').filter(f => f.endsWith('.js') && !f.endsWith('.config.js'));
   for (const f of labs) {
-    for (const m of readFileSync(f, 'utf8').matchAll(/\$\$?\(\s*['"`]\[(data-[a-z-]+)/g)) {
+    for (const m of readFileSync(f, 'utf8').matchAll(/(?:\$\$?|querySelector(?:All)?)\(\s*['"`]\[(data-[a-z-]+)/g)) {
       assert.ok(!shared.has(m[1]), `${f}: ‘[${m[1]}]’는 공통 화면도 쓰는 이름이에요. ‘#controls [${m[1]}]’처럼 범위를 좁히거나 다른 이름을 써 주세요.`);
     }
   }
