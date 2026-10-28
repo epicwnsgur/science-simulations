@@ -141,7 +141,7 @@ function paintCylinder() {
   setHTML('#cyl-panel', `<rect width="340" height="300" rx="14" fill="#0a1029e6" stroke="#2c3966"/>
     <text x="16" y="28" class="gas-title">온도 20 ℃로 일정 · 입자 30개</text>
     ${bar(66, '외부 압력', ext, '#8f9bc4')}${bar(100, '기체의 압력', pin, '#5cc8ff')}
-    <text x="16" y="140" class="gas-label">기체의 부피(높이)</text><text x="200" y="140" class="gas-num">${Math.round(cyl.height / CYL.h1 * 30)} mL</text>
+    <text x="16" y="140" class="gas-label">기체의 부피(높이)</text><text x="200" y="140" class="gas-num">${+(cyl.volumeRatio * 30).toFixed(1)} mL</text>
     <text x="16" y="176" class="gas-label">입자의 운동 빠르기</text><path d="M200 172 h${(cyl.speed * .3).toFixed(0)}" stroke="#7fe7ff" stroke-width="4" marker-end="url(#arrow-head)"/><text x="${(212 + cyl.speed * .3).toFixed(0)}" y="176" class="gas-small">그대로</text>
     ${show ? `<text x="16" y="216" class="gas-label">1초 동안 피스톤에 부딪힌 횟수</text><text x="16" y="250" class="gas-num">약 ${Math.round(cyl.hitsPerSecond)}번</text>` : '<text x="16" y="216" class="gas-label">위쪽의 ‘화살표·충돌 보기’를 켜면</text><text x="16" y="240" class="gas-label">피스톤에 부딪히는 횟수를 볼 수 있어요.</text>'}
     <text x="16" y="284" class="gas-small">기체의 부피는 두 압력이 같아질 때까지 변해요.</text>`);
@@ -247,7 +247,7 @@ function frame(now) {
     if (mode === 'syringe') paintSyringe(dt);
     if (mode === 'particles') {
       cyl.step(dt, { flashes: show }); cyl.render(); paintCylinder();
-      if (Math.abs(cyl.inner / ext - 1) < .01 && !extSeen.has(ext)) { extSeen.add(ext); toast(`외부 압력 ${ext} 기압: 기체의 부피가 ${Math.round(cyl.height / CYL.h1 * 30)} mL가 되어 멈췄어요`); renderText(); }
+      if (Math.abs(cyl.inner / ext - 1) < .01 && !extSeen.has(ext)) { extSeen.add(ext); toast(`외부 압력 ${ext} 기압: 기체의 부피가 ${+(SYRINGE.startMl / ext).toFixed(1)} mL가 되어 멈췄어요`); renderText(); }
       if (show && extSeen.size > 1) { particleTime += dt; if (!particlesDone && particleTime > 4) { particlesDone = true; renderText(); } }
     }
     if (mode === 'life') paintLife(dt);

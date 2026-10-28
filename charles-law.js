@@ -164,7 +164,7 @@ function record() {
 
 /* ---------- 입자 모형 ---------- */
 const cyl = createCylinder({ layer: $('#cyl-gas'), x: CYL.x, w: CYL.w, floor: CYL.floor, n: 30, h1: CYL.h1, maxH: 330, minH: 80, baseSpeed: 150, seed: 53, ease: .7 });
-const volMl = () => Math.round(cyl.height / CYL.h1 * 30 * 10) / 10;
+const volMl = () => Math.round(cyl.volumeRatio * 30 * 10) / 10;
 function paintCylinder() {
   const top = cyl.top;
   setHTML('#piston', `<rect x="${CYL.x}" y="${(top - 16).toFixed(1)}" width="${CYL.w}" height="16" rx="3" fill="#c9d1db" stroke="#eef2f7"/><rect x="${CYL.x + 74}" y="${(top - 38).toFixed(1)}" width="62" height="20" rx="3" fill="#8f9bc4" stroke="#cfd6ec"/><text x="${CYL.x + CYL.w + 14}" y="${(top - 2).toFixed(1)}" class="gas-label">← 피스톤</text>`);

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { buildLightTheme } from '../build/light-theme.mjs';
 import { buildDarkDeco } from '../build/dark-deco.mjs';
 import { buildUnitArt } from '../build/unit-art.mjs';
@@ -15,6 +15,18 @@ test('밝은 테마의 모든 규칙은 html[data-theme=light] 아래에만 걸�
   const selectors = css.split('}').map(r => r.split('{')[0].trim()).filter(Boolean).flatMap(s => s.split(','));
   assert.ok(selectors.length > 100);
   for (const s of selectors) assert.match(s.trim(), /^html\[data-theme=light\]/, s);
+});
+
+// 실험 무대는 밝은 테마에서도 어두운 바탕 그대로예요. 무대 그림(SVG)의 색을 밝은 바탕용 짙은 색으로 바꾸면 잘 안 보여요(정전기 유도의 쇠숟가락·검전기·장갑에서 있었던 일).
+test('밝은 테마는 실험 무대 그림(SVG 요소)의 채우기·선 색을 바꾸지 않음', () => {
+  const css = readFileSync('theme-light.css', 'utf8');
+  const paint = new Set(css.split('}').filter(r => /(?:^|[;{])\s*(?:fill|stroke):/.test(r)).flatMap(r => [...r.split('{')[0].matchAll(/\.([a-zA-Z][\w-]*)/g)].map(m => m[1])));
+  const files = [...readdirSync('.').filter(f => f.endsWith('.js') && !f.endsWith('.config.js')), ...readdirSync('src').filter(f => f.endsWith('.js') && !f.endsWith('.test.js')).map(f => `src/${f}`)];
+  for (const f of files) {
+    for (const m of readFileSync(f, 'utf8').matchAll(/<(?:g|path|text|circle|rect|ellipse|line|polygon|polyline|tspan)\b[^>]*?class="([^"$]+)"/g)) {
+      for (const c of m[1].split(/\s+/)) assert.ok(!paint.has(c), `${f}: 무대 그림의 ‘.${c}’ 색을 밝은 테마가 바꿔요(build/light-theme.mjs의 SOURCES·SKIP_SELECTOR를 확인해 주세요).`);
+    }
+  }
 });
 
 test('과학의 약속 색은 밝은 테마에서도 그대로: 자석 N극 빨강·S극 파랑, (+)전하 빨강·(−)전하 파랑', () => {

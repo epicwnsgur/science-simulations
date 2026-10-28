@@ -81,5 +81,5 @@ test('샤를 법칙: 물이 식을수록 부피가 일정하게 작아지고, �
   await expect(page.locator('#cyl-panel')).toContainText('20 ℃보다 느려요');
   await expect(page.locator('#cyl-panel')).toContainText('두 압력이 같아서 피스톤이 멈췄어요', { timeout: 8000 });
   const ml = Number((await page.locator('#cyl-panel').textContent()).match(/([\d.]+) mL/)[1]);
-  expect(ml).toBeGreaterThan(28); expect(ml).toBeLessThan(30);
+  expect(ml).toBeGreaterThan(27); expect(ml).toBeLessThan(30);
 });

@@ -3,6 +3,8 @@
 // - 입자의 빠르기는 온도로만 정해져요(src/gas-model.js의 particleSpeed). 부피를 줄여도 빨라지지 않아요.
 // - 기체의 압력(내부 압력)은 ‘입자가 벽에 부딪히는 횟수와 세기’에서 생겨요. 화면에서는 같은 규칙으로 계산한 값을 막대로 보여 줘요:
 //   1 기압·20 ℃일 때의 높이(h1)를 기준으로, 빠르기가 같으면 높이가 낮을수록(부피가 작을수록), 높이가 같으면 빠를수록 커져요.
+// - 기체의 부피는 입자의 중심이 움직일 수 있는 높이(h − 2r)로 계산해요. 그래야 부피가 1/2배일 때 피스톤에 부딪히는 횟수가
+//   그림 속 입자의 크기와 관계없이 2배가 되어, 기체의 압력과 같은 규칙을 따라요.
 // - 피스톤은 내부 압력과 외부 압력(추)이 같아질 때까지 움직여요(ease가 작을수록 천천히 움직여 두 압력의 차이를 오래 볼 수 있어요).
 import { particleSpeed } from './gas-model.js';
 
@@ -26,8 +28,9 @@ export function createCylinder({ layer, x, w, floor, n = 24, h1 = 200, maxH = 30
   layer.append(g);
 
   const speed = () => particleSpeed(tempC, baseSpeed);
-  // 내부 압력(기압): 빠르기의 제곱에 비례하고 높이(부피)에 반비례해요.
-  const inner = () => (speed() / particleSpeed(20, baseSpeed)) ** 2 * h1 / h;
+  const free = hh => hh - 2 * r;                       // 입자의 중심이 움직일 수 있는 높이(기체의 부피에 비례)
+  // 내부 압력(기압): 빠르기의 제곱에 비례하고 부피에 반비례해요.
+  const inner = () => (speed() / particleSpeed(20, baseSpeed)) ** 2 * free(h1) / free(h);
   const flash = (fx, fy, strong) => {
     if (flashLayer.childElementCount > 18) return;
     const c = make('circle', { cx: fx, cy: fy, r: 3, fill: 'none', stroke: '#ffd166', 'stroke-width': strong ? 2.6 : 1.6 });
@@ -37,6 +40,8 @@ export function createCylinder({ layer, x, w, floor, n = 24, h1 = 200, maxH = 30
 
   return {
     get height() { return h; },
+    // 처음(1 기압·20 ℃) 부피에 대한 지금 부피의 비
+    get volumeRatio() { return free(h) / free(h1); },
     get top() { return floor - h; },
     get inner() { return inner(); },
     get external() { return ext; },
@@ -48,7 +53,7 @@ export function createCylinder({ layer, x, w, floor, n = 24, h1 = 200, maxH = 30
     setExternal(atm) { ext = atm; },
     setArrows(on) { showArrows = on; },
     // 화면을 처음 상태로 돌릴 때: 높이를 곧바로 평형 높이로 맞춰요.
-    settle() { h = Math.max(minH, Math.min(maxH, h1 * (speed() / particleSpeed(20, baseSpeed)) ** 2 / ext)); },
+    settle() { h = Math.max(minH, Math.min(maxH, 2 * r + free(h1) * (speed() / particleSpeed(20, baseSpeed)) ** 2 / ext)); },
     step(dt, { flashes = true } = {}) {
       // 피스톤: 내부 압력이 크면 올라가고, 작으면 내려가요. 같아지면 멈춰요.
       const push = inner() / ext - 1;
