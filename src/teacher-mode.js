@@ -17,6 +17,11 @@ export async function checkTeacherPassword(text) {
   if (!globalThis.crypto?.subtle) return false;
   return (await sha256(String(text).trim())) === PASS_SHA256;
 }
+// 교사 모드를 켜고 끄며 이 탭에 기억해요. 교사용 자료 폴더(src/teacher-gate.js)도 같은 값을 써요.
+export function setTeacherMode(on) {
+  teacherMode.on = on;
+  try { if (on) sessionStorage.setItem(KEY, 'on'); else sessionStorage.removeItem(KEY); } catch { /* 저장하지 못하면 이 화면에서만 켜져요 */ }
+}
 
 export function mountTeacherMode(bar, { onChange }) {
   bar.insertAdjacentHTML('beforeend', `
@@ -40,11 +45,7 @@ export function mountTeacherMode(bar, { onChange }) {
     status.textContent = teacherMode.on ? '교사 모드 · 단계 이동과 실험 순서 잠금이 모두 풀려 있어요.' : '';
     status.hidden = !teacherMode.on;
   }
-  function set(on) {
-    teacherMode.on = on;
-    try { if (on) sessionStorage.setItem(KEY, 'on'); else sessionStorage.removeItem(KEY); } catch { /* 저장하지 못하면 이 화면에서만 켜져요 */ }
-    render(); onChange();
-  }
+  function set(on) { setTeacherMode(on); render(); onChange(); }
   const close = () => { if (dialog.close) dialog.close(); else dialog.removeAttribute('open'); };
   btn.onclick = () => {
     if (teacherMode.on) return set(false);

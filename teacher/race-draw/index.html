@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#080b16">
+  <title>레이싱 번호 뽑기 · 교사용 자료 · 준혁T의 과학 실험실</title>
+  <link rel="stylesheet" href="/home.css">
+  <link rel="stylesheet" href="/theme-light.css">
+  <link rel="stylesheet" href="/theme-dark-deco.css">
+  <link rel="stylesheet" href="/teacher.css">
+  <script>try{if(localStorage.getItem('theme')==='light')document.documentElement.dataset.theme='light'}catch(e){}try{if(sessionStorage.getItem('poe-teacher')!=='on')document.documentElement.classList.add('teacher-locked')}catch(e){document.documentElement.classList.add('teacher-locked')}</script>
+</head>
+<body class="teacher-page race-page">
+  <header class="site-header"><a class="brand" href="../../"><span class="brand-star" aria-hidden="true">✦</span> 준혁T의 과학 실험실</a><a class="nav-link" href="../">← 교사용 자료</a></header>
+  <main class="rd-main">
+    <section class="rd-head" aria-labelledby="rd-title">
+      <div>
+        <p class="eyebrow"><span></span> 교사용 자료 · 무작위 순서 정하기</p>
+        <h1 id="rd-title">레이싱 번호 뽑기</h1>
+      </div>
+      <p class="rd-lead">인원을 고르고 출발하면 번호 차들이 서킷을 한 바퀴 달려요. 결승선을 통과한 차례가 곧 뽑힌 순서예요.</p>
+    </section>
+
+    <section class="rd-setup" id="rd-setup" aria-label="경주 준비">
+      <div class="rd-count">
+        <label for="rd-count">참가 인원</label>
+        <div class="rd-stepper">
+          <button type="button" class="rd-step" data-step="-1" aria-label="한 명 줄이기">−</button>
+          <input id="rd-count" type="number" min="2" max="100" step="1" value="25" inputmode="numeric">
+          <span class="rd-unit">명</span>
+          <button type="button" class="rd-step" data-step="1" aria-label="한 명 늘리기">+</button>
+        </div>
+        <input id="rd-range" type="range" min="2" max="100" step="1" value="25" aria-label="참가 인원 고르기">
+        <div class="rd-presets" role="group" aria-label="자주 쓰는 인원">
+          <button type="button" data-n="10">10명</button><button type="button" data-n="20">20명</button><button type="button" data-n="25">25명</button><button type="button" data-n="30">30명</button><button type="button" data-n="100">100명</button>
+        </div>
+      </div>
+      <div class="rd-controls">
+        <button type="button" class="rd-start" id="rd-start"><span class="rd-start-flag" aria-hidden="true"></span>레이스 시작</button>
+        <button type="button" class="rd-toggle" id="rd-fast" aria-pressed="false"><span class="rd-toggle-dot" aria-hidden="true"></span>배속 모드 <small>5초 안에 결과</small></button>
+        <button type="button" class="rd-toggle" id="rd-sound" aria-pressed="true"><span class="rd-toggle-dot" aria-hidden="true"></span>소리</button>
+      </div>
+    </section>
+
+    <section class="rd-arena" aria-label="레이싱 서킷">
+      <div class="rd-stage" id="rd-stage">
+        <canvas id="rd-canvas" aria-label="번호 차들이 달리는 레이싱 서킷" role="img"></canvas>
+        <div class="rd-hud">
+          <div class="rd-clock"><span class="rd-hud-label">경주 시간</span><strong id="rd-clock">00초 00</strong></div>
+          <div class="rd-lap"><span class="rd-hud-label">결승 통과</span><strong id="rd-finished">0 / 25</strong></div>
+          <div class="rd-speed" id="rd-speed" hidden>배속</div>
+        </div>
+        <div class="rd-lights" id="rd-lights" hidden aria-hidden="true"><div class="rd-gantry"><i></i><i></i><i></i><i></i><i></i></div></div>
+        <div class="rd-banner" id="rd-banner" aria-live="polite"></div>
+      </div>
+      <aside class="rd-tower" aria-label="실시간 순위">
+        <div class="rd-cam" id="rd-cam-wrap"><canvas id="rd-cam" aria-hidden="true"></canvas><span class="rd-cam-label" id="rd-cam-label">선두 카메라</span></div>
+        <h2>실시간 순위</h2>
+        <ol id="rd-tower"></ol>
+        <p class="rd-tower-more" id="rd-tower-more"></p>
+      </aside>
+    </section>
+
+    <dialog class="rd-result" id="rd-result" aria-labelledby="rd-result-title">
+      <canvas class="rd-confetti" id="rd-confetti" aria-hidden="true"></canvas>
+      <div class="rd-result-inner">
+        <p class="rd-result-kicker">체커기 · 경주 끝</p>
+        <h2 id="rd-result-title">최종 순위</h2>
+        <div class="rd-podium" id="rd-podium"></div>
+        <ol class="rd-board" id="rd-board"></ol>
+        <div class="rd-result-actions">
+          <button type="button" class="rd-again" id="rd-again">같은 인원으로 다시 뽑기</button>
+          <button type="button" class="rd-close" id="rd-close">서킷 보기</button>
+        </div>
+      </div>
+    </dialog>
+  </main>
+  <script type="module" src="/race-draw.js"></script>
+</body>
+</html>
