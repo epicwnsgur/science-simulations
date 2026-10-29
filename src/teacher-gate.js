@@ -12,7 +12,7 @@ function passwordDialog({ title, note, cancelLabel }) {
       <form class="gate-body" id="gate-form" novalidate>
         <span class="gate-icon" aria-hidden="true">${icon('lock')}</span>
         <h2 id="gate-title">${title}</h2>
-        <p class="gate-note">${note}</p>
+        ${note ? `<p class="gate-note">${note}</p>` : ''}
         <label for="gate-pass">교사 모드 비밀번호</label>
         <input id="gate-pass" type="password" inputmode="numeric" autocomplete="off" maxlength="30">
         <p class="gate-error" id="gate-error" role="alert"></p>
@@ -45,7 +45,7 @@ function passwordDialog({ title, note, cancelLabel }) {
 export function setupTeacherFolderLinks() {
   const links = document.querySelectorAll('a[data-teacher-gate]');
   if (!links.length) return;
-  const dialog = passwordDialog({ title: '교사용 자료', note: '선생님만 들어갈 수 있는 폴더예요. 비밀번호를 넣으면 교사 모드가 켜지고 바로 들어가요.', cancelLabel: '취소' });
+  const dialog = passwordDialog({ title: '교사용 자료', note: '', cancelLabel: '취소' });
   links.forEach(link => link.addEventListener('click', ev => {
     if (teacherMode.on) return;
     ev.preventDefault();
