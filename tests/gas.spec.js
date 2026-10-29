@@ -62,9 +62,27 @@ test('보일 법칙: 30 mL 1 기압 → 15 mL 2 기압, 압력×부피가 일정
 
 test('샤를 법칙: 물이 식을수록 부피가 일정하게 작아지고, 입자 모형에서 0 ℃에도 부피는 0이 아님', async ({ page }) => {
   await openObserveUnlocked(page, '/simulations/charles-law/');
+  // 풍선으로 먼저 보기: 뜨거운 물에서는 풍선이 부풀고, 얼음물에서는 플라스크 안으로 빨려 들어가요.
+  await page.locator('[data-bath="hot"]').click();
+  await expect(page.locator('#flask-panel')).toContainText('밖으로 부풀었어요', { timeout: 5000 });
+  await page.locator('[data-bath="ice"]').click();
+  await expect(page.locator('#flask-panel')).toContainText('안으로 빨려 들어갔어요', { timeout: 5000 });
+  // 부피 재기: 단추 순서(①→②→④→③→④…)대로, 다음에 누를 단추가 빛나요.
+  await page.locator('#tab-measure').click();
   await expect(page.locator('#record')).toBeDisabled();
-  await page.locator('#pour').click(); await page.locator('#drop').click(); await page.locator('#fast').click();
-  for (let i = 0; i < 4; i++) { await page.waitForTimeout(1300); await page.locator('#record').click(); }
+  await expect(page.locator('#pour')).toHaveClass(/primary/);
+  await page.locator('#pour').click();
+  await expect(page.locator('#drop')).toHaveClass(/primary/);
+  await page.locator('#drop').click();
+  await expect(page.locator('#record')).toHaveClass(/primary/);
+  await page.locator('#record').click();
+  for (let i = 0; i < 3; i++) {
+    await expect(page.locator('#cool-step')).toHaveClass(/primary/);
+    await page.locator('#cool-step').click();
+    await expect(page.locator('#record')).toBeEnabled({ timeout: 4000 });
+    await page.locator('#record').click();
+  }
+  await expect(page.locator('#glyc-arrow')).toContainText('내려가요');
   const rows = await page.locator('#readout tr').evaluateAll(trs => trs.slice(1).map(tr => [...tr.cells].map(td => Number(td.textContent))));
   expect(rows.length).toBe(4);
   // 표는 온도가 높은 순서: 온도가 낮을수록 부피가 작고, 부피 = 유리병 5 mL + 피펫 눈금
@@ -72,6 +90,7 @@ test('샤를 법칙: 물이 식을수록 부피가 일정하게 작아지고, �
   for (const [, r, v] of rows) expect(Math.abs(5 + r - v)).toBeLessThan(.011);
   // 같은 온도 차이마다 부피 변화가 거의 같아요(직선): 1 ℃마다 약 0.018 mL
   const slope = (rows[0][2] - rows.at(-1)[2]) / (rows[0][0] - rows.at(-1)[0]);
+  expect(rows.map(r => r[0])).toEqual([60, 55, 50, 45]);
   expect(slope).toBeGreaterThan(.015); expect(slope).toBeLessThan(.021);
   await page.locator('#tab-particles').click();
   for (let i = 0; i < 2; i++) await page.locator('#heat').click();
