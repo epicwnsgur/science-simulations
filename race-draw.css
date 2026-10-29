@@ -39,6 +39,28 @@ main.rd-main{max-width:1480px;padding-bottom:60px}
 .rd-stage{position:relative;border-radius:20px;overflow:hidden;border:1px solid #2f3450;background:#05070d;box-shadow:0 20px 60px #000a,0 0 0 1px #ffffff08 inset}
 .rd-stage.racing{box-shadow:0 20px 60px #000a,0 0 60px #ffb70322}
 #rd-canvas{display:block;width:100%}
+.rd-3d{position:absolute;inset:0;width:100%;height:100%;display:block}
+.rd-stage:not(.view-3d) .rd-3d{display:none}
+.rd-stage.view-3d:after{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 50%,transparent 58%,#0008 100%)}
+.rd-hud,.rd-tv,.rd-views,.rd-lights,.rd-banner{z-index:2}
+.rd-tv{position:absolute;left:14px;bottom:56px;display:flex;align-items:stretch;max-width:calc(100% - 28px);pointer-events:none;font-size:clamp(13px,1.4vw,17px);box-shadow:0 10px 30px #000a}
+.rd-tv[hidden]{display:none}
+.rd-tv>*{display:flex;align-items:center;padding:7px 12px;white-space:nowrap}
+.rd-live{background:#d62828;color:#fff;font-weight:900;font-size:.82em;letter-spacing:1px;border-radius:8px 0 0 8px}
+.rd-live:before{content:'';width:7px;height:7px;border-radius:50%;background:#fff;margin-right:7px;animation:rd-blink 1s steps(2) infinite}
+.rd-tv strong{background:#0b0d18e6;color:#fff;font-weight:900;border-top:2px solid #ffd65a}
+.rd-tv-car{background:#ffd65a;color:#1b1300;font-weight:900}
+.rd-tv-car:empty{display:none}
+.rd-tv-kmh{background:#0b0d18e6;color:#7cff4f;font-weight:900;font-variant-numeric:tabular-nums;border-radius:0 8px 8px 0;min-width:6.4em;justify-content:flex-end}
+.rd-tv-kmh[hidden]{display:none}
+.rd-tv.cut{animation:rd-cut .45s cubic-bezier(.2,1.2,.4,1)}
+@keyframes rd-cut{0%{opacity:0;transform:translateX(-24px)}}
+.rd-views{position:absolute;right:12px;bottom:12px;display:flex;gap:4px;padding:4px;border-radius:12px;background:#05070dcc;border:1px solid #ffffff24;backdrop-filter:blur(6px)}
+.rd-views button{font:inherit;font-size:13px;font-weight:800;padding:7px 11px;border-radius:9px;border:0;background:transparent;color:#c9cde0;cursor:pointer;white-space:nowrap}
+.rd-views button:hover:not(:disabled){color:#fff;background:#ffffff14}
+.rd-views button[aria-pressed=true]{background:#ffd65a;color:#1b1300}
+.rd-views button:disabled{opacity:.35;cursor:default}
+.rd-stage:not(.view-3d) .rd-views{left:auto}
 .rd-hud{position:absolute;left:14px;top:14px;display:flex;gap:10px;pointer-events:none}
 .rd-hud>div{padding:8px 14px;border-radius:12px;background:#05070dc8;border:1px solid #ffffff1f;backdrop-filter:blur(4px)}
 .rd-hud-label{display:block;font-size:10px;letter-spacing:1px;color:#9ea3bd;font-weight:700}
@@ -110,8 +132,8 @@ main.rd-main{max-width:1480px;padding-bottom:60px}
 .rd-close{border:1px solid #4a4d6a;background:#171827;color:#e6e8f5}
 
 @media(max-width:1000px){.rd-arena{grid-template-columns:1fr}.rd-tower{display:grid;grid-template-columns:minmax(0,320px) minmax(0,1fr);gap:0 16px;align-items:start}.rd-cam{grid-row:span 3}.rd-tower ol{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}}
-@media(max-width:620px){.rd-tower{display:block}.rd-hud{left:8px;top:8px;gap:6px}.rd-hud>div{padding:5px 9px}.rd-setup{padding:14px}.rd-start{font-size:17px;padding:12px 18px}.rd-step-block .block{display:none}.rd-podium{gap:6px}}
-@media(prefers-reduced-motion:reduce){.rd-start:after,.rd-speed,.rd-cam-label:before{animation:none}.rd-banner.show{animation-duration:.01s;opacity:1}}
+@media(max-width:620px){.rd-views{left:6px;right:6px;bottom:6px;overflow-x:auto;justify-content:space-between}.rd-views button{font-size:11px;padding:6px 7px}.rd-tv{left:6px;bottom:48px;font-size:11px}.rd-tv>*{padding:4px 7px}.rd-tower{display:block}.rd-hud{left:8px;top:8px;gap:6px}.rd-hud>div{padding:5px 9px}.rd-setup{padding:14px}.rd-start{font-size:17px;padding:12px 18px}.rd-step-block .block{display:none}.rd-podium{gap:6px}}
+@media(prefers-reduced-motion:reduce){.rd-start:after,.rd-speed,.rd-cam-label:before,.rd-live:before,.rd-tv.cut{animation:none}.rd-banner.show{animation-duration:.01s;opacity:1}}
 
 /* 밝은 테마: 서킷 무대 밖의 판만 밝게 */
 html[data-theme=light] .rd-lead{color:#6f4462}

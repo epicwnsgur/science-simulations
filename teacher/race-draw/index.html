@@ -19,7 +19,7 @@
         <p class="eyebrow"><span></span> 교사용 자료 · 무작위 순서 정하기</p>
         <h1 id="rd-title">레이싱 번호 뽑기</h1>
       </div>
-      <p class="rd-lead">인원을 고르고 출발하면 번호 차들이 서킷을 한 바퀴 달려요. 결승선을 통과한 차례가 곧 뽑힌 순서예요.</p>
+      <p class="rd-lead">인원을 고르고 출발하면 번호 차들이 서킷을 한 바퀴 달려요. 결승선을 통과한 차례가 곧 뽑힌 순서예요. 경기는 3D 생중계로 보여 주고, 탑승·추격·헬기 카메라나 서킷 지도로 바꿔 볼 수 있어요.</p>
     </section>
 
     <section class="rd-setup" id="rd-setup" aria-label="경주 준비">
@@ -50,6 +50,10 @@
           <div class="rd-clock"><span class="rd-hud-label">경주 시간</span><strong id="rd-clock">00초 00</strong></div>
           <div class="rd-lap"><span class="rd-hud-label">결승 통과</span><strong id="rd-finished">0 / 25</strong></div>
           <div class="rd-speed" id="rd-speed" hidden>배속</div>
+        </div>
+        <div class="rd-tv" id="rd-tv" hidden aria-live="off"><span class="rd-live">생중계</span><strong id="rd-tv-shot">출발 그리드</strong><span class="rd-tv-car" id="rd-tv-car"></span><span class="rd-tv-kmh" id="rd-tv-kmh" hidden></span></div>
+        <div class="rd-views" role="group" aria-label="화면 고르기">
+          <button type="button" data-view="auto" aria-pressed="false">자동 중계</button><button type="button" data-view="onboard" aria-pressed="false">탑승</button><button type="button" data-view="chase" aria-pressed="false">추격</button><button type="button" data-view="heli" aria-pressed="false">헬기</button><button type="button" data-view="map" aria-pressed="true">서킷 지도</button>
         </div>
         <div class="rd-lights" id="rd-lights" hidden aria-hidden="true"><div class="rd-gantry"><i></i><i></i><i></i><i></i><i></i></div></div>
         <div class="rd-banner" id="rd-banner" aria-live="polite"></div>

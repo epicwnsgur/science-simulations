@@ -1,6 +1,8 @@
 // 레이싱 번호 뽑기(교사용 자료): 1~n번 차가 야간 서킷을 한 바퀴 달리고, 결승선을 통과한 차례가 뽑힌 순서예요.
 // 순위와 기록은 출발하는 순간 src/race-model.js가 정해요(번호를 고르게 섞음). 화면은 그 기록에 맞춰 차를 움직일 뿐이에요.
 // 보통은 가장 느린 차도 15초 안에 들어오고, 배속 모드는 같은 기록을 빨리 돌려 5초 안에 결과를 보여 줘요.
+// 화면은 3D 중계(src/race-3d.js: 자동 중계·탑승·추격·헬기 카메라)가 기본이고, ‘서킷 지도’는 위에서 내려다본 2D 화면이에요.
+// 3D 중계 중에는 2D 화면이 오른쪽 작은 창의 서킷 지도가 돼요. WebGL을 쓸 수 없으면 2D 화면만 보여 줘요.
 import './race-draw.css';
 import { setupTheme } from './src/theme.js';
 import { guardTeacherPage } from './src/teacher-gate.js';
@@ -89,6 +91,7 @@ const clockEl = $('rd-clock'), finishedEl = $('rd-finished'), speedEl = $('rd-sp
 const lightsEl = $('rd-lights'), lightBulbs = [...lightsEl.querySelectorAll('i')];
 const tower = $('rd-tower'), towerMore = $('rd-tower-more'), camLabel = $('rd-cam-label');
 const result = $('rd-result'), confetti = $('rd-confetti'), confCtx = confetti.getContext('2d');
+const tv = $('rd-tv'), tvShot = $('rd-tv-shot'), tvCar = $('rd-tv-car'), tvKmh = $('rd-tv-kmh'), viewBtns = [...document.querySelectorAll('.rd-views button')];
 
 /* ---------- 상태 ---------- */
 let count = 25, fast = false, sound = true;
@@ -99,6 +102,8 @@ let raceT = 0, countdownT = 0, lightsOn = 0, holdT = 0, finishedCount = 0, leade
 let scale = 1, dpr = 1, bg = null, shakeT = 0;
 const particles = [], rockets = [];
 let camX = 0, camY = 0;
+let view = 'map', view3d = null, lastShot = null;
+const events = { go: false, crossed: [], winner: false }; // 3D 화면에 알려 줄 일(그 프레임에만)
 
 /* ---------- 출발 그리드 ---------- */
 function layout(n) {
@@ -200,10 +205,8 @@ function strokeTrack(k, width, style, alpha = 1) {
   k.closePath(); k.stroke(); k.restore();
 }
 
-function renderBackground() {
-  const c = document.createElement('canvas');
-  c.width = canvas.width; c.height = canvas.height;
-  const k = c.getContext('2d'), s = scale * dpr;
+// 서킷 바닥 그림. 3D 중계 화면은 props=false로 불러 바닥 무늬(잔디·도로·연석·그리드·결승선·조명 빛)만 받아 가요.
+function paintCircuit(k, s, { props = true } = {}) {
   k.setTransform(s, 0, 0, s, 0, 0);
   // 잔디(깎은 줄무늬)
   k.fillStyle = '#0b1c12'; k.fillRect(0, 0, W, H);
@@ -211,7 +214,7 @@ function renderBackground() {
   for (let i = -30; i < 30; i += 2) { k.fillStyle = '#0e2417'; k.fillRect(i * 46, -1200, 46, 2400); }
   k.restore();
   // 나무
-  for (const t of trees) {
+  if (props) for (const t of trees) {
     k.fillStyle = 'rgba(0,0,0,.35)'; k.beginPath(); k.arc(t.x + 4, t.y + 5, t.r, 0, Math.PI * 2); k.fill();
     const gr = k.createRadialGradient(t.x - t.r * 0.3, t.y - t.r * 0.3, 1, t.x, t.y, t.r);
     gr.addColorStop(0, t.t > 0.5 ? '#2f6b3a' : '#2a5d43'); gr.addColorStop(1, '#0d2a17');
@@ -262,6 +265,21 @@ function renderBackground() {
   const cell = TW / 8;
   for (let r = 0; r < 2; r++) for (let q = 0; q < 8; q++) { k.fillStyle = (r + q) % 2 ? '#111' : '#fafafa'; k.fillRect(-cell + r * cell, -TW / 2 + q * cell, cell, cell); }
   k.restore();
+  if (props) paintProps(k);
+  // 조명탑의 빛 웅덩이
+  k.globalCompositeOperation = 'lighter';
+  for (const [x, y] of TOWERS) {
+    const gr = k.createRadialGradient(x, y, 0, x, y, 300);
+    gr.addColorStop(0, 'rgba(190,215,255,.16)'); gr.addColorStop(1, 'rgba(190,215,255,0)');
+    k.fillStyle = gr; k.fillRect(x - 300, y - 300, 600, 600);
+  }
+  k.globalCompositeOperation = 'source-over';
+  if (props) for (const [x, y] of TOWERS) {
+    k.fillStyle = '#4b5272'; k.fillRect(x - 3, y - 3, 6, 6);
+    k.drawImage(glowSprite, x - 14, y - 14, 28, 28);
+  }
+}
+function paintProps(k) {
   // 관중석
   for (const st of STANDS) {
     k.fillStyle = '#1a1d2b'; k.fillRect(st.x, st.y, st.w, st.h);
@@ -274,19 +292,13 @@ function renderBackground() {
   k.fillStyle = '#20253a'; k.fillRect(PITS.x, PITS.y, PITS.w, PITS.h);
   for (let x = PITS.x + 8; x < PITS.x + PITS.w - 20; x += 34) { k.fillStyle = '#ffd98a'; k.globalAlpha = 0.75; k.fillRect(x, PITS.y + PITS.h - 7, 24, 5); }
   k.globalAlpha = 1; k.fillStyle = '#3a4160'; k.fillRect(PITS.x, PITS.y, PITS.w, 4);
-  // 조명탑의 빛 웅덩이
-  k.globalCompositeOperation = 'lighter';
-  for (const [x, y] of TOWERS) {
-    const gr = k.createRadialGradient(x, y, 0, x, y, 300);
-    gr.addColorStop(0, 'rgba(190,215,255,.16)'); gr.addColorStop(1, 'rgba(190,215,255,0)');
-    k.fillStyle = gr; k.fillRect(x - 300, y - 300, 600, 600);
-  }
-  k.globalCompositeOperation = 'source-over';
-  for (const [x, y] of TOWERS) {
-    k.fillStyle = '#4b5272'; k.fillRect(x - 3, y - 3, 6, 6);
-    k.drawImage(glowSprite, x - 14, y - 14, 28, 28);
-  }
+}
+function renderBackground() {
+  const c = document.createElement('canvas');
+  c.width = canvas.width; c.height = canvas.height;
+  paintCircuit(c.getContext('2d'), scale * dpr);
   bg = c;
+  view3d?.setCars(cars, layout(count));
 }
 
 /* ---------- 크기 ---------- */
@@ -561,10 +573,46 @@ function drawCam() {
   camCtx.drawImage(canvas, (camX - viewW / 2) * s, (camY - viewH / 2) * s, viewW * s, viewH * s, 0, 0, cam.width, cam.height);
 }
 
+// 3D 중계 중에는 오른쪽 작은 창에 서킷 전체 지도와 지금 카메라의 자리를 보여 줘요.
+function drawMinimap(info) {
+  camLabel.textContent = '서킷 지도';
+  const f = Math.min(cam.width / canvas.width, cam.height / canvas.height), w = canvas.width * f, h = canvas.height * f, ox = (cam.width - w) / 2, oy = (cam.height - h) / 2;
+  camCtx.fillStyle = '#05070d'; camCtx.fillRect(0, 0, cam.width, cam.height);
+  camCtx.drawImage(canvas, ox, oy, w, h);
+  const s = scale * dpr * f, x = ox + info.cam.x * s, y = oy + info.cam.y * s, a = Math.atan2(info.cam.ly - info.cam.y, info.cam.lx - info.cam.x);
+  camCtx.save(); camCtx.translate(x, y); camCtx.rotate(a);
+  camCtx.fillStyle = 'rgba(255,255,255,.22)'; camCtx.beginPath(); camCtx.moveTo(0, 0); camCtx.lineTo(28 * dpr, -12 * dpr); camCtx.lineTo(28 * dpr, 12 * dpr); camCtx.closePath(); camCtx.fill();
+  camCtx.fillStyle = '#ff3b3b'; camCtx.strokeStyle = '#fff'; camCtx.lineWidth = 1.5 * dpr;
+  camCtx.beginPath(); camCtx.arc(0, 0, 4.5 * dpr, 0, Math.PI * 2); camCtx.fill(); camCtx.stroke();
+  camCtx.restore();
+}
+// 중계 화면 아래쪽 자막: 카메라 이름, 따라가는 차, 빠르기
+let tvText = '';
+function showShot(info) {
+  lastShot = info.kind;
+  const order = phase === 'race' || phase === 'done' ? standings() : cars;
+  const car = info.car, pos = car ? order.indexOf(car) + 1 : 0;
+  const carText = car && phase !== 'idle' ? `${car.number}번 · ${car.finished ? `${car.rank}등 결승` : `${pos}위`}` : phase === 'idle' ? `${count}대 출발 준비` : '';
+  const kmh = info.kmh !== null && ['onboard', 'tcam', 'chase', 'trackside'].includes(info.kind) ? `${info.kmh} km/h` : '';
+  const text = `${info.name}|${carText}|${kmh}`;
+  if (text === tvText) return;
+  if (info.name !== tvText.split('|')[0]) { tv.classList.remove('cut'); void tv.offsetWidth; tv.classList.add('cut'); }
+  tvText = text; tvShot.textContent = info.name; tvCar.textContent = carText; tvKmh.textContent = kmh; tvKmh.hidden = !kmh;
+}
+function setView(next) {
+  if (next !== 'map' && !view3d) next = 'map';
+  view = next;
+  viewBtns.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === view)));
+  stage.classList.toggle('view-3d', view !== 'map');
+  tv.hidden = view === 'map';
+  tvText = '';
+}
+
 /* ---------- 주 반복 ---------- */
 let last = performance.now();
 function frame(now) {
-  const real = Math.min(0.05, (now - last) / 1000); last = now;
+  // 화면이 느리거나 잠깐 멈칫해도 경주 시간은 실제 시간대로 가요(배속 모드가 5초 안에 끝나도록). 효과(입자)는 한 번에 조금씩만 움직여요.
+  const real = Math.min(1, (now - last) / 1000), fx = Math.min(0.05, real); last = now;
   const rate = fast ? FAST_SCALE : 1;
   if (phase === 'countdown') stepCountdown(real);
   else if (phase === 'race' || phase === 'done') stepRace(real * rate);
@@ -586,14 +634,18 @@ function frame(now) {
   k.setTransform(s, 0, 0, s, k.getTransform().e, k.getTransform().f);
   drawCrowdFlashes(k);
   drawCars(k, raceT);
-  drawParticles(k, real);
+  drawParticles(k, fx);
   drawGantry(k);
   // 가장자리 어둡게
   k.setTransform(1, 0, 0, 1, 0, 0);
   const v = k.createRadialGradient(canvas.width / 2, canvas.height / 2, canvas.height * 0.45, canvas.width / 2, canvas.height / 2, canvas.width * 0.62);
   v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,.45)');
   k.fillStyle = v; k.fillRect(0, 0, canvas.width, canvas.height);
-  drawCam();
+  if (view !== 'map' && view3d) {
+    const info = view3d.render({ cars, g: layout(count), raceT, phase, order: phase === 'race' || phase === 'done' ? standings() : cars, lightsOn, fast, events }, real, view);
+    if (info) { showShot(info); drawMinimap(info); }
+  } else drawCam();
+  events.go = false; events.crossed = []; events.winner = false;
   renderTower();
   requestAnimationFrame(frame);
 }
@@ -615,6 +667,7 @@ function go() {
   noiseBurst(0.9, 0.1, 600);
   startEngine();
   showBanner('출발!', 'go');
+  events.go = true;
   for (const car of cars) puff(car.x - Math.cos(car.a) * 10, car.y - Math.sin(car.a) * 10, count > 50 ? 3 : 6, { dir: car.a + Math.PI, spread: 1.4, speed: 40, life: 1.4, size: 4, grow: 14, kind: 'smoke', drag: 0.94 });
 }
 
@@ -624,9 +677,11 @@ function stepRace(dt) {
   for (const car of cars) {
     if (!car.finished && raceT >= car.time) {
       car.finished = true; finishedCount++;
+      events.crossed.push(car);
       puff(car.x, car.y, count > 50 ? 10 : 22, { speed: 160, life: 0.7, size: 2.5, color: car.rank === 1 ? '#ffd65a' : '#ffffff', kind: 'spark', spread: Math.PI * 2, drag: 0.92 });
       if (car.rank === 1) {
         showBanner(`1등 결승! ${car.number}번`, 'win');
+        events.winner = true;
         beep(660, 0.18, { type: 'triangle', vol: 0.09 }); setTimeout(() => beep(990, 0.4, { type: 'triangle', vol: 0.09 }), 140);
         noiseBurst(1.6, 0.08, 1400);
         for (let i = 0; i < (reduceMotion ? 1 : 4); i++) setTimeout(launchFirework, i * (fast ? 90 : 350));
@@ -748,6 +803,7 @@ soundBtn.onclick = () => {
   soundBtn.setAttribute('aria-pressed', String(sound));
   if (!sound) stopEngine(); else if (phase === 'race') startEngine();
 };
+viewBtns.forEach(b => { b.onclick = () => setView(b.dataset.view); });
 $('rd-again').onclick = () => { result.close(); phase = 'idle'; start(); };
 $('rd-close').onclick = () => result.close();
 result.addEventListener('close', () => { confettiRun++; });
@@ -757,6 +813,16 @@ setCount(count);
 resize();
 renderTower(true);
 requestAnimationFrame(frame);
+setView('map');
+// 3D 중계 화면은 three.js를 따로 불러와요. 그동안(또는 WebGL을 쓸 수 없으면) 2D 화면이 보여요.
+import('./src/race-3d.js').then(({ createRace3D }) => {
+  view3d = createRace3D({ host: stage, before: canvas.nextSibling, track, TW, W, H, scenery: { trees, STANDS, PITS, TOWERS }, paintGround: (k, s) => paintCircuit(k, s, { props: false }), reduceMotion });
+  view3d.setCars(cars, layout(count));
+  setView('auto');
+}).catch(() => {
+  viewBtns.forEach(b => { if (b.dataset.view !== 'map') b.disabled = true; });
+  setView('map');
+});
 
 // 화면 검사용: 지금 상태를 읽어요.
-window.raceDraw = { get phase() { return phase; }, get plan() { return plan; }, get fast() { return fast; } };
+window.raceDraw = { get phase() { return phase; }, get plan() { return plan; }, get fast() { return fast; }, get view() { return view; }, get shot() { return lastShot; }, get has3d() { return !!view3d; } };
