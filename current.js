@@ -56,6 +56,7 @@ const scene = `
   ${['b', 'a'].map(k => { const P = k === 'a' ? A : B; return `<g id="plate-${k}">
     <rect x="${P.x - 7}" y="196" width="14" height="110" rx="6" fill="url(#cur-handle)" stroke="#bfe6ff" stroke-width="1"/><circle cx="${P.x}" cy="196" r="11" fill="url(#cur-handle)" stroke="#bfe6ff"/>
     ${k === 'a' ? `<text class="muted" x="${P.x - 14}" y="240" text-anchor="end" font-size="12">절연 손잡이</text>` : ''}
+    <text class="object-name" x="${k === 'a' ? P.x - 108 : P.x + 108}" y="${P.y + 6}" text-anchor="${k === 'a' ? 'end' : 'start'}">알루미늄 접시</text>
     <ellipse cx="${P.x}" cy="${P.y + 3}" rx="100" ry="23" fill="#000" opacity=".2"/>
     <ellipse cx="${P.x}" cy="${P.y}" rx="98" ry="22" fill="url(#cur-alu)" stroke="#f4f7fa" stroke-width="2"/>
     <path d="${Array.from({ length: 24 }, (_, i) => { const a = i / 24 * Math.PI * 2, c = Math.cos(a), si = Math.sin(a); return `M${(P.x + c * 78).toFixed(1)} ${(P.y - 4 + si * 14).toFixed(1)} L${(P.x + c * 96).toFixed(1)} ${(P.y + si * 21).toFixed(1)}`; }).join('')}" stroke="#8d98a3" stroke-width="1" opacity=".7"/>
@@ -380,7 +381,7 @@ function renderText() {
     setText('#note-title', seen.lit ? (seen.noLight ? '불빛이 계속 켜져 있었나요?' : '한 번 더 대 보면 어떻게 될까요?') : '네온전구를 관찰해 보세요');
     setText('#note-text', show ? '네온전구를 대는 순간 전하가 어디에서 어디로 이동하나요?' : '‘전하·방향 보기’를 켜면 접시에 있는 전하를 볼 수 있어요.');
     setHTML('#readout', `<div class="readout-grid"><div class="readout-card"><strong>문지른 횟수</strong><b>${rubs}번</b><small>여러 번 문질러야 해요</small></div><div class="readout-card"><strong>네온전구</strong><b>${flash > .05 ? '번쩍!' : '꺼짐'}</b><small>${discharged ? '전하가 이동했어요' : '대기 중'}</small></div></div>`);
-    setText('#model-note', '알루미늄 접시에는 손이 닿지 않도록 빨대를 잡고 옮겨요. 전하는 대전된 만큼 남는 전하만 나타냈고, 입자의 수와 이동 속도는 보기 쉽게 나타낸 모형이에요.');
+    setText('#model-note', '알루미늄 접시에는 손이 닿지 않도록 절연 손잡이(빨대)를 잡고 옮겨요. 전하는 대전된 만큼 남는 전하만 나타냈고, 입자의 수와 이동 속도는 보기 쉽게 나타낸 모형이에요.');
     setText('#discovery', '마찰 전기는 일상생활에서 쓰는 전기와 어떤 관계가 있을까요?');
   } else {
     setText('#guide', '왼쪽 전기 회로와 오른쪽 수로 모형을 나란히 놓고 비교해 보세요.');

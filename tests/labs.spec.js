@@ -109,8 +109,11 @@ const LABS = [
     await page.locator('[data-life="snack"]').click(); await page.locator('#life-run').click(); await page.waitForTimeout(3500);
   }],
   ['/simulations/charles-law/', '샤를 법칙', async page => {
-    await page.locator('#pour').click(); await page.locator('#drop').click(); await page.locator('#fast').click();
-    for (let i = 0; i < 5; i++) { await page.waitForTimeout(1300); await page.locator('#record').click(); }
+    await page.locator('[data-bath="hot"]').click(); await page.waitForTimeout(2500);
+    await page.locator('[data-bath="ice"]').click(); await page.waitForTimeout(2500);
+    await page.locator('#tab-measure').click();
+    await page.locator('#pour').click(); await page.locator('#drop').click(); await page.locator('#record').click();
+    for (let i = 0; i < 4; i++) { await page.locator('#cool-step').click(); await expect(page.locator('#record')).toBeEnabled({ timeout: 4000 }); await page.locator('#record').click(); }
     await page.locator('#tab-particles').click(); await page.locator('#show-detail').check();
     for (let i = 0; i < 3; i++) await page.locator('#heat').click();
     await page.waitForTimeout(6500);
@@ -123,7 +126,7 @@ const LABS = [
 
 for (const [url, concept, run] of LABS) {
   test(`${url} 예상→관찰→설명`, async ({ page }) => {
-    test.setTimeout(60000);
+    test.setTimeout(90000);
     const errors = []; page.on('pageerror', e => errors.push(e.message));
     await page.goto(url);
     // 모든 실험은 실험 전 1분 복습부터 시작하고, 건너뛸 수 없어요.
