@@ -177,7 +177,6 @@ export const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 export const instantLessons = { get matches() { return reducedMotion.matches && navigator.webdriver === true; } };
 
 // 짧은 알림. 관찰 하나를 마칠 때 등에 사용합니다.
-let toastTimer = null;
 // 무대 위에 크게 띄우는 경고(안전·실험 주의). 토스트보다 오래(기본 5초) 보여 줘서 학생이 끝까지 읽을 수 있어요.
 let alertTimer = null;
 export function stageAlert(html, ms = 5000) {
@@ -188,10 +187,16 @@ export function stageAlert(html, ms = 5000) {
   el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
   clearTimeout(alertTimer); alertTimer = setTimeout(() => el.classList.remove('show'), ms);
 }
+// 실험 결과·진행 안내(무대 위 주황 띠): 학생이 다 읽을 수 있게 저절로 사라지지 않고, ‘닫기’를 눌러 닫아요(교사 의견).
+// 새 안내가 오면 글만 바뀌어요.
 export function toast(text) {
   const el = $('#toast'); if (!el) return;
-  el.textContent = text; el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
-  clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), 2400);
+  if (!el.querySelector('.toast-text')) {
+    el.innerHTML = '<span class="toast-text"></span><button type="button" class="toast-close" aria-label="안내 닫기">닫기</button>';
+    el.querySelector('.toast-close').onclick = () => el.classList.remove('show');
+  }
+  el.querySelector('.toast-text').textContent = text;
+  el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
   // 관찰 하나를 마치면 무대 테두리가 번쩍여요.
   const stage = el.closest('.stage');
   if (stage) { stage.classList.remove('flash'); void stage.offsetWidth; stage.classList.add('flash'); }
