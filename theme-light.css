@@ -382,6 +382,12 @@ html[data-theme=light] .site-header .theme-toggle{border:1px solid #f1acc7;backg
 html[data-theme=light] .site-header .theme-toggle:hover{border-color:#d19eb3}
 html[data-theme=light] .section-group{color:#38192d}
 html[data-theme=light] .section-group::after{background:linear-gradient(90deg,#b499ff66,transparent)}
+html[data-theme=light] .home .hero-cta{background:#f3cfdd;color:#1a1530;box-shadow:0 8px 24px #b499ff40,inset 0 -3px 0 #8131510c}
+html[data-theme=light] .home .hero-cta:hover{box-shadow:0 12px 30px #b499ff55,inset 0 -3px 0 #8131510c}
+html[data-theme=light] .home .folder-face{box-shadow:0 14px 34px #81315114,inset 0 1px 0 #ca2b6a14,inset 0 -3px 10px #8131510f}
+html[data-theme=light] .home .folder:focus-visible{outline:none}
+html[data-theme=light] .home .folder:focus-visible .folder-face{outline:3px solid #f2c9d9}
+html[data-theme=light] .home .folder-footer>span{border:1px solid #ca2b6a2a}
 /* unit-electric.css */
 html[data-theme=light] .unit-electric{--current:#d6336c;--volt:#c2410c}
 html[data-theme=light] .unit-electric .cosmos{background:radial-gradient(ellipse at 78% 28%,#1e9bff33,transparent 46%),radial-gradient(ellipse at 20% 0,#7b5cff22,transparent 55%)}
