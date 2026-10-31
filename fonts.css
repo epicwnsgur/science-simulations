@@ -1,0 +1,10 @@
+/* 사이트 전체 글꼴: 제목은 주아(통통하고 부드러운 글씨), 본문은 고운돋움(둥근 획, 오래 읽기 편함).
+   글꼴 파일은 사이트 안에 함께 넣어요(@fontsource). 한글은 여러 조각으로 나뉘어 있어서 화면에 나오는 글자 조각만 받아요.
+   두 글꼴 모두 굵기가 하나(400)뿐이에요. 본문의 굵은 글씨는 브라우저가 굵게 만들어 강조가 살아 있게 하고,
+   주아 제목은 이미 통통해서 굵게 만들지 않아요(겹쳐 번져 보여요). */
+@import '@fontsource/gowun-dodum/400.css';
+@import '@fontsource/jua/400.css';
+:root{--font-body:'Gowun Dodum','Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif;--font-title:'Jua','Gowun Dodum','Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif}
+html:root,body{font-family:var(--font-body);font-synthesis-weight:auto}
+button,input,select,textarea{font-family:inherit}
+h1,h2,h3,.brand,.hero-cta{font-family:var(--font-title);font-synthesis-weight:none}
