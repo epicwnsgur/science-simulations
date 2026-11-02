@@ -154,3 +154,9 @@
 .text-size [data-text-size=l]{font-size:19px}
 .text-size button[aria-pressed=true]{background:var(--volt);border-color:var(--volt);color:#2a1600}
 @media(max-width:600px){.lab-readable .grade{display:none}.lab-readable header{flex-wrap:wrap;gap:8px}.theme-toggle{padding:0 10px;font-size:13px}.text-size span,.page-zoom>span,.zoom-word{display:none}.page-zoom{margin-right:0}.header-right{gap:8px}.page-zoom button{min-width:36px;padding:0 8px}.page-zoom .zoom-value{min-width:38px;font-size:13px}.text-size button{min-width:34px;padding:0 6px}}
+/* 실험 머리글 단추를 손가락으로 누르기 좋은 44px로 맞춰요(목록 페이지와 같아요). 휴대폰에서는 머리글이 두 줄로 넘어가요. */
+.memo-head-btn,.theme-toggle,.page-zoom button,.text-size button{height:44px;min-width:44px;border-radius:12px}.memo-head-btn,.theme-toggle{border-radius:22px;padding:0 16px}
+.lab-readable header .brand{display:inline-flex;align-items:center;min-height:44px}.teacher-btn{min-height:44px;padding:0 16px;border-radius:22px}
+/* 휴대폰은 두 손가락으로 화면을 키울 수 있어서 화면 크기 단추를 숨기고, 머리글이 두 줄을 넘지 않게 해요. 제목은 낱말 중간에서 끊지 않아요. */
+@media(max-width:600px){.page-zoom{display:none}.text-size button{min-width:44px;padding:0 6px}.memo-head-btn,.theme-toggle{padding:0 12px}.header-right{flex-wrap:wrap;row-gap:8px}}
+.lab-readable h1{word-break:keep-all;text-wrap:balance}
