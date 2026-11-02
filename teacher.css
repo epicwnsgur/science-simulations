@@ -34,13 +34,13 @@
 
 /* 교사용 페이지 */
 html.teacher-locked main,html.teacher-locked .site-footer{visibility:hidden}
-.teacher-off{margin-left:10px;height:36px;padding:0 14px;border-radius:18px;border:1px solid #5a4a2f;background:#2a2318;color:#f3d38e;font:inherit;font-size:13px;font-weight:700;white-space:nowrap;cursor:pointer}
+.teacher-off{margin-left:10px;height:44px;padding:0 16px;border-radius:22px;border:1px solid #5a4a2f;background:#2a2318;color:#f3d38e;font:inherit;font-size:13px;font-weight:700;white-space:nowrap;cursor:pointer}
 .teacher-off:hover{border-color:#d8b46a}
 .tool-folder .folder-face{border-color:#5a4a2f}
 .tool-folder:hover .folder-face{border-color:#d8b46a}
 .tool-art{height:165px;position:relative;overflow:hidden;background:radial-gradient(ellipse at 50% 120%,#1d3a26,#0b1510 70%)}
 .tool-art svg{position:absolute;inset:0;width:100%;height:100%}
-@media(max-width:620px){.teacher-off{margin-left:8px;padding:0 10px;font-size:12px}.teacher-page .site-header{height:auto;flex-wrap:wrap;row-gap:10px;padding-top:14px;padding-bottom:14px}.teacher-page .site-header .brand{white-space:nowrap;flex-basis:100%}.teacher-page .site-header .nav-link{margin-left:0;margin-right:auto}}
+@media(max-width:620px){.teacher-off{margin-left:8px;padding:0 10px;font-size:13px}.teacher-page .site-header{height:auto;flex-wrap:wrap;row-gap:10px;padding-top:14px;padding-bottom:14px}.teacher-page .site-header .brand{white-space:nowrap;flex-basis:100%}.teacher-page .site-header .nav-link{margin-left:0;margin-right:auto}}
 
 /* 밝은 테마 */
 html[data-theme=light] .teacher-folder .folder-tab{color:#7a4f00;border-color:#e7c98a;background:#fff3d6}
