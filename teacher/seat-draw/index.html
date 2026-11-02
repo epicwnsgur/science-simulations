@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#080b16">
+  <title>자리 뽑기 · 교사용 자료 · 준혁T의 과학 실험실</title>
+  <link rel="stylesheet" href="/home.css">
+  <link rel="stylesheet" href="/fonts.css">
+  <link rel="stylesheet" href="/theme-light.css">
+  <link rel="stylesheet" href="/theme-dark-deco.css">
+  <link rel="stylesheet" href="/teacher.css">
+  <script>try{if(localStorage.getItem('theme')==='light')document.documentElement.dataset.theme='light'}catch(e){}try{if(sessionStorage.getItem('poe-teacher')!=='on')document.documentElement.classList.add('teacher-locked')}catch(e){document.documentElement.classList.add('teacher-locked')}</script>
+</head>
+<body class="teacher-page seat-page">
+  <header class="site-header"><a class="brand" href="../../"><span class="brand-star" aria-hidden="true">✦</span> 준혁T의 과학 실험실</a><a class="nav-link" href="../">← 교사용 자료</a></header>
+  <main class="sd-main">
+    <section class="sd-head" aria-labelledby="sd-title">
+      <p class="eyebrow"><span></span> 교사용 자료 · 자리 배치</p>
+      <h1 id="sd-title">자리 뽑기</h1>
+    </section>
+
+    <section class="sd-setup" id="sd-setup" aria-label="자리 뽑기 준비">
+      <div class="sd-field">
+        <label for="sd-rows">세로 줄(앞→뒤)</label>
+        <input id="sd-rows" type="number" min="1" max="10" value="5" inputmode="numeric">
+      </div>
+      <div class="sd-field">
+        <label for="sd-cols">가로 줄(왼→오)</label>
+        <input id="sd-cols" type="number" min="1" max="10" value="6" inputmode="numeric">
+      </div>
+      <div class="sd-field">
+        <label for="sd-count">학생 수</label>
+        <input id="sd-count" type="number" min="1" max="100" value="30" inputmode="numeric">
+      </div>
+      <label class="sd-check"><input type="checkbox" id="sd-pairs" checked> 짝(두 자리씩 붙이기)</label>
+      <fieldset class="sd-reveal">
+        <legend>공개 방법</legend>
+        <label><input type="radio" name="sd-reveal" value="auto" checked> 차례로 공개</label>
+        <label><input type="radio" name="sd-reveal" value="click"> 눌러서 한 자리씩</label>
+      </fieldset>
+      <details class="sd-names">
+        <summary>이름으로 뽑기</summary>
+        <label for="sd-names-text">이름 명단(한 줄에 한 명, 줄 차례가 번호)</label>
+        <textarea id="sd-names-text" rows="6" spellcheck="false"></textarea>
+      </details>
+      <div class="sd-actions">
+        <button type="button" class="sd-draw" id="sd-draw">자리 뽑기</button>
+        <button type="button" class="sd-btn" id="sd-flip" aria-pressed="false">교사 시점</button>
+        <button type="button" class="sd-btn" id="sd-reset">처음 자리로</button>
+        <button type="button" class="sd-btn" id="sd-print">인쇄</button>
+      </div>
+    </section>
+
+    <p class="sd-status" id="sd-status" role="status" aria-live="polite"></p>
+
+    <section class="sd-room" id="sd-room" aria-label="교실 자리">
+      <div class="sd-board" id="sd-board"><span>칠판</span><i class="sd-desk-t" aria-hidden="true">교탁</i></div>
+      <div class="sd-grid" id="sd-grid"></div>
+    </section>
+    <div class="sd-room-actions">
+      <button type="button" class="sd-btn" id="sd-skip" hidden>바로 보기</button>
+      <button type="button" class="sd-btn" id="sd-all" hidden>모두 공개</button>
+    </div>
+
+    <dialog class="gate-dialog sd-dialog" id="sd-dialog" aria-labelledby="sd-dialog-title">
+      <form class="gate-body" id="sd-dialog-form" method="dialog">
+        <h2 id="sd-dialog-title">자리 설정</h2>
+        <label class="sd-check"><input type="checkbox" id="sd-blocked"> 빈자리로 두기(아무도 앉지 않아요)</label>
+        <label for="sd-fixed">이 자리에 고정할 학생</label>
+        <select id="sd-fixed"></select>
+        <p class="gate-error" id="sd-dialog-error" role="alert"></p>
+        <div class="gate-actions"><button type="button" class="gate-cancel" id="sd-dialog-cancel">취소</button><button type="submit" class="gate-ok" id="sd-dialog-ok">확인</button></div>
+      </form>
+    </dialog>
+  </main>
+  <script type="module" src="/seat-draw.js"></script>
+</body>
+</html>
