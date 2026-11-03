@@ -290,6 +290,7 @@ html[data-theme=light] .look-ring span{background:#ff9f6b;color:#2a1000}
 html[data-theme=light] .lab:fullscreen{background:var(--bg)}
 html[data-theme=light] .sb-tools button[aria-pressed=true]{outline:2px solid var(--volt)}
 html[data-theme=light] .sb-readout .sb-bad{color:#c20000}
+html[data-theme=light] .sb-ghost{background:#ffd23f;color:#2a1600;box-shadow:0 6px 16px #81315130}
 /* readable.css */
 html[data-theme=light] .lab-readable{--faint:#8f6683;--muted:#6f4462}
 html[data-theme=light] .lab-now{color:var(--volt)}

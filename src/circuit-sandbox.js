@@ -1,6 +1,7 @@
 // 자유 회로 실험실(저항의 연결 실험의 넷째 탭): 점판 위에 전지·전구·저항·도선·스위치·전류계·전압계를 놓아 회로를 마음대로 만들어 봐요.
 // 보고서·실험 순서와 상관없이 자유롭게 만지는 곳이에요(교사 의견). 계산은 src/circuit-solver.js(검사: src/circuit-solver.test.js).
-// 놓는 법: 위에서 부품을 고르고 점과 점 사이를 눌러요. 도선과 지우개는 누른 채 끌면 이어서 돼요.
+// 놓는 법: 위의 부품 단추를 판 위 자리로 끌어다 놓거나, 부품을 고르고 점과 점 사이를 눌러요. 도선과 지우개는 누른 채 끌면 이어서 돼요.
+// 보기(자바실험실의 전기 회로 시뮬레이터를 참고, 교사 요청): 전자의 이동 / 전류의 방향 고르기, 전구 빛줄기, 부품마다 전압·저항 표시. 계기 값은 계기 안에 써요.
 // 손: 스위치 켜고 끄기, 전지·전류계·전압계의 (+)(−) 방향 바꾸기, 저항값 바꾸기(5·10·20 Ω), 끊어진 전구 새것으로 바꾸기.
 // 전압계 도구는 이미 부품이 있는 자리에 누르면 그 부품에 ‘나란히(병렬로)’ 연결돼요.
 import { pole } from './lab-shell.js';
@@ -33,6 +34,7 @@ const PRESETS = {
 export function mountSandbox({ board, controls, actions, readout, toast, showElectrons }) {
   const parts = new Map(); // 자리 → { type, flip, on, ohm, burnt, meter: { flip } | null }
   let tool = 'wire', painting = false, solved = null, warned = '';
+  const view = { flow: 'electron', rays: true, values: false }; // flow: 'electron'(전자의 이동) | 'current'(전류의 방향)
   const electrons = []; // { el, key, u }
 
   board.innerHTML = `<g class="sb-dots">${Array.from({ length: COLS * ROWS }, (_, k) => { const [x, y] = nodeXY(k % COLS, Math.floor(k / COLS)); return `<circle cx="${x}" cy="${y}" r="4" class="sb-dot"/>`; }).join('')}</g>
@@ -41,7 +43,8 @@ export function mountSandbox({ board, controls, actions, readout, toast, showEle
   const layer = sel => board.querySelector(sel);
 
   /* ---------- 놓기·바꾸기 ---------- */
-  function apply(key, dragging = false) {
+  function apply(key, dragging = false, use = tool) {
+    const tool = use;
     const p = parts.get(key);
     if (tool === 'erase') {
       if (!p) return;
@@ -74,6 +77,48 @@ export function mountSandbox({ board, controls, actions, readout, toast, showEle
   addEventListener('pointerup', () => { painting = false; });
   hits.addEventListener('keydown', e => { const key = e.target.dataset?.edge; if (key && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); apply(key); } });
 
+  // 부품 단추를 판 위로 끌어다 놓기: 손가락·마우스를 놓은 곳에서 가장 가까운 자리에 놓아요(놓을 자리는 미리 밝게 보여요).
+  const svg = board.ownerSVGElement;
+  const nearestEdge = (cx, cy) => {
+    const pt = new DOMPoint(cx, cy).matrixTransform(svg.getScreenCTM().inverse());
+    let best = null, bestD = 34;
+    for (const key of EDGES) {
+      const [[i1, j1], [i2, j2]] = edgeEnds(key), [x1, y1] = nodeXY(i1, j1), [x2, y2] = nodeXY(i2, j2);
+      const t = Math.max(0, Math.min(1, ((pt.x - x1) * (x2 - x1) + (pt.y - y1) * (y2 - y1)) / (STEP * STEP)));
+      const dd = Math.hypot(pt.x - (x1 + (x2 - x1) * t), pt.y - (y1 + (y2 - y1) * t));
+      if (dd < bestD) { bestD = dd; best = key; }
+    }
+    return best;
+  };
+  let drag = null;
+  function startDrag(e, id) {
+    if (e.button !== 0 || ['hand', 'erase'].includes(id)) return;
+    drag = { id, x: e.clientX, y: e.clientY, moved: false, ghost: null, target: null };
+  }
+  addEventListener('pointermove', e => {
+    if (!drag) return;
+    if (!drag.moved && Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 8) return;
+    if (!drag.moved) {
+      drag.moved = true;
+      drag.ghost = document.createElement('div'); drag.ghost.className = 'sb-ghost'; drag.ghost.textContent = TOOLS.find(([id]) => id === drag.id)[1];
+      document.body.append(drag.ghost);
+    }
+    const z = Number(document.documentElement.style.zoom) || 1;
+    Object.assign(drag.ghost.style, { left: `${(e.clientX + scrollX) / z + 12}px`, top: `${(e.clientY + scrollY) / z + 12}px` });
+    const key = nearestEdge(e.clientX, e.clientY);
+    if (key !== drag.target) {
+      hits.querySelector('.sb-target')?.classList.remove('sb-target');
+      if (key) hits.querySelector(`[data-edge="${key}"]`).classList.add('sb-target');
+      drag.target = key;
+    }
+  });
+  addEventListener('pointerup', () => {
+    if (!drag) return;
+    const d = drag; drag = null;
+    d.ghost?.remove(); hits.querySelector('.sb-target')?.classList.remove('sb-target');
+    if (d.moved && d.target) { tool = d.id; apply(d.target, false, d.id); renderControls(); }
+  });
+
   /* ---------- 계산 ---------- */
   function solverParts() {
     const list = [];
@@ -98,6 +143,8 @@ export function mountSandbox({ board, controls, actions, readout, toast, showEle
   const rot = d => (d === 'v' ? 90 : 0);
   const upright = (d, inner) => `<g transform="rotate(${-rot(d)})">${inner}</g>`; // 글자는 세로 자리에서도 바로 서게
   const lead = (from, to) => `<path d="M${from} 0 H${to}" class="sb-lead"/>`;
+  // 전구의 빛줄기: 밝을수록 길어요(전구가 내는 빛을 보이게, 자바실험실의 ‘빛 방출 표시’처럼).
+  const rays = (glow, d) => upright(d, Array.from({ length: 8 }, (_, k) => { const a = k * Math.PI / 4 + Math.PI / 8, r1 = 21, r2 = 21 + 6 + 16 * glow; return `<path d="M${(r1 * Math.cos(a)).toFixed(1)} ${(r1 * Math.sin(a)).toFixed(1)} L${(r2 * Math.cos(a)).toFixed(1)} ${(r2 * Math.sin(a)).toFixed(1)}" class="sb-ray"/>`; }).join(''));
   function partSVG(key, p, d) {
     const L = HALF, r = solved?.results.get(key);
     const plusAtB = p.type === 'cell' ? !p.flip : p.flip; // 전지: 기본은 b(오른쪽·아래)가 (+)극 / 계기: 기본은 a가 (+)단자
@@ -112,12 +159,15 @@ export function mountSandbox({ board, controls, actions, readout, toast, showEle
         const glow = Math.min(1, Math.sqrt(r?.brightness ?? 0));
         return `${lead(-L, -15)}${lead(15, L)}<circle class="sb-glow" r="46" fill="url(#bulb-light)" opacity="${glow.toFixed(2)}"/><circle r="16" fill="#ffffff1c" stroke="#e8eef5" stroke-width="2"/>${p.burnt
           ? '<path d="M-8 7 l3 -11 l3 5 M3 -2 l2 -4 l3 13" stroke="#8a7a60" stroke-width="2" fill="none"/>'
-          : `<path d="M-8 7 l4 -11 l4 7 l4 -7 l4 11" stroke="${glow > .2 ? '#fff6c8' : '#9a7a40'}" stroke-width="2" fill="none"/>`}`;
+          : `<path d="M-8 7 l4 -11 l4 7 l4 -7 l4 11" stroke="${glow > .2 ? '#fff6c8' : '#9a7a40'}" stroke-width="2" fill="none"/>`}${view.rays && !p.burnt && glow > .05 ? rays(glow, d) : ''}`;
       }
       case 'resistor': return `${lead(-L, -24)}${lead(24, L)}<path d="M-24 0 l4 -9 l8 18 l8 -18 l8 18 l8 -18 l8 18 l4 -9" stroke="#e8c15a" stroke-width="3" fill="none" stroke-linejoin="round"/>`;
       case 'switch': return `${lead(-L, -20)}${lead(20, L)}<circle cx="-20" r="5" fill="#cfd6ec"/><circle cx="20" r="5" fill="#cfd6ec"/><path d="${p.on ? 'M-20 0 L20 0' : 'M-20 0 L14 -20'}" stroke="#ffd166" stroke-width="5" stroke-linecap="round"/>`;
-      case 'ammeter': case 'voltmeter':
-        return `${lead(-L, -17)}${lead(17, L)}<circle r="17" fill="#f4f1e8" stroke="#8f9bc4" stroke-width="2"/>${upright(d, `<text y="6" text-anchor="middle" font-size="17" font-weight="800" class="sb-letter">${p.type === 'ammeter' ? 'A' : 'V'}</text>`)}${poles(27, -18, 7)}`;
+      case 'ammeter': case 'voltmeter': {
+        // 실제 계기처럼 값을 계기 안에 써요(위: 계기 이름 글자, 아래: 잰 값).
+        const value = p.type === 'ammeter' ? ampText(r?.reading ?? 0) : voltText(r?.reading ?? 0);
+        return `${lead(-L, -24)}${lead(24, L)}<circle r="24" fill="#f4f1e8" stroke="#8f9bc4" stroke-width="2"/>${upright(d, `<text y="-6" text-anchor="middle" font-size="12" font-weight="800" class="sb-letter">${p.type === 'ammeter' ? 'A' : 'V'}</text><text y="11" text-anchor="middle" font-size="11" font-weight="800" class="sb-meter-value${(r?.reading ?? 0) < -.0004 ? ' neg' : ''}">${value}</text>`)}${poles(32, -22, 7)}`;
+      }
       default: return '';
     }
   }
@@ -131,9 +181,10 @@ export function mountSandbox({ board, controls, actions, readout, toast, showEle
     // 가로 자리는 부품 아래(위) 가운데, 세로 자리는 부품 왼쪽(오른쪽)에 글을 둬요.
     const at = (dx, dy, text, cls) => out.push(`<text x="${(mx + dx).toFixed(0)}" y="${(my + dy).toFixed(0)}" text-anchor="${d === 'h' ? 'middle' : dx < 0 ? 'end' : 'start'}" class="${cls}">${text}</text>`);
     const below = d === 'h' ? [0, 40] : [-28, 5];
-    if (p.type === 'ammeter') at(...below, ampText(r?.reading ?? 0), 'sb-read');
-    if (p.type === 'voltmeter') at(...below, voltText(r?.reading ?? 0), 'sb-read');
-    if (p.type === 'resistor') at(...(d === 'h' ? [0, 30] : [-18, 5]), `${p.ohm} Ω`, 'sb-val');
+    // 전압·저항 표시(선택): 전구·저항에 걸린 전압과 저항값, 전지의 전압
+    if (view.values && ['bulb', 'resistor'].includes(p.type)) at(...below, `${voltText(Math.abs(r?.voltage ?? 0))} · ${p.type === 'bulb' ? 10 : p.ohm} Ω`, 'sb-val');
+    if (view.values && p.type === 'cell') at(...below, '1.5 V', 'sb-val');
+    if (p.type === 'resistor' && !view.values) at(...(d === 'h' ? [0, 30] : [-18, 5]), `${p.ohm} Ω`, 'sb-val');
     if (p.type === 'bulb' && p.burnt) at(...(d === 'h' ? [0, 36] : [-22, 5]), '끊어짐', 'sb-warn');
     if (p.meter) at(...(d === 'h' ? [0, -60] : [56, 5]), voltText(solved?.results.get(`${key}m`)?.reading ?? 0), 'sb-read');
     return out.join('');
@@ -158,9 +209,12 @@ export function mountSandbox({ board, controls, actions, readout, toast, showEle
       const I = solved?.results.get(key)?.current ?? 0;
       if (Math.abs(I) < 1e-3) continue;
       for (let k = 0; k < 3; k++) {
-        const el = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        el.setAttribute('r', '4'); el.setAttribute('class', 'sb-electron'); g.append(el);
-        electrons.push({ el, key, I, u: k / 3 });
+        const current = view.flow === 'current';
+        const el = document.createElementNS('http://www.w3.org/2000/svg', current ? 'path' : 'circle');
+        if (current) { el.setAttribute('d', 'M-6 -6 L7 0 L-6 6 Z'); el.setAttribute('class', 'sb-current'); }
+        else { el.setAttribute('r', '4'); el.setAttribute('class', 'sb-electron'); }
+        g.append(el);
+        electrons.push({ el, key, I, u: k / 3, current });
       }
     }
   }
@@ -171,16 +225,28 @@ export function mountSandbox({ board, controls, actions, readout, toast, showEle
     for (const e of electrons) {
       // 같은 굵기의 도선이면 전류가 셀수록 전자가 빨리 움직여요(150 mA에서 1초에 자리 하나의 절반쯤).
       const speed = Math.min(2.5, Math.max(.12, Math.abs(e.I) / .3));
-      e.u = (e.u - Math.sign(e.I) * speed * dt + 1) % 1; // 전류가 a→b면 전자는 b→a
+      // 전류가 a→b면 전자는 b→a로 움직여요. ‘전류의 방향’을 고르면 화살표가 a→b(전지의 (+)극 → (−)극 쪽)로 가요.
+      const dir = e.current ? Math.sign(e.I) : -Math.sign(e.I);
+      e.u = (e.u + dir * speed * dt + 1) % 1;
       const [[i1, j1], [i2, j2]] = edgeEnds(e.key), [x1, y1] = nodeXY(i1, j1), [x2, y2] = nodeXY(i2, j2);
-      e.el.setAttribute('cx', (x1 + (x2 - x1) * e.u).toFixed(1)); e.el.setAttribute('cy', (y1 + (y2 - y1) * e.u).toFixed(1));
+      const x = x1 + (x2 - x1) * e.u, y = y1 + (y2 - y1) * e.u;
+      if (e.current) e.el.setAttribute('transform', `translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${(Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI + (dir < 0 ? 180 : 0)).toFixed(0)})`);
+      else { e.el.setAttribute('cx', x.toFixed(1)); e.el.setAttribute('cy', y.toFixed(1)); }
     }
   }
 
   /* ---------- 단추와 결과 ---------- */
   function renderControls() {
     controls.innerHTML = `<div role="group" aria-label="부품 고르기" class="sb-tools"><span class="group-label">부품</span>${TOOLS.map(([id, label]) => `<button type="button" data-sb-tool="${id}" aria-pressed="${tool === id}">${label}</button>`).join('')}</div>`;
-    controls.querySelectorAll('[data-sb-tool]').forEach(b => b.onclick = () => { tool = b.dataset.sbTool; renderControls(); });
+    controls.innerHTML += `<div role="group" aria-label="보기" class="sb-view"><span class="group-label">보기</span><label><input type="radio" name="sb-flow" value="electron" ${view.flow === 'electron' ? 'checked' : ''}> 전자의 이동</label><label><input type="radio" name="sb-flow" value="current" ${view.flow === 'current' ? 'checked' : ''}> 전류의 방향</label><label><input type="checkbox" id="sb-rays" ${view.rays ? 'checked' : ''}> 전구 빛줄기</label><label><input type="checkbox" id="sb-values" ${view.values ? 'checked' : ''}> 전압·저항 표시</label></div>`;
+    controls.querySelectorAll('[data-sb-tool]').forEach(b => {
+      b.onclick = () => { tool = b.dataset.sbTool; renderControls(); };
+      b.addEventListener('pointerdown', e => startDrag(e, b.dataset.sbTool));
+      b.title = ['hand', 'erase'].includes(b.dataset.sbTool) ? '고른 뒤 판 위의 부품을 눌러요' : '판 위로 끌어다 놓거나, 고른 뒤 점과 점 사이를 눌러요';
+    });
+    controls.querySelectorAll('[name="sb-flow"]').forEach(r => r.onchange = () => { view.flow = r.value; draw(); });
+    controls.querySelector('#sb-rays').onchange = e => { view.rays = e.target.checked; draw(); };
+    controls.querySelector('#sb-values').onchange = e => { view.values = e.target.checked; draw(); };
     actions.innerHTML = `<span class="group-label">예시 회로</span><button type="button" class="secondary" data-sb-preset="single">전구 1개</button><button type="button" class="secondary" data-sb-preset="series">직렬연결</button><button type="button" class="secondary" data-sb-preset="parallel">병렬연결</button><button type="button" class="secondary" id="sb-clear">모두 지우기</button>`;
     actions.querySelectorAll('[data-sb-preset]').forEach(b => b.onclick = () => load(PRESETS[b.dataset.sbPreset]));
     actions.querySelector('#sb-clear').onclick = () => { if (!parts.size || confirm('놓은 부품을 모두 지울까요?')) { parts.clear(); update(); } };

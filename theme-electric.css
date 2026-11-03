@@ -705,3 +705,12 @@ button.term:focus-visible{outline:2px solid var(--current);outline-offset:2px}
 .sb-readout .sb-bad{color:#ff6b6b}
 #actions:has([data-sb-preset]){flex-wrap:wrap;justify-content:flex-start;align-items:center;gap:8px}
 #scene .sb-letter{fill:#1b2340!important}
+#scene .sb-meter-value{fill:#1b2340!important;font-family:monospace}
+#scene .sb-meter-value.neg{fill:#c92a2a!important}
+#scene .sb-ray{stroke:#ffd23f;stroke-width:2.5;stroke-linecap:round}
+#scene .sb-current{fill:#ffb347;stroke:#7a3b00;stroke-width:1}
+#scene .sb-hit.sb-target{stroke:#ffd23f66}
+.sb-ghost{position:absolute;z-index:90;pointer-events:none;padding:6px 12px;border-radius:12px;background:#ffd23f;color:#2a1600;font-weight:800;font-size:14px;box-shadow:0 6px 16px #0008}
+.sb-view{flex-wrap:wrap;margin-top:8px}
+.sb-view label{display:inline-flex;align-items:center;gap:4px;margin-right:12px;font-size:14px}
+.sb-tools button{user-select:none;-webkit-user-select:none;touch-action:none}
