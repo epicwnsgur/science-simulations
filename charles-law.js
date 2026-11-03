@@ -130,7 +130,7 @@ function paintMeasure(dt) {
     coolAnim.t = Math.min(1, coolAnim.t + dt / (instantLessons.matches ? .01 : 1.4));
     const e = 1 - (1 - coolAnim.t) ** 2;
     water = coolAnim.from + (coolAnim.to - coolAnim.from) * e;
-    if (coolAnim.t >= 1) { water = coolAnim.to; coolAnim = null; toast(`물이 ${water} ℃가 되었어요. ④ ‘온도와 부피 기록하기’를 눌러요`); renderControls(); }
+    if (coolAnim.t >= 1) { water = coolAnim.to; coolAnim = null; toast(`물이 ${water} ℃가 되었어요. ③ ‘온도와 부피 기록하기’를 눌러요`); renderControls(); }
   }
   $('#water').setAttribute('fill', waterColor(water));
   const r = reading(), gy0 = pipY(r);
@@ -174,7 +174,7 @@ function pourHot() {
 function dropGlycerol() {
   phase = 'cooling';
   burst($('#fx'), PIP.x, pipY(PIPETTE_ML), '#ff5d8f', 8);
-  toast('글리세롤이 피펫 입구를 막았어요. 이제 기체의 부피가 변하면 글리세롤이 움직여요. ④ 지금(60 ℃) 온도와 부피를 기록해요');
+  toast('글리세롤이 피펫 입구를 막았어요. 이제 기체의 부피가 변하면 글리세롤이 움직여요. ③ 지금(60 ℃) 온도와 부피를 기록해요');
   renderControls();
 }
 function coolStep() {
@@ -329,7 +329,7 @@ function renderText() {
   setText('#note-text', { flask: '풍선 속으로 들어간 것은 플라스크 속 공기예요. 공기의 온도가 높아지거나 낮아질 때 부피가 어떻게 되는지 보세요.', measure: '글리세롤은 기체를 막는 마개예요. 물이 식을 때 글리세롤이 내려가면 기체의 부피가 줄어든 거예요. 그래프의 점들은 어떤 모양으로 놓이나요?', particles: '온도가 높아지면 입자의 운동 빠르기가 달라져요. 외부 압력과 기체의 압력 막대를 비교하며 피스톤이 언제 멈추는지 보세요.', life: '탁구공, 페트병, 열기구 속 기체의 온도가 어떻게 달라지는지 살펴보세요.' }[mode]);
   const rows = records.map(r => `<tr><td>${r.c.toFixed(1)}</td><td>${r.reading.toFixed(2)}</td><td>${r.ml.toFixed(2)}</td></tr>`).join('');
   setHTML('#readout', `<table class="data-table"><tr><th>온도(℃)</th><th>피펫 눈금(mL)</th><th>기체의 부피(mL)</th></tr>${rows || '<tr><td colspan="3">아직 기록이 없어요</td></tr>'}</table>`);
-  setText('#model-note', { flask: '플라스크 속 공기는 실온에서 250 mL로 정하고, 풍선으로 나가거나 들어온 부피를 샤를 법칙으로 계산했어요. 풍선의 크기는 보기 쉽게 키웠어요. 풍선이 늘어나는 힘 때문에 실제로는 조금 덜 부풀어요.', measure: '유리병 속 기체의 온도는 직접 재기 어려워서, 유리병 속 기체와 비커 속 물의 온도가 같다고 보고 물의 온도를 재요. 측정값은 이상적인 기체로 계산했어요. 실제 실험에서는 연결 부분의 틈이나 글리세롤의 움직임 때문에 값이 조금씩 다를 수 있어요.', particles: '입자의 수와 크기, 빠르기는 보기 쉽게 나타냈어요. 실제 기체 입자는 눈에 보이지 않을 만큼 작고 훨씬 많아요. 피스톤의 높이는 샤를 법칙에 맞게 계산했어요.', life: '그림 속 크기 변화는 보기 쉽게 나타냈어요.' }[mode]);
+  setText('#model-note', { flask: '플라스크 속 공기는 실온에서 250 mL로 정하고, 풍선으로 나가거나 들어온 부피를 샤를 법칙으로 계산했어요. 풍선의 크기는 보기 쉽게 키웠어요. 풍선이 늘어나는 힘 때문에 실제로는 조금 덜 부풀어요.', measure: '유리병 속 기체의 온도는 직접 재기 어려워서, 유리병 속 기체와 비커 속 물의 온도가 같다고 보고 물의 온도를 재요. 측정값은 샤를 법칙에 꼭 맞게 계산한 값이에요. 실제 실험에서는 연결 부분의 틈이나 글리세롤의 움직임 때문에 값이 조금씩 다를 수 있어요.', particles: '입자의 수와 크기, 빠르기는 보기 쉽게 나타냈어요. 실제 기체 입자는 눈에 보이지 않을 만큼 작고 훨씬 많아요. 피스톤의 높이는 샤를 법칙에 맞게 계산했어요.', life: '그림 속 크기 변화는 보기 쉽게 나타냈어요.' }[mode]);
   setText('#discovery', '온도 변화에 따라 기체의 부피가 변하는 정도는 기체의 종류와 관계없이 같아요.');
 }
 function renderControls() {

@@ -42,11 +42,12 @@ const PATHS = {
 };
 const bulbSVG = b => `<g class="bulb" id="bulb-${b.id}" transform="translate(${b.x} ${b.y})"><circle class="glow" r="70" fill="url(#bulb-light)" opacity="0"/><circle r="20" fill="#ffffff1c" stroke="#e8eef5" stroke-width="2"/><path class="filament" d="M-9 10 l4 -14 l5 9 l5 -9 l4 14" stroke="#9a7a40" stroke-width="2" fill="none"/><rect x="-11" y="18" width="22" height="9" fill="#8f9bc4"/><text y="-30" text-anchor="middle" font-size="14" font-weight="700">전구 ${b.id}</text></g>`;
 const switchSVG = s => `<g class="switch" id="sw-${s.id}" role="button" tabindex="0" aria-label="스위치 ${s.id}" transform="translate(${s.x} ${s.y}) rotate(${s.vertical ? 90 : 0})"><rect x="-32" y="-14" width="64" height="28" rx="6" fill="#2a3150" stroke="#8f9bc4"/><circle cx="-20" r="5" fill="#cfd6ec"/><circle cx="20" r="5" fill="#cfd6ec"/><path class="lever" stroke="#ffd166" stroke-width="5" stroke-linecap="round"/><text y="${s.vertical ? 32 : 30}" text-anchor="middle" font-size="11" class="muted" transform="rotate(${s.vertical ? -90 : 0} 0 ${s.vertical ? 32 : 30})">${s.id}</text></g>`;
-const scene = `${Object.entries(PATHS).map(([key, paths]) => `<g id="circuit-${key}" hidden>${Object.entries(paths).map(([k, d]) => `<path id="path-${key}-${k}" d="${d}" stroke="#7d8fbf" stroke-width="5" fill="none" stroke-linejoin="round"/>`).join('')}<g class="electrons"></g>${BULBS[key].map(bulbSVG).join('')}${SWITCHES[key].map(switchSVG).join('')}</g>`).join('')}
+// 회로(전구·스위치·전지·불꽃)는 왼쪽으로 100만큼 옮겨, 오른쪽 비교 막대와 함께 무대 가운데에 오게 해요(교사 의견: 왼쪽 공백).
+const scene = `<g id="circuit-area" transform="translate(-100 0)">${Object.entries(PATHS).map(([key, paths]) => `<g id="circuit-${key}" hidden>${Object.entries(paths).map(([k, d]) => `<path id="path-${key}-${k}" d="${d}" stroke="#7d8fbf" stroke-width="5" fill="none" stroke-linejoin="round"/>`).join('')}<g class="electrons"></g>${BULBS[key].map(bulbSVG).join('')}${SWITCHES[key].map(switchSVG).join('')}</g>`).join('')}
 <g id="battery"><rect x="356" y="354" width="88" height="32" rx="6" fill="#2a3150" stroke="#8f9bc4"/><rect x="361" y="359" width="38" height="22" rx="4" fill="url(#copper)"/><rect x="401" y="359" width="38" height="22" rx="4" fill="url(#copper)"/>${pole(342, 370, '−')}${pole(458, 370, '+')}<text x="400" y="408" text-anchor="middle" font-size="12" class="muted">전지 2개 (1.5 V × 2)</text></g>
-<g id="gauge" transform="translate(622 70)"><text x="0" y="0" font-size="13" font-weight="700" style="fill:#dfe6ff">전구 1개일 때와 비교</text><text x="0" y="16" font-size="11" class="muted">노란 점선 = 전구 1개 회로</text>${COMPARE.map(([id, name, color], k) => `<g transform="translate(0 ${44 + k * 92})"><text font-size="13" font-weight="700" style="fill:${color}">${name}</text><rect y="8" width="${BAR_W}" height="14" rx="7" fill="#0f1730" stroke="#2c3966"/><rect id="cmp-${id}" y="10" height="10" rx="5" width="0" style="fill:${color}"/><line x1="${BAR_W / BAR_MAX}" x2="${BAR_W / BAR_MAX}" y1="3" y2="27" stroke="#ffd166" stroke-width="2" stroke-dasharray="3 3"/><text id="cmp-${id}-v" y="44" font-size="12" style="fill:#dfe6ff"></text><text id="cmp-${id}-w" y="60" font-size="12" style="fill:#ffd166"></text></g>`).join('')}</g>
-<g id="free-board" hidden></g>
-<g id="fx"></g>`;
+<g id="fx"></g></g>
+<g id="gauge" transform="translate(585 70)"><text x="0" y="0" font-size="13" font-weight="700" style="fill:#dfe6ff">전구 1개일 때와 비교</text><text x="0" y="16" font-size="11" class="muted">노란 점선 = 전구 1개 회로</text>${COMPARE.map(([id, name, color], k) => `<g transform="translate(0 ${44 + k * 92})"><text font-size="13" font-weight="700" style="fill:${color}">${name}</text><rect y="8" width="${BAR_W}" height="14" rx="7" fill="#0f1730" stroke="#2c3966"/><rect id="cmp-${id}" y="10" height="10" rx="5" width="0" style="fill:${color}"/><line x1="${BAR_W / BAR_MAX}" x2="${BAR_W / BAR_MAX}" y1="3" y2="27" stroke="#ffd166" stroke-width="2" stroke-dasharray="3 3"/><text id="cmp-${id}-v" y="44" font-size="12" style="fill:#dfe6ff"></text><text id="cmp-${id}-w" y="60" font-size="12" style="fill:#ffd166"></text></g>`).join('')}</g>
+<g id="free-board" hidden></g>`;
 
 const lab = buildLab({
   crumb: '05 저항의 연결',
@@ -176,11 +177,11 @@ function toggle(id) {
 let sandbox = null;
 function renderFreeText() {
   setText('#guide', '자유 회로 실험실: 부품을 마음대로 놓아 회로를 만들어 보세요.');
-  setText('#subguide', '① 위에서 부품을 고르고 ② 점과 점 사이를 눌러 놓아요. 도선과 지우개는 누른 채 끌면 이어서 돼요. ‘손’으로 누르면 스위치를 켜고 끄거나, 전지·전류계·전압계의 (+)(−)를 바꾸거나, 저항값을 바꿔요. 전압계는 부품 위에 누르면 그 부품과 나란히 연결돼요.');
+  setText('#subguide', '위의 부품 단추를 판 위로 끌어다 놓거나, 부품을 고른 뒤 점과 점 사이를 눌러 놓아요. 도선과 지우개는 누른 채 끌면 이어서 돼요. ‘손’으로 누르면 스위치를 켜고 끄거나, 전지·전류계·전압계의 (+)(−)를 바꾸거나, 저항값을 바꿔요. 전압계는 부품 위에 누르면 그 부품과 나란히 연결돼요.');
   setText('#stage-state', '자유 회로 실험실 · 보고서와 상관없이 자유롭게 실험해요');
   setText('#note-title', '내가 만든 회로');
   setText('#note-text', '전류계는 직렬로, 전압계는 병렬로 연결해요. 전지를 도선으로만 이으면(합선) 위험해요.');
-  setText('#model-note', '전지 1개는 1.5 V, 전구는 10 Ω(건전지 2개일 때 알맞게 켜져요), 저항은 5·10·20 Ω이에요. 전구와 저항의 저항값은 일정하다고 보았고, 전류계는 저항이 거의 없고 전압계는 저항이 아주 큰 이상적인 계기로 나타냈어요. 실제 전구는 뜨거워지면 저항이 조금 커지고, 실제 전지는 내부 저항 때문에 전류가 셀수록 전압이 조금 낮아져요.');
+  setText('#model-note', '전지 1개는 1.5 V, 전구는 10 Ω(건전지 2개일 때 알맞게 켜져요), 저항은 5·10·20 Ω이에요. 전구와 저항의 저항값은 일정하다고 보았고, 전류계는 저항이 거의 없고 전압계는 저항이 아주 큰 이상적인 계기로 나타냈어요. 실제 전구의 필라멘트는 뜨거워질수록 저항이 커지고, 실제 전지는 내부 저항 때문에 전류가 셀수록 전압이 조금 낮아져요.');
   setText('#discovery', '전구를 직렬로 늘릴 때와 병렬로 늘릴 때, 전류계의 값은 어떻게 달라질까요?');
 }
 function setMode(next) {
