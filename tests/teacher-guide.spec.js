@@ -3,7 +3,7 @@ import { beginObservation } from './poe-helpers.js';
 
 // 교사 모드, 실험 순서 안내 가리키기, 과학 낱말 뜻 풀이(모든 실험 공통, src/poe-flow.js)
 const SERIES = '/simulations/series-parallel/';
-const LABS = ['friction-electricity', 'electrostatic-induction', 'electric-current', 'ohms-law', 'series-parallel', 'coil-magnetic-field', 'electric-swing', 'electric-motor', 'stellar-parallax', 'star-brightness', 'star-color', 'milky-way', 'expanding-universe', 'gas-pressure', 'boyles-law', 'charles-law'];
+const LABS = ['friction-electricity', 'electrostatic-induction', 'electric-current', 'ohms-law', 'series-parallel', 'electric-energy', 'coil-magnetic-field', 'electric-swing', 'electric-motor', 'stellar-parallax', 'star-brightness', 'star-color', 'milky-way', 'expanding-universe', 'gas-pressure', 'boyles-law', 'charles-law'];
 
 async function turnOnTeacher(page, password = '0421') {
   await page.locator('#teacher-btn').click();

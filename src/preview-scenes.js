@@ -112,6 +112,21 @@ export const SCENES = {
       ],
     },
   },
+  'electric-energy': {
+    // 전기 에너지 카드(소비 전력) → 에너지 전환 분류 → 같은 시간 켜 보기 → 효율 등급(실험과 같은 순서).
+    main: {
+      svg: `<g data-o="cards">${[['전기 주전자', '2000 W', 20], ['텔레비전', '100 W', 120], ['LED 조명', '10 W', 220]].map(([n, w, x], i) => `<g data-o="card${i}"><rect x="${x}" y="20" width="84" height="56" rx="8" fill="#121a3a" stroke="#ffd23f"/>${label(x + 42, 42, n, 11, '#fff')}${label(x + 42, 64, w, 13, '#ffd166')}</g>`).join('')}${label(160, 100, '소비 전력이 큰 것부터', 11)}</g>
+        <g data-o="convert" class="pv-off"><rect x="0" y="0" width="320" height="150" fill="#070b1cf0"/><rect x="20" y="40" width="84" height="56" rx="8" fill="#121a3a" stroke="#ffd23f"/>${label(62, 72, '텔레비전', 12, '#fff')}<path d="M110 60 L190 36 M110 76 L190 100" stroke="#dfe6ff" stroke-width="2"/><rect x="194" y="22" width="96" height="28" rx="6" fill="#0f1730" stroke="#ffd23f"/>${label(242, 41, '빛에너지', 12, '#ffd23f')}<rect x="194" y="86" width="96" height="28" rx="6" fill="#0f1730" stroke="#c9a2ff"/>${label(242, 105, '소리 에너지', 12, '#c9a2ff')}</g>
+        <g data-o="meter" class="pv-off"><rect x="0" y="0" width="320" height="150" fill="#070b1cf0"/>${label(80, 22, '에어컨', 12, '#fff')}${label(240, 22, '선풍기', 12, '#fff')}<rect x="60" y="30" width="40" height="100" rx="5" fill="#0a1029" stroke="#3a4a7a"/><rect x="220" y="30" width="40" height="100" rx="5" fill="#0a1029" stroke="#3a4a7a"/><g data-o="barA"><rect x="63" y="40" width="34" height="88" rx="3" fill="#5cc8ff"/></g><g data-o="barB"><rect x="223" y="124" width="34" height="4" rx="2" fill="#ff9f6b"/></g>${label(160, 80, '같은 시간', 12)}</g>
+        <g data-o="grade" class="pv-off"><rect x="0" y="0" width="320" height="150" fill="#070b1cf0"/>${[[1, '#1e9e4a', 40], [3, '#f2d22e', 140], [5, '#e2412b', 240]].map(([g, c, x]) => `<rect x="${x}" y="24" width="40" height="64" rx="6" fill="#dfe6ff22" stroke="#dfe6ff"/><rect x="${x}" y="96" width="40" height="18" rx="3" fill="${c}"/>${label(x + 20, 109, `${g}등급`, 11, '#10151f')}`).join('')}${label(160, 138, '크기와 성능이 같은 냉장고', 11)}</g>`,
+      steps: [
+        h => { h.pulse(62, 48, 40, 200); h.pulse(162, 48, 40, 700); h.pulse(262, 48, 40, 1200); },
+        h => { h.show('convert', 500); h.pulse(242, 36, 20, 700); h.pulse(242, 100, 20, 1000); },
+        h => { h.show('meter', 400); h.pulse(80, 84, 34, 400); h.ask(240, 100, 900); },
+        h => { h.show('grade', 400); h.ask(160, 18, 900); },
+      ],
+    },
+  },
   'coil-magnetic-field': {
     // 실제 실험(시뮬레이션과 같음): 전원 장치에 이은 코일이 판을 뚫고 서 있고, 둘레에 나침반 8개. 먼저 막대자석 둘레의 나침반을 봐요.
     main: {

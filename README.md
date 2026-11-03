@@ -12,6 +12,7 @@
 | VII. 전기와 자기 | 1-03 (교과서 242–243쪽) | 전류와 전압 | `/simulations/electric-current/` | [9과14-02] |
 | VII. 전기와 자기 | 1-04 (교과서 244–247쪽) | 전압, 전류, 저항 | `/simulations/ohms-law/` | [9과14-02] |
 | VII. 전기와 자기 | 1-05 (교과서 248–249쪽) | 저항의 연결 | `/simulations/series-parallel/` | [9과14-03] |
+| VII. 전기와 자기 | 1-06 (교과서 250–253쪽) | 전기 에너지의 이용 | `/simulations/electric-energy/` | [9과14-03] |
 | VII. 전기와 자기 | 2-01 (교과서 258–259쪽) | 전류가 만든 자기장 | `/simulations/coil-magnetic-field/` | [9과14-04] |
 | VII. 전기와 자기 | 2-02 (교과서 260–261쪽) | 전기 그네 | `/simulations/electric-swing/` | [9과14-04] |
 | VII. 전기와 자기 | 2-02 (교과서 262–264쪽) | 전동기 | `/simulations/electric-motor/` | [9과14-04] |

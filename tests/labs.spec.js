@@ -71,6 +71,23 @@ const LABS = [
     await page.locator('#close-all').click();
     for (const t of ['series', 'parallel']) { await page.locator(`#tab-${t}`).click(); await page.locator('#close-all').click(); await page.waitForTimeout(100); await page.locator('[data-switch="S2"]').click(); await page.waitForTimeout(100); }
   }],
+  ['/simulations/electric-energy/', '소비 전력', async page => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    for (const id of ['kettle', 'aircon', 'dryer', 'heater', 'vacuum', 'washer', 'blender', 'tv', 'fan', 'phone', 'led', 'headphone']) await page.locator(`[data-card="${id}"]`).click();
+    await expect(page.locator('#stage-state')).toContainText('순서가 맞아요');
+    await page.locator('#tab-convert').click();
+    for (const [id, es] of [['kettle', ['heat']], ['aircon', ['motion']], ['dryer', ['heat', 'motion']], ['heater', ['heat']], ['vacuum', ['motion']], ['washer', ['motion']], ['tv', ['light', 'sound']]]) {
+      await page.locator(`[data-pick="${id}"]`).click();
+      for (const e of es) await page.locator(`[data-energy="${e}"]`).click();
+      await page.locator('#convert-check').click();
+    }
+    await expect(page.locator('#stage-state')).toContainText('분류한 기구 7');
+    await page.locator('#tab-meter').click();
+    await page.locator('#run-hour').click();
+    await expect(page.locator('#readout')).toContainText('1,800 Wh');
+    await page.locator('#tab-grade').click();
+    await page.locator('[data-fridge-btn="1"]').click(); await page.locator('[data-fridge-btn="5"]').click();
+  }],
   ['/simulations/coil-magnetic-field/', '자기장', async page => {
     await page.waitForTimeout(1700);
     await page.locator('#tab-coil').click(); await hold(page);
