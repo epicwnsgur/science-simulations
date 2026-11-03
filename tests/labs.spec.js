@@ -73,19 +73,24 @@ const LABS = [
   }],
   ['/simulations/electric-energy/', '소비 전력', async page => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
-    for (const id of ['kettle', 'aircon', 'dryer', 'heater', 'vacuum', 'washer', 'blender', 'tv', 'fan', 'phone', 'led', 'headphone']) await page.locator(`[data-card="${id}"]`).click();
-    await expect(page.locator('#stage-state')).toContainText('순서가 맞아요');
-    await page.locator('#tab-convert').click();
-    for (const [id, es] of [['kettle', ['heat']], ['aircon', ['motion']], ['dryer', ['heat', 'motion']], ['heater', ['heat']], ['vacuum', ['motion']], ['washer', ['motion']], ['tv', ['light', 'sound']]]) {
-      await page.locator(`[data-pick="${id}"]`).click();
-      for (const e of es) await page.locator(`[data-energy="${e}"]`).click();
-      await page.locator('#convert-check').click();
+    // 누르기로도 할 수 있어요: 카드 두 장을 차례로 누르면 자리가 바뀌어요.
+    const RIGHT = ['kettle', 'aircon', 'dryer', 'heater', 'vacuum', 'washer', 'blender', 'tv', 'fan', 'phone', 'led', 'headphone'];
+    for (const [i, id] of RIGHT.entries()) {
+      if (await page.locator(`[data-slot="${i}"]`).getAttribute('data-drag') === `card:${id}`) continue;
+      await page.locator(`[data-drag="card:${id}"]`).click(); await page.locator(`[data-slot="${i}"]`).click();
     }
-    await expect(page.locator('#stage-state')).toContainText('분류한 기구 7');
-    await page.locator('#tab-meter').click();
+    await page.locator('#check-order').click();
+    await expect(page.locator('#stage-state')).toContainText('줄 세우기를 마쳤어요');
+    await page.locator('#next-tab').click();
+    for (const [id, es] of [['kettle', ['heat']], ['aircon', ['motion']], ['dryer', ['heat', 'motion']], ['heater', ['heat']], ['vacuum', ['motion']], ['washer', ['motion']], ['tv', ['light', 'sound']]]) {
+      for (const e of es) { await page.locator(`[data-drag="dev:${id}"]`).click(); await page.locator(`[data-zone="${e}"]`).click(); }
+    }
+    await expect(page.locator('#stage-state')).toContainText('분류를 마친 기구 7');
+    await page.locator('#next-tab').click();
+    await page.locator('[data-drag="plug:aircon"]').click(); await page.locator('[data-drag="plug:fan"]').click();
     await page.locator('#run-hour').click();
     await expect(page.locator('#readout')).toContainText('1,800 Wh');
-    await page.locator('#tab-grade').click();
+    await page.locator('#next-tab').click();
     await page.locator('[data-fridge-btn="1"]').click(); await page.locator('[data-fridge-btn="5"]').click();
   }],
   ['/simulations/coil-magnetic-field/', '자기장', async page => {
