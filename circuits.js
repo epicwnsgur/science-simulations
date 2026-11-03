@@ -79,7 +79,9 @@ function paint(dt) {
   for (const b of BULBS[mode]) {
     const key = `${mode}${b.id}`; shown[key] = (shown[key] ?? 0) + ((r.brightness[b.id] ?? 0) - (shown[key] ?? 0)) * g;
     const node = document.querySelector(`#circuit-${mode} #bulb-${b.id}`);
-    node.querySelector('.glow').setAttribute('opacity', Math.min(1, shown[key] * 1.05).toFixed(2));
+    // 빛 번짐은 밝기의 제곱근으로 그려요. 직렬연결 전구(밝기 1/4)도 ‘어둡게 켜진’ 모습이 또렷이 보이고(0.5), 전구 1개·병렬연결(1)과 차례는 그대로예요.
+    // 학생 의견(과학 오류 신고): 직렬연결한 전구가 꺼진 것처럼 보였어요. 실제로는 어둡지만 켜져 있어요.
+    node.querySelector('.glow').setAttribute('opacity', Math.min(1, Math.sqrt(shown[key])).toFixed(2));
     node.querySelector('.filament').setAttribute('stroke', shown[key] > .15 ? '#fff6c8' : '#9a7a40');
     node.querySelector('.filament').setAttribute('filter', shown[key] > .15 ? 'url(#glow)' : '');
   }
@@ -186,12 +188,15 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 
-const thumb = (x, y, dim) => `<circle cx="${x}" cy="${y}" r="${dim ? 26 : 40}" fill="url(#p-light)" opacity="${dim ? .5 : .9}"/><circle cx="${x}" cy="${y}" r="13" fill="#ffffff22" stroke="#e8eef5" stroke-width="2"/>`;
+// 예상하기 그림의 전구: 켜기 전 모습에 ‘?’를 붙여요(밝기는 학생이 예상해요).
+const thumb = (x, y) => `<circle cx="${x}" cy="${y}" r="13" fill="#e8eef5" stroke="#8f9bc4" stroke-width="2"/><path d="M${x - 5} ${y + 2} q2.5 -6 5 0 t5 0" stroke="#9a7a40" fill="none"/><text x="${x + 19}" y="${y + 5}" font-size="16" font-weight="700" fill="#ff8a8a">?</text>`;
+// 예상하기 그림의 전지 2개(실험과 같아요)
+const cellPair = (x, y) => `<rect x="${x - 23}" y="${y - 9}" width="21" height="18" rx="3" fill="#d98c45" stroke="#8a5420"/><rect x="${x + 2}" y="${y - 9}" width="21" height="18" rx="3" fill="#d98c45" stroke="#8a5420"/><text x="${x + 30}" y="${y + 4}" fill="#cfd8f2" font-size="11">전지</text>`;
 flow = setupPOEFlow({
   predict: {
     title: '전구 두 개를 직렬, 병렬로 연결하면<br>각 전구의 밝기는?',
     lead: '전구 1개를 연결한 회로의 밝기를 기준으로,<br>같은 전구 두 개를 직렬연결한 회로와 병렬연결한 회로를 비교할 거예요.',
-    illustration: `<svg viewBox="0 0 520 250" role="img" aria-label="직렬연결과 병렬연결 회로"><defs><radialGradient id="p-light"><stop offset="0" stop-color="#fffbe0"/><stop offset="1" stop-color="#ffb627" stop-opacity="0"/></radialGradient></defs><rect width="520" height="250" rx="12" fill="#121a33"/><path d="M40 60 H220 V200 H40 Z" stroke="#7d8fbf" stroke-width="3" fill="none"/>${thumb(90, 60)}${thumb(170, 60)}<text x="130" y="232" text-anchor="middle" fill="#aab4d6" font-size="13">직렬연결</text><path d="M300 50 H480 M300 120 H480 M300 50 V200 H480 V50" stroke="#7d8fbf" stroke-width="3" fill="none"/>${thumb(390, 50)}${thumb(390, 120)}<text x="390" y="232" text-anchor="middle" fill="#aab4d6" font-size="13">병렬연결</text></svg>`,
+    illustration: `<svg viewBox="0 0 520 250" role="img" aria-label="전지 2개에 전구 두 개를 직렬연결한 회로와 병렬연결한 회로(전구의 밝기는 아직 모름)"><defs></defs><rect width="520" height="250" rx="12" fill="#121a33"/><path d="M40 60 H220 V200 H40 Z" stroke="#7d8fbf" stroke-width="3" fill="none"/>${thumb(90, 60)}${thumb(170, 60)}${cellPair(130, 200)}<text x="130" y="238" text-anchor="middle" fill="#aab4d6" font-size="13">직렬연결</text><path d="M300 50 H480 M300 120 H480 M300 50 V200 H480 V50" stroke="#7d8fbf" stroke-width="3" fill="none"/>${thumb(390, 50)}${thumb(390, 120)}${cellPair(390, 200)}<text x="390" y="238" text-anchor="middle" fill="#aab4d6" font-size="13">병렬연결</text></svg>`,
     question: '전구 1개일 때와 비교하면 각 전구의 밝기는 어떨까요?',
     choices: ['직렬은 더 어둡고, 병렬은 같을 것 같아요.', '직렬은 같고, 병렬은 더 어두울 것 같아요.', '둘 다 전구 1개일 때보다 어두울 것 같아요.', '둘 다 전구 1개일 때와 같을 것 같아요.'],
     placeholder: '초등학교에서 전구를 연결해 본 경험이나 멀티탭을 사용한 경험을 떠올려 보세요.',

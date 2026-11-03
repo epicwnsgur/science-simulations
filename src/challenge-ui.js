@@ -90,7 +90,11 @@ export function mountChallenge(container, challenge, { saved = null, onChange = 
     });
     blockPaste(think, { onBlocked: () => onPasteBlocked(PASTE_MESSAGE) });
   }
-  q('#challenge-retry').onclick = () => { state = fresh(); render(); onChange(state); };
+  // 다시 풀기: 실수로 누르지 않게 한 번 묻고, 생각 더하기에 쓴 글은 그대로 둬요(학생 의견).
+  q('#challenge-retry').onclick = () => {
+    if (!confirm('도전 문제의 답을 지우고 처음부터 다시 풀까요? (생각 더하기에 쓴 글은 그대로 남아요)')) return;
+    state = { ...fresh(), think: state.think ?? '' }; render(); onChange(state);
+  };
   render();
   return {
     reset() { state = fresh(); render(); },

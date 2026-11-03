@@ -51,11 +51,11 @@ const scene = `
   <path d="M40 366 L760 366 L800 420 L0 420Z" fill="url(#cur-table)" opacity=".9"/><path d="M40 366 H760" stroke="#7a5c40" stroke-width="2"/>
   <g id="plastic"><ellipse cx="${A.x}" cy="356" rx="122" ry="26" fill="#000" opacity=".25"/><ellipse cx="${A.x}" cy="350" rx="120" ry="26" fill="url(#cur-plastic)" stroke="#9fb0c2" stroke-width="2"/><ellipse cx="${A.x}" cy="346" rx="94" ry="17" fill="#e9eff5" stroke="#cbd6e1"/><path d="M${A.x - 70} 340 q40 -8 90 -4" stroke="#fff" stroke-width="3" fill="none" opacity=".8"/></g>
   <g id="fur"><ellipse cx="${B.x}" cy="356" rx="128" ry="30" fill="#000" opacity=".25"/><ellipse cx="${B.x}" cy="350" rx="125" ry="30" fill="url(#cur-fur)"/><path d="${FUR}" stroke="#c4935e" stroke-width="2.2" fill="none" stroke-linecap="round" opacity=".9"/><path d="${FUR}" stroke="#6b4423" stroke-width="1" fill="none" transform="translate(3 4)" opacity=".7"/></g>
-  <text class="muted" x="${A.x}" y="404" text-anchor="middle" font-size="13">플라스틱 접시</text>
-  <text class="muted" x="${B.x}" y="404" text-anchor="middle" font-size="13">털가죽</text>
+  <text class="object-name sub-name" x="${A.x}" y="404" text-anchor="middle" font-size="13">플라스틱 접시</text>
+  <text class="object-name sub-name" x="${B.x}" y="404" text-anchor="middle" font-size="13">털가죽</text>
   ${['b', 'a'].map(k => { const P = k === 'a' ? A : B; return `<g id="plate-${k}">
     <rect x="${P.x - 7}" y="196" width="14" height="110" rx="6" fill="url(#cur-handle)" stroke="#bfe6ff" stroke-width="1"/><circle cx="${P.x}" cy="196" r="11" fill="url(#cur-handle)" stroke="#bfe6ff"/>
-    ${k === 'a' ? `<text class="muted" x="${P.x - 14}" y="240" text-anchor="end" font-size="12">절연 손잡이</text>` : ''}
+    ${k === 'a' ? `<text class="object-name sub-name" x="${P.x - 14}" y="240" text-anchor="end" font-size="12">절연 손잡이</text>` : ''}
     <text class="object-name" x="${k === 'a' ? P.x - 108 : P.x + 108}" y="${P.y + 6}" text-anchor="${k === 'a' ? 'end' : 'start'}">알루미늄 접시</text>
     <ellipse cx="${P.x}" cy="${P.y + 3}" rx="100" ry="23" fill="#000" opacity=".2"/>
     <ellipse cx="${P.x}" cy="${P.y}" rx="98" ry="22" fill="url(#cur-alu)" stroke="#f4f7fa" stroke-width="2"/>
@@ -278,6 +278,30 @@ function rub() {
   motion = { kind: 'rub', start: performance.now(), duration: instantLessons.matches ? 1 : 700, done: () => { rubs++; charge = rubs * PER_RUB; discharged = false; renderControls(); } };
   renderControls();
 }
+// 마우스(손가락)로 직접 문지르기: 플라스틱 접시나 털가죽을 누른 채 좌우로 문지르면, 한 번 문지를 만큼 움직일 때마다 1번 문질러요.
+// 학생 의견: 단추보다 마우스로 직접 비비며 실험할 때 더 이해하기 쉬웠어요. 단추로도 그대로 할 수 있어요.
+const RUB_STROKE = 140;
+let rubDrag = null;
+for (const id of ['#plastic', '#fur']) {
+  const el = $(id), scene = $('#scene');
+  const xOf = e => new DOMPoint(e.clientX, e.clientY).matrixTransform(scene.getScreenCTM().inverse()).x;
+  el.classList.add('rubbable');
+  el.addEventListener('pointerdown', e => {
+    if (mode !== 'neon' || placed) return;
+    e.preventDefault();
+    rubDrag = { x: xOf(e), travel: 0 };
+    el.setPointerCapture?.(e.pointerId);
+  });
+  el.addEventListener('pointermove', e => {
+    if (!rubDrag) return;
+    const x = xOf(e);
+    rubDrag.travel += Math.abs(x - rubDrag.x); rubDrag.x = x;
+    if (rubDrag.travel >= RUB_STROKE && !motion) { rubDrag.travel = 0; rub(); }
+  });
+  const end = () => { rubDrag = null; };
+  el.addEventListener('pointerup', end);
+  el.addEventListener('pointercancel', end);
+}
 function togglePlates() {
   if (motion) return;
   placed = !placed; touching = false; renderControls();
@@ -376,7 +400,7 @@ function renderControls() {
 function renderText() {
   if (mode === 'neon') {
     setText('#guide', '마찰 전기만으로 네온전구에 불을 켤 수 있을까요?');
-    setText('#subguide', '① 문지르기 → ② 알루미늄 접시 올려놓기 → ③ 네온전구 끝을 다른 접시에 대기 순서로 해 보세요.');
+    setText('#subguide', '① 문지르기 → ② 알루미늄 접시 올려놓기 → ③ 네온전구 끝을 다른 접시에 대기 순서로 해 보세요. 문지르기는 플라스틱 접시나 털가죽을 마우스로 누른 채 좌우로 문질러도 돼요.');
     setText('#stage-state', `문지른 횟수 ${rubs}번 · ${placed ? '알루미늄 접시를 올려놓음' : '알루미늄 접시를 듦'}${touching ? ' · 네온전구 닿음' : ''}`);
     setText('#note-title', seen.lit ? (seen.noLight ? '불빛이 계속 켜져 있었나요?' : '한 번 더 대 보면 어떻게 될까요?') : '네온전구를 관찰해 보세요');
     setText('#note-text', show ? '네온전구를 대는 순간 전하가 어디에서 어디로 이동하나요?' : '‘전하·방향 보기’를 켜면 접시에 있는 전하를 볼 수 있어요.');
@@ -422,14 +446,14 @@ function frame(now) {
     if (show && mode === 'neon' && rubs > 0) seen.viewNeon = true;
     if (show && mode === 'circuit' && battery) seen.viewCircuit = true;
     flow?.update(checklist([
-      ['마찰 전기로 네온전구 켜기', seen.lit, '‘털가죽으로 접시 문지르기’ 3번 이상 → ‘알루미늄 접시 올려놓기’ → ‘네온전구 끝을 접시에 대기’'],
-      ['‘전하·방향 보기’를 켜고 접시의 전하 살펴보기', seen.viewNeon, '위쪽 ‘전하·방향 보기’를 켜고, 네온전구를 댈 때 전하가 어디로 이동하는지 봐요', '', '#show-detail'],
-      ['네온전구를 다시 대어 보기', seen.noLight, '‘네온전구 떼기’를 누른 뒤 한 번 더 ‘네온전구 끝을 접시에 대기’'],
-      ['전지를 연결해 전자의 움직임 관찰하기', seen.battery, '‘전기 회로와 수로 모형’ 탭 → ‘전지 연결하기’', '#tab-circuit, #battery-btn'],
-      ['‘전하·방향 보기’를 켜고 전자와 전류의 방향 비교하기', seen.viewCircuit, '‘전하·방향 보기’를 켜고, 전자가 움직이는 방향과 전류의 방향(화살표)을 비교해요', '', '#show-detail'],
-      ['펌프를 작동해 수로 모형 관찰하기', seen.pump, '‘펌프 작동하기’를 누르고, 높은 곳과 낮은 곳의 물(높이 차)과 물레방아를 살펴요', '#pump-btn'],
+      ['마찰 전기로 네온전구 켜기', seen.lit, '‘털가죽으로 접시 문지르기’ 3번 이상 → ‘알루미늄 접시 올려놓기’ → ‘네온전구 끝을 접시에 대기’', '', '', ['#neon', '네온전구']],
+      ['‘전하·방향 보기’를 켜고 접시의 전하 살펴보기', seen.viewNeon, '위쪽 ‘전하·방향 보기’를 켜고, 네온전구를 댈 때 전하가 어디로 이동하는지 봐요', '', '#show-detail', ['#neon-scene', '접시와 네온전구의 전하']],
+      ['네온전구를 다시 대어 보기', seen.noLight, '‘네온전구 떼기’를 누른 뒤 한 번 더 ‘네온전구 끝을 접시에 대기’', '', '', ['#neon', '네온전구']],
+      ['전지를 연결해 전자의 움직임 관찰하기', seen.battery, '‘전기 회로와 수로 모형’ 탭 → ‘전지 연결하기’', '#tab-circuit, #battery-btn', '', ['#wire', '도선 속 전자']],
+      ['‘전하·방향 보기’를 켜고 전자와 전류의 방향 비교하기', seen.viewCircuit, '‘전하·방향 보기’를 켜고, 전자가 움직이는 방향과 전류의 방향(화살표)을 비교해요', '', '#show-detail', ['#wire', '전자와 전류의 방향']],
+      ['펌프를 작동해 수로 모형 관찰하기', seen.pump, '‘펌프 작동하기’를 누르고, 높은 곳과 낮은 곳의 물(높이 차)과 물레방아를 살펴요', '#pump-btn', '', ['#water-box', '수로 모형']],
       ['전기 회로와 수로 모형의 짝 5개 찾기', matched.size === PAIRS.length, '아래 ‘짝 찾기’에서 전기 회로(왼쪽) 하나와 수로 모형(오른쪽) 하나를 차례로 눌러 닮은 것끼리 짝을 지어요', '[data-pair-left], [data-pair-right]', '#pair-area'],
-      ['전지 2개와 펌프 세게: 전압과 높이 차를 함께 키워 비교하기', seen.strong, '‘전지 2개’와 ‘펌프 세게’를 누르고 전지 연결·펌프 작동을 켠 채로, 전구의 밝기·전자의 빠르기와 물의 높이 차·흐름을 비교해요', '[data-cells], [data-pump-level]', '[data-cells="2"]'],
+      ['전지 2개와 펌프 세게: 전압과 높이 차를 함께 키워 비교하기', seen.strong, '‘전지 2개’와 ‘펌프 세게’를 누르고 전지 연결·펌프 작동을 켠 채로, 전구의 밝기·전자의 빠르기와 물의 높이 차·흐름을 비교해요', '[data-cells], [data-pump-level]', '[data-cells="2"]', ['#bulb', '전구의 밝기']],
     ]));
   }
   requestAnimationFrame(frame);

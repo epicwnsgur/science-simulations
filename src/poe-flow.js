@@ -121,7 +121,7 @@ export function setupPOEFlow(config) {
     </section>
     <section id="explain-panel" class="poe-panel explanation-panel" aria-labelledby="explain-title" hidden>
       <p class="poe-kicker">${L.explainKicker}</p><h2 id="explain-title" tabindex="-1">${L.explainTitle}</h2>
-      <div class="poe-comparison"><article><h3>${L.compareFirst}</h3><p data-prediction></p><p data-reason></p></article><article><h3>${L.compareSecond}</h3><p id="saved-observation"></p></article></div>
+      <div class="poe-comparison"><article><h3>${L.compareFirst}</h3><p data-prediction></p><p data-reason></p></article><article><h3>${L.compareSecond}</h3><p id="saved-observation"></p><button type="button" class="secondary fix-observation" id="fix-observation">관찰 기록의 오타 고치기</button></article></div>
       <form id="explanation-form" class="poe-form">
         <label class="writing-label" for="explanation-record"></label>
         <textarea id="explanation-record" rows="4" maxlength="1800" required placeholder="직접 본 움직임과 전하 표시의 변화를 근거로 내 말로 설명해 보세요."></textarea><p class="char-count" data-for="explanation-record" aria-live="polite"></p><p class="autosave-note" aria-hidden="true"></p>
@@ -401,6 +401,7 @@ export function setupPOEFlow(config) {
   // 한 번 관찰을 마친 실험은 새로 고침한 뒤에도 다음 단계로 넘어갈 수 있어요.
   function update(progress, force = false) {
     gate(progress);
+    markNext(progress);
     if (!force && lastProgress && progress.ready === lastProgress.ready && progress.message === lastProgress.message) return;
     lastProgress = progress;
     const done = progress.ready || exp().observed || teacherMode.on;
@@ -509,6 +510,45 @@ export function setupPOEFlow(config) {
     toast(`${step.done ? '✓ 이미 해 본 단계예요. 다시 해 보려면 · ' : '이렇게 해요 · '}${step.hint || step.label}`);
     markTarget(target, '▲ 여기를 눌러요');
   });
+  // 다음에 누를 조작을 은은하게 빛내요(학생 의견: 무엇을 눌러야 할지 모르겠어요). 실험이 단추를 새로 그려도 따라가도록 자주 확인하되, 0.4초에 한 번만 찾아요.
+  let nextAt = 0;
+  function markNext(progress) {
+    const now = performance.now();
+    if (now - nextAt < 400) return;
+    nextAt = now;
+    const step = document.body.dataset.poe === 'observe' ? (progress.steps ?? []).find(v => !v.done) : null;
+    const target = step ? stepTarget(step) : null;
+    document.querySelectorAll('.next-target').forEach(el => { if (el !== target) el.classList.remove('next-target'); });
+    target?.classList.add('next-target');
+  }
+  // 지금 볼 곳: 지금 할 단계의 단추를 누르면, 결과가 나타나는 곳(단계의 look)을 무대에서 3초 동안 동그라미로 가리켜요.
+  // 학생 의견: 그림에서 어디를 봐야 할지 모르겠어요. 계속 깜박이면 정신없어서 누른 뒤에만 잠깐 보여요.
+  let lookStep = null, lookTimer = null;
+  $('#simulation-mount').addEventListener('pointerdown', ev => {
+    lookStep = ev.target.closest('button, [role=button], [role=tab], input') && !ev.target.closest('.step-guide, .term, .term-pop') ? (lastProgress?.steps ?? []).find(v => !v.done) ?? null : null;
+  }, true);
+  $('#simulation-mount').addEventListener('click', () => {
+    const look = lookStep?.look;
+    lookStep = null;
+    if (look) setTimeout(() => showLook(look), 250);
+  });
+  function showLook([selector, name]) {
+    const el = [...document.querySelectorAll(selector)].find(v => { const r = v.getBoundingClientRect(); return r.width > 2 && r.height > 2; });
+    const stage = el?.closest('.stage');
+    if (!stage) return;
+    // ‘화면 크기’(html의 zoom)를 바꿔도 맞도록, 화면 위치의 차이를 배율(z)로 나눠요.
+    const z = Number(document.documentElement.style.zoom) || 1, pad = 10;
+    const r = el.getBoundingClientRect(), s = stage.getBoundingClientRect();
+    const left = Math.max(4, r.left - s.left - pad), top = Math.max(4, r.top - s.top - pad);
+    const right = Math.min(s.width - 4, r.right - s.left + pad), bottom = Math.min(s.height - 4, r.bottom - s.top + pad);
+    let ring = stage.querySelector('.look-ring');
+    if (!ring) { ring = document.createElement('div'); ring.className = 'look-ring'; ring.setAttribute('aria-hidden', 'true'); ring.innerHTML = '<span></span>'; stage.append(ring); }
+    Object.assign(ring.style, { left: `${left / z}px`, top: `${top / z}px`, width: `${(right - left) / z}px`, height: `${(bottom - top) / z}px` });
+    ring.querySelector('span').textContent = `지금 볼 곳: ${name}`;
+    ring.classList.toggle('below', top < 40);
+    ring.classList.remove('show'); void ring.offsetWidth; ring.classList.add('show');
+    clearTimeout(lookTimer); lookTimer = setTimeout(() => ring.classList.remove('show'), 3200);
+  }
   const nextStepLabel = () => (lastProgress?.steps ?? []).find(v => !v.done)?.label;
 
   // 왼쪽 실험 순서 안내: 끝낸 단계는 ✓, 지금 할 단계는 강조, 뒤 단계는 자물쇠, 모두 끝나면 마지막 ‘기록하기’ 단계를 강조해요.
@@ -522,10 +562,10 @@ export function setupPOEFlow(config) {
     const items = steps.map((v, i) => {
       const state = v.done ? 'done' : i === current ? 'current' : 'todo';
       const lockedStep = state === 'todo' && !exp().observed && !teacherMode.on;
-      return `<li class="${state}${lockedStep ? ' locked' : ''}"${state === 'current' ? ' aria-current="step"' : ''}><button type="button" class="guide-item" data-guide-step="${i}" aria-label="${v.label}: 어떻게 하는지 보기"><span class="guide-num">${v.done ? '✓' : lockedStep ? icon('lock') : i + 1}</span><div><b>${v.label}</b>${state === 'current' ? `<small class="guide-now">지금 할 일</small>` : ''}${v.hint && state === 'current' ? `<small>${v.hint}</small>` : ''}${lockedStep ? '<small>앞 단계를 마치면 열려요</small>' : ''}<small class="guide-how">눌러서 할 일 보기 ›</small></div></button></li>`;
+      return `<li class="${state}${lockedStep ? ' locked' : ''}"${state === 'current' ? ' aria-current="step"' : ''}><button type="button" class="guide-item" data-guide-step="${i}" aria-label="${v.label}: 어떻게 하는지 보기" title="${i + 1}. ${v.label}"><span class="guide-num">${v.done ? '✓' : lockedStep ? icon('lock') : i + 1}</span><div><b>${v.label}</b>${state === 'current' ? `<small class="guide-now">지금 할 일</small>` : ''}${v.hint && state === 'current' ? `<small>${v.hint}</small>` : ''}${lockedStep ? '<small>앞 단계를 마치면 열려요</small>' : ''}<small class="guide-how">눌러서 할 일 보기 ›</small></div></button></li>`;
     });
     const allDone = current === -1;
-    items.push(`<li class="${allDone ? 'current final' : 'todo final'}"${allDone ? ' aria-current="step"' : ''}><button type="button" class="guide-item" data-guide-step="final"><span class="guide-num">✎</span><div><b>${L.guideFinal}</b>${allDone ? '<small class="guide-now">지금 할 일</small>' : ''}<small>${L.guideFinalHint}</small></div></button></li>`);
+    items.push(`<li class="${allDone ? 'current final' : 'todo final'}"${allDone ? ' aria-current="step"' : ''}><button type="button" class="guide-item" data-guide-step="final" title="${L.guideFinal}"><span class="guide-num">✎</span><div><b>${L.guideFinal}</b>${allDone ? '<small class="guide-now">지금 할 일</small>' : ''}<small>${L.guideFinalHint}</small></div></button></li>`);
     guide.querySelector('.guide-steps').innerHTML = items.join('');
     guide.querySelector('.guide-bar span').style.width = `${done / steps.length * 100}%`;
     guide.querySelector('.guide-count').textContent = `${done} / ${steps.length}`;
@@ -673,6 +713,16 @@ export function setupPOEFlow(config) {
   }
   document.querySelectorAll('[data-experiment]').forEach(b => b.onclick = () => { if (+b.dataset.experiment !== state.current || isReviewing()) { state.onReview = false; selectExperiment(+b.dataset.experiment); } });
   $('#revisit-lab').onclick = () => changeStage('observe');
+  // 설명하기에서 관찰 기록의 오타를 보면 바로 고치러 가요(학생 의견). 고친 뒤 ‘관찰 저장하고 설명하기’를 다시 누르면 돌아와요.
+  // 예상은 실험 전의 내 생각을 그대로 남기려고 고치지 않아요.
+  $('#fix-observation').onclick = () => {
+    if (state.locked) return toast('보고서를 이미 제출해서 글을 고칠 수 없어요.');
+    changeStage('observe');
+    const box = partAreas()[0];
+    box?.scrollIntoView({ behavior: reducedMotion.matches ? 'instant' : 'smooth', block: 'center' });
+    box?.focus({ preventScroll: true });
+    toast('관찰 기록을 고친 뒤 ‘관찰 저장하고 설명하기’를 누르면 설명하기로 돌아가요.');
+  };
   $('#restart-poe').onclick = () => {
     if (!confirm('지금까지 쓴 예상·관찰·설명과 퀴즈 답을 모두 지우고 처음부터 할까요?')) return;
     restart(true);

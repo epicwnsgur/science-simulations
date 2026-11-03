@@ -110,6 +110,7 @@ test('보일 법칙: 처음부터 밀기를 먼저 해도 기록되고, 피스�
   await page.locator('#record').click();
   await expect(page.locator('#readout')).toContainText('25');
   // 피스톤을 오른쪽으로 끌면 부피가 커지고 압력계 값이 작아져요.
+  await page.locator('#plunger').scrollIntoViewIfNeeded();
   const box = await page.locator('#plunger').boundingBox();
   const per = box.width / 196 * 6;                            // 화면에서 1 mL가 차지하는 너비
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2); await page.mouse.down();

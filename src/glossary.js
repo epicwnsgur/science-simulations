@@ -127,13 +127,17 @@ function show(btn) {
   pop.innerHTML = `<b>${btn.dataset.term}</b><p>${TERMS[btn.dataset.term]}</p><button type="button" class="term-close" aria-label="뜻 풀이 닫기">닫기</button>`;
   pop.querySelector('.term-close').onclick = () => { const b = openBtn; close(); b?.focus(); };
   pop.hidden = false; openBtn = btn; btn.setAttribute('aria-expanded', 'true'); btn.setAttribute('aria-controls', 'term-pop');
-  const r = btn.getBoundingClientRect(), w = Math.min(320, innerWidth - 24);
-  pop.style.width = `${w}px`;
+  // 누른 낱말 바로 위에 띄워요(위에 자리가 없으면 아래). 학생 의견: 뜻이 낱말과 떨어져 너무 위쪽에 떴어요.
+  // ‘화면 크기’(html의 zoom)를 줄이면 화면 위치(getBoundingClientRect)와 CSS 위치의 배율이 달라서, 배율(z)로 나눠 맞춰요.
+  const z = Number(document.documentElement.style.zoom) || 1;
+  const r = btn.getBoundingClientRect(), w = Math.min(320 * z, innerWidth - 24);
+  pop.style.width = `${w / z}px`;
+  const h = pop.offsetHeight * z;
   const left = Math.max(12, Math.min(innerWidth - w - 12, r.left + r.width / 2 - w / 2));
-  const below = r.bottom + 10 + pop.offsetHeight < innerHeight;
-  pop.style.left = `${left + scrollX}px`;
-  pop.style.top = `${(below ? r.bottom + 8 : r.top - pop.offsetHeight - 8) + scrollY}px`;
-  pop.dataset.side = below ? 'below' : 'above';
+  const above = r.top - 8 - h >= 8;
+  pop.style.left = `${(left + scrollX) / z}px`;
+  pop.style.top = `${((above ? r.top - h - 8 : r.bottom + 8) + scrollY) / z}px`;
+  pop.dataset.side = above ? 'above' : 'below';
 }
 
 // roots: 낱말을 찾을 영역(선택자). 글이 바뀌면(실험 안내가 바뀔 때 등) 다시 찾아요.

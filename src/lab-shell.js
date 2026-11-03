@@ -40,7 +40,8 @@ function setPageZoom(z) {
 }
 const zoomNow = () => Number(document.documentElement.style.zoom) || 1;
 
-// 실험 페이지 머리글(실험 목록으로 · 메모 · 테마 · 화면 크기 · 글씨 크기 · 학년). 머리글을 넣은 뒤 setupTextSize()를 불러요.
+// 실험 페이지 머리글(실험 목록으로 · 메모 · 설정 · 학년). 테마 · 화면 크기 · 글씨 크기는 ‘설정’ 안에 모아 머리글을 단순하게 해요(학생 의견: 화면이 복잡해요).
+// 머리글을 넣은 뒤 setupTextSize()를 불러요.
 // 단원: 실험 페이지 위쪽의 ‘← 실험 목록’과 경로 표시에 써요. 새 단원은 UNITS에 더하고 buildLab({ unit })로 골라요.
 // 중학교 1학년 단원은 'g1-6'처럼 학년을 붙여 적어요(단원 그림도 이 이름으로 골라요). grade는 머리글 오른쪽의 학년이에요.
 export const UNITS = {
@@ -48,7 +49,7 @@ export const UNITS = {
   8: { href: '../../grades/middle-school-2/unit-8/', label: 'VIII. 별과 우주', grade: '중학교 2학년' },
   'g1-6': { href: '../../grades/middle-school-1/unit-6/', label: 'VI. 기체의 성질', grade: '중학교 1학년' },
 };
-export const headerHTML = (unit = 7) => `<header data-unit="${unit}"><a class="brand" href="${UNITS[unit].href}">← 실험 목록</a><div class="header-right"><button type="button" class="memo-head-btn" data-memo-open aria-controls="memo-panel" aria-expanded="false" title="내 메모 열기·닫기">${icon('memo')} 메모</button>${themeButtonHTML()}<div class="page-zoom" role="group" aria-label="화면 크기"><span aria-hidden="true">화면 크기</span><button type="button" data-zoom="-" aria-label="화면 작게" title="화면 작게 (Ctrl −)">－<span class="zoom-word"> 작게</span></button><output class="zoom-value" aria-live="polite">100%</output><button type="button" data-zoom="+" aria-label="화면 크게" title="화면 크게 (Ctrl +)">＋<span class="zoom-word"> 크게</span></button></div><div class="text-size" role="group" aria-label="글씨 크기"><span aria-hidden="true">글씨 크기</span>${TEXT_SIZES.map(([id, label, name]) => `<button type="button" data-text-size="${id}" aria-pressed="false" aria-label="글씨 ${name}" title="글씨 ${name}">${label}</button>`).join('')}</div><span class="grade">${UNITS[unit].grade} <i></i> 과학</span></div></header>`;
+export const headerHTML = (unit = 7) => `<header data-unit="${unit}"><a class="brand" href="${UNITS[unit].href}">← 실험 목록</a><div class="header-right"><button type="button" class="memo-head-btn" data-memo-open aria-controls="memo-panel" aria-expanded="false" title="내 메모 열기·닫기 (Alt + M)">${icon('memo')} 메모</button><details class="settings-menu"><summary class="settings-btn" title="테마 · 화면 크기 · 글씨 크기">${icon('settings')} 설정</summary><div class="settings-panel" role="group" aria-label="화면 설정">${themeButtonHTML()}<div class="page-zoom" role="group" aria-label="화면 크기"><span aria-hidden="true">화면 크기</span><button type="button" data-zoom="-" aria-label="화면 작게" title="화면 작게 (Ctrl −)">－<span class="zoom-word"> 작게</span></button><output class="zoom-value" aria-live="polite">100%</output><button type="button" data-zoom="+" aria-label="화면 크게" title="화면 크게 (Ctrl +)">＋<span class="zoom-word"> 크게</span></button></div><div class="text-size" role="group" aria-label="글씨 크기"><span aria-hidden="true">글씨 크기</span>${TEXT_SIZES.map(([id, label, name]) => `<button type="button" data-text-size="${id}" aria-pressed="false" aria-label="글씨 ${name}" title="글씨 ${name}">${label}</button>`).join('')}</div></div></details><span class="grade">${UNITS[unit].grade} <i></i> 과학</span></div></header>`;
 export function setupTextSize() {
   document.body.classList.add('lab-readable');
   // 단원 번호: 단원에 어울리는 제목 옆 그림(theme-unit-art.css)을 골라요.
@@ -58,6 +59,12 @@ export function setupTextSize() {
   try { saved = localStorage.getItem('text-size') || 'm'; } catch { /* 처음 크기(중)로 시작해요. */ }
   setTextSize(TEXT_SIZES.some(([id]) => id === saved) ? saved : 'm');
   $$('[data-text-size]').forEach(b => b.onclick = () => setTextSize(b.dataset.textSize));
+  // 설정 상자: 바깥을 누르거나 Esc를 누르면 닫혀요.
+  const menu = $('.settings-menu');
+  if (menu) {
+    addEventListener('pointerdown', e => { if (menu.open && !menu.contains(e.target)) menu.open = false; });
+    addEventListener('keydown', e => { if (e.key === 'Escape' && menu.open) { menu.open = false; menu.querySelector('summary').focus(); } });
+  }
   let zoom = 1;
   try { zoom = Number(localStorage.getItem('page-zoom')) || 1; } catch { /* 처음 크기(100%)로 시작해요. */ }
   setPageZoom(zoom);
@@ -73,13 +80,13 @@ export function buildLab(cfg) {
 ${headerHTML(cfg.unit)}
 <main class="lab-page"><div class="breadcrumb">${UNITS[cfg.unit ?? 7].label} <span>/</span> ${cfg.crumb}</div>
 <section class="intro"><div><h1>${cfg.title}</h1><p>${cfg.intro}</p></div></section>
-<div class="workspace"><section class="lab"><div class="lab-toolbar"><div class="tabs" role="tablist" aria-label="활동 선택">${tabs}</div><button id="reset" class="reset">↻ <span>처음으로</span></button></div>
+<div class="workspace"><section class="lab"><div class="lab-toolbar"><div class="tabs" role="tablist" aria-label="활동 선택">${tabs}</div><div class="toolbar-right"><button type="button" class="reset lab-full" aria-pressed="false">${icon('expand')} <span>크게 보기</span></button><button id="reset" class="reset">↻ <span>처음으로</span></button></div></div>
 <div class="instruction"><span class="step-icon">↔</span><div><strong id="guide"></strong><p id="subguide"></p></div>${cfg.toggle ? `<label class="toggle"><input type="checkbox" id="show-detail"><span>${cfg.toggle}</span></label>` : ''}</div>
 <div id="controls" class="pair-controls choice-row"></div>
-<div class="stage night"><div class="stage-label"><span id="stage-state" aria-live="polite"></span></div>
+<div class="stage night"><div class="stage-label"><span class="model-tag" title="실제 모습을 보기 쉽게 나타낸 모형 그림이에요">모형 그림</span><span id="stage-state" aria-live="polite"></span></div>
 <svg id="scene" viewBox="0 0 800 440" aria-label="${cfg.sceneLabel}">${FX_DEFS}${cfg.scene}</svg><div class="stage-hint" id="stage-hint"></div><div class="toast" id="toast" role="status" aria-live="polite"></div></div>
 <div class="lab-bottom">${cfg.legend ? `<div class="legend">${cfg.legend}</div>` : ''}<div id="actions" class="actions"></div></div>
-<p class="model-note" id="model-note"></p></section>
+<details class="model-note-box"><summary>모형과 실제의 다른 점 보기</summary><p class="model-note" id="model-note"></p></details></section>
 <aside><section class="observation"><div class="section-label"><span>◉</span> 무엇이 달라졌나요?</div><h2 id="note-title"></h2><p id="note-text"></p><div id="readout"></div><div class="discovery" id="discovery"></div></section>
 <section class="mission"></section></aside></div>
 <section class="vocabulary"><div class="vocab-heading"><h2>실험 속 핵심 개념</h2><span>단어를 누르면 뜻을 확인할 수 있어요.</span></div><div class="term-buttons">${cfg.terms.map(([t], i) => `<button data-term="${i}" class="${i === 0 ? 'active' : ''}">${t}</button>`).join('')}</div><p id="term-definition"><strong>${cfg.terms[0][0]}</strong> ${cfg.terms[0][1]}</p></section>
@@ -90,9 +97,44 @@ ${headerHTML(cfg.unit)}
     $$('[data-term]').forEach(v => v.classList.toggle('active', v === b));
     const [t, d] = cfg.terms[+b.dataset.term]; $('#term-definition').innerHTML = `<strong>${t}</strong> ${d}`;
   });
+  watchChanges();
+  setupFullView();
   const resetQuiz = () => $('[data-term="0"]').click();
   const selectTab = id => cfg.tabs.forEach(t => $(`#tab-${t.id}`).setAttribute('aria-selected', t.id === id));
   return { resetQuiz, selectTab };
+}
+
+// 크게 보기: 실험 칸(그림과 단추)을 화면 가득 키워요. 학생 의견: 수로 모형을 더 자세히 보고 싶어요.
+// 전체 화면을 쓸 수 없는 기기(아이폰 등)에서는 단추를 숨겨요. Esc나 ‘작게 보기’로 돌아와요.
+function setupFullView() {
+  const lab = $('.lab'), btn = $('.lab-full');
+  if (!lab || !btn) return;
+  btn.hidden = !document.fullscreenEnabled;
+  btn.onclick = () => { if (document.fullscreenElement) document.exitFullscreen(); else lab.requestFullscreen?.().catch(() => {}); };
+  document.addEventListener('fullscreenchange', () => {
+    const on = document.fullscreenElement === lab;
+    btn.innerHTML = `${icon(on ? 'shrink' : 'expand')} <span>${on ? '작게 보기' : '크게 보기'}</span>`;
+    btn.setAttribute('aria-pressed', String(on));
+    dispatchEvent(new Event('resize'));
+  });
+}
+
+// 단추를 누르면 1초 뒤(실험 동작이 끝난 뒤) ‘무엇이 달라졌나요?’의 값과 무대 위 상태 글 중 바뀐 곳을 잠깐 빛내요.
+// 학생 의견: 단추로 실험하면 무엇이 바뀌었는지 잘 모르겠어요. 값 칸은 실험마다 달라서, 글자만 담은 칸을 차례대로 견줘요.
+function watchChanges() {
+  const cells = () => $$('#stage-state, #readout *').filter(el => !el.children.length && el.textContent.trim());
+  $('.lab')?.addEventListener('click', e => {
+    if (!e.target.closest('button, input, [role=button]') || e.target.closest('.term, .model-note-box')) return;
+    const before = cells().map(el => el.textContent);
+    setTimeout(() => {
+      const after = cells();
+      if (after.length !== before.length) return;
+      after.forEach((el, i) => {
+        if (el.textContent === before[i]) return;
+        el.classList.remove('just-changed'); void el.getBoundingClientRect(); el.classList.add('just-changed');
+      });
+    }, 1000);
+  });
 }
 
 // 스스로 평가: 고른 보기를 옳으면 초록색(right), 틀리면 붉은색(wrong)으로 표시하고 피드백 글도 같은 색으로 보여 줘요.
@@ -114,7 +156,8 @@ export function checklist(steps) {
     message: done === steps.length ? `${steps.length}가지 관찰을 모두 해 보았어요. 직접 본 결과를 기록해 주세요.` : `관찰 ${done}/${steps.length} · 다음: ${next[0]}`,
     // 왼쪽 실험 순서 안내와 순서 잠금에 쓰는 단계 목록
     // press(다섯째 값, 고를 수 있어요): 안내 글에 단추 이름(‘…’)이 없을 때 눌러야 할 조작의 CSS 선택자
-    steps: steps.map(([label, isDone, hint, unlocks, press]) => ({ label, done: !!isDone, hint: hint ?? '', unlocks: unlocks ?? '', press: press ?? '' })),
+    // look(여섯째 값, 고를 수 있어요): [무대 속 요소의 선택자, 이름]. 그 단계의 단추를 누르면 무대에서 그곳을 잠깐 동그라미로 가리켜요(‘지금 볼 곳’).
+    steps: steps.map(([label, isDone, hint, unlocks, press, look]) => ({ label, done: !!isDone, hint: hint ?? '', unlocks: unlocks ?? '', press: press ?? '', look: look ?? null })),
   };
 }
 

@@ -119,7 +119,8 @@ export function createStage3D({ stage, svg, reducedMotion, ariaLabel, views, mod
 
   /* ---------- 화질 자동 조절 ---------- */
   const dpr = devicePixelRatio || 1;
-  const LEVELS = [{ pr: Math.min(dpr, 2), env: true }, { pr: Math.min(dpr, 1.5), env: true }, { pr: Math.min(dpr, 1), env: false }, { pr: .75, env: false }];
+  // 느린 컴퓨터에서도 화면 해상도(1배) 아래로는 낮추지 않아요. 더 낮추면 3D 물체가 픽셀로 깨져 보여요(학생 의견). 대신 반사 표현을 꺼서 빠르게 해요.
+  const LEVELS = [{ pr: Math.min(dpr, 2), env: true }, { pr: Math.min(dpr, 1.5), env: true }, { pr: Math.min(dpr, 1), env: false }];
   let level = -1, slow = { ema: 16, n: 0, prev: 0 };
   const known = new Set(); // 장면에 잠깐 없는 재질(바꿔 끼우는 재질)도 화질에 맞춰요.
   function setQuality(next) {

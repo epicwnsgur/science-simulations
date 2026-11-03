@@ -1,6 +1,8 @@
 // 화면에 쓰는 작은 선 아이콘(SVG). 에모지 대신 써요: 기기마다 모양이 달라지지 않고, 글자 색(currentColor)을 따라 테마에 어울려요.
 // icon('memo')처럼 부르면 글자 크기에 맞춘 <svg class="icon">를 돌려줘요. 꾸밈이라 화면 읽기 프로그램에는 읽히지 않아요(aria-hidden).
 const PATHS = {
+  // 설정(조절 막대 세 개)
+  settings: '<path d="M4 6.5h16M4 12h16M4 17.5h16"/><circle cx="9" cy="6.5" r="2" fill="currentColor"/><circle cx="15" cy="12" r="2" fill="currentColor"/><circle cx="7.5" cy="17.5" r="2" fill="currentColor"/>',
   // 메모장과 연필
   memo: '<path d="M5 3.5h10l4 4V20a.5.5 0 0 1-.5.5h-13A.5.5 0 0 1 5 20z"/><path d="M15 3.5V8h4M8.5 11.5h7M8.5 15h4.5"/>',
   // 해(밝은 테마)

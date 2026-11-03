@@ -56,9 +56,11 @@ export function createMotor3D({ stage, svg, reducedMotion }) {
   const cell = new THREE.Mesh(new THREE.CylinderGeometry(.3, .3, 1.9, 28), mat.copper); cell.rotation.z = Math.PI / 2; battery.add(cell);
   const cap = new THREE.Mesh(new THREE.CylinderGeometry(.306, .306, .5, 28), mat.dark); cap.rotation.z = Math.PI / 2; battery.add(cap);
   const batLabels = { '+': [-1, 1].map(s => { const l = label('+', { size: .42, color: '#ffd166' }); l.position.set(s * 1.3, .42, 0); battery.add(l); return l; }), '−': [-1, 1].map(s => { const l = label('−', { size: .42, color: '#9fdcff' }); l.position.set(s * 1.3, .42, 0); battery.add(l); return l; }) };
-  const motorTexts = [label('전지', { size: .26, color: '#aab4d6' }), label('브러시', { size: .24, color: '#aab4d6' }), label('금색 고리', { size: .24, color: '#e8c15a' })];
+  const motorTexts = [label('전지', { size: .26, color: '#dfe6ff' }), label('브러시', { size: .24, color: '#dfe6ff' }), label('금색 고리', { size: .24, color: '#e8c15a' })];
   motorTexts[0].position.set(0, BY - .62, BZ); motorTexts[1].position.set(-1.0, -.42, ZC + .1); motorTexts[2].position.set(.72, -.42, ZC + .25);
   motor.add(...motorTexts);
+  // 코일 이름표(학생 의견: 그림이 무엇인지 모르겠어요)
+  const coilName = label('코일', { size: .3, color: '#e8c15a' }); coilName.position.set(.45, 1.25, ZC + .55); motor.add(coilName);
   // 전류 알갱이(전류의 방향으로 흘러요), 전류·힘·자기장 화살표
   const dots = Array.from({ length: 22 }, () => { const d = new THREE.Mesh(new THREE.SphereGeometry(.07, 12, 10), mat.dot); rotor.add(d); return d; });
   const currentArrows = [0, 1].map(() => { const a = arrow(COLORS.current, .04); rotor.add(a); return a; });
@@ -95,7 +97,7 @@ export function createMotor3D({ stage, svg, reducedMotion }) {
   const spark = label('✦', { size: .5, color: '#ffd166' }); spark.position.set(1.62, AY - .3, .3); simple.add(spark);
   const ringDots = Array.from({ length: 18 }, () => { const d = new THREE.Mesh(new THREE.SphereGeometry(.06, 10, 8), mat.dot); simple.add(d); return d; });
   const simpleFieldArrows = Array.from({ length: 5 }, (_, i) => { const a = arrow(COLORS.field, .025, .75); a.userData.x = (i - 2) * .42; simple.add(a); return a; });
-  const simpleTexts = [label('건전지', { size: .26, color: '#aab4d6' }), label('네오디뮴 자석', { size: .24, color: '#aab4d6' }), label('반만 벗긴 끝', { size: .24, color: '#e8c15a' })];
+  const simpleTexts = [label('건전지', { size: .26, color: '#dfe6ff' }), label('네오디뮴 자석', { size: .24, color: '#dfe6ff' }), label('반만 벗긴 끝', { size: .24, color: '#e8c15a' })];
   simpleTexts[0].position.set(.45, -1.94, .9); simpleTexts[1].position.set(-1.25, -1.05, .7); simpleTexts[2].position.set(1.75, AY + .45, 0);
   simple.add(...simpleTexts);
 
