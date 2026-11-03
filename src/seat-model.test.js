@@ -36,7 +36,7 @@ test('설정이 맞지 않으면 까닭을 알려 줌', () => {
   const base = { rows: 2, cols: 2, blocked: new Set(), fixed: new Map(), students: makeStudents(4) };
   assert.equal(checkSetup(base), '');
   assert.match(checkSetup({ ...base, students: makeStudents(5) }), /자리\(4자리\)가 적어요/);
-  assert.match(checkSetup({ ...base, blocked: new Set([0]), fixed: new Map([[0, 1]]) }), /빈자리/);
+  assert.match(checkSetup({ ...base, blocked: new Set([0]), fixed: new Map([[0, 1]]) }), /막은 자리/);
   assert.match(checkSetup({ ...base, fixed: new Map([[0, 9]]) }), /9번 학생이 명단에 없어요/);
   assert.match(checkSetup({ ...base, fixed: new Map([[0, 1], [1, 1]]) }), /두 자리/);
   assert.throws(() => drawSeats({ ...base, students: makeStudents(5) }), /적어요/);

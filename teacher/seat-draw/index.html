@@ -46,27 +46,34 @@
       </details>
       <div class="sd-actions">
         <button type="button" class="sd-draw" id="sd-draw">자리 뽑기</button>
+        <button type="button" class="sd-btn" id="sd-block" aria-pressed="false">자리 막기</button>
         <button type="button" class="sd-btn" id="sd-flip" aria-pressed="false">교사 시점</button>
+        <button type="button" class="sd-btn" id="sd-sound" aria-pressed="true">소리</button>
         <button type="button" class="sd-btn" id="sd-reset">처음 자리로</button>
         <button type="button" class="sd-btn" id="sd-print">인쇄</button>
       </div>
     </section>
 
-    <p class="sd-status" id="sd-status" role="status" aria-live="polite"></p>
-
-    <section class="sd-room" id="sd-room" aria-label="교실 자리">
-      <div class="sd-board" id="sd-board"><span>칠판</span><i class="sd-desk-t" aria-hidden="true">교탁</i></div>
-      <div class="sd-grid" id="sd-grid"></div>
-    </section>
-    <div class="sd-room-actions">
-      <button type="button" class="sd-btn" id="sd-skip" hidden>바로 보기</button>
-      <button type="button" class="sd-btn" id="sd-all" hidden>모두 공개</button>
+    <div class="sd-stage" id="sd-stage">
+      <p class="sd-status" id="sd-status" role="status" aria-live="polite"></p>
+      <section class="sd-room" id="sd-room" aria-label="교실 자리">
+        <button type="button" class="sd-fs" id="sd-fs" aria-label="전체 화면" title="전체 화면"></button>
+        <div class="sd-board" id="sd-board"><span>칠판</span><i class="sd-desk-t" aria-hidden="true">교탁</i></div>
+        <div class="sd-grid" id="sd-grid"></div>
+        <div class="sd-countdown" id="sd-countdown" aria-hidden="true"></div>
+        <canvas class="sd-fx" id="sd-fx" aria-hidden="true"></canvas>
+      </section>
+      <div class="sd-room-actions">
+        <button type="button" class="sd-draw sd-fs-draw" id="sd-fs-draw">자리 뽑기</button>
+        <button type="button" class="sd-btn" id="sd-skip" hidden>바로 보기</button>
+        <button type="button" class="sd-btn" id="sd-all" hidden>모두 공개</button>
+      </div>
     </div>
 
     <dialog class="gate-dialog sd-dialog" id="sd-dialog" aria-labelledby="sd-dialog-title">
       <form class="gate-body" id="sd-dialog-form" method="dialog">
         <h2 id="sd-dialog-title">자리 설정</h2>
-        <label class="sd-check"><input type="checkbox" id="sd-blocked"> 빈자리로 두기(아무도 앉지 않아요)</label>
+        <label class="sd-check"><input type="checkbox" id="sd-blocked"> 이 자리 막기(아무도 앉지 않아요)</label>
         <label for="sd-fixed">이 자리에 고정할 학생</label>
         <select id="sd-fixed"></select>
         <p class="gate-error" id="sd-dialog-error" role="alert"></p>

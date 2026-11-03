@@ -1,5 +1,5 @@
 // 자리 뽑기(교사용 자료)의 계산: 교실 자리(세로 줄 × 가로 줄)에 학생을 무작위로 앉혀요.
-// - 빈자리(쓰지 않는 자리)에는 아무도 앉히지 않아요.
+// - 막은 자리에는 아무도 앉히지 않아요.
 // - 고정 자리는 그 학생을 먼저 앉히고, 나머지 학생만 섞어요.
 // - 학생보다 자리가 많으면 앞줄부터 채워서 남는 자리는 뒤쪽에 생겨요.
 // 자리 번호는 앞줄(칠판 쪽) 왼쪽부터 0, 1, 2 …예요(교실 앞에서 학생들이 보는 방향 기준).
@@ -20,10 +20,10 @@ export function checkSetup({ rows, cols, blocked, fixed, students }) {
   const ids = new Set(students.map(s => s.id));
   const fixedIds = [...fixed.values()];
   if (!students.length) return '학생이 없어요.';
-  if (students.length > usable) return `학생 ${students.length}명보다 앉을 자리(${usable}자리)가 적어요. 줄을 늘리거나 빈자리를 줄여 주세요.`;
+  if (students.length > usable) return `학생 ${students.length}명보다 앉을 자리(${usable}자리)가 적어요. 줄을 늘리거나 막은 자리를 줄여 주세요.`;
   for (const [seat, id] of fixed) {
     if (seat >= total) return '교실 밖의 고정 자리가 있어요. 자리 설정을 다시 확인해 주세요.';
-    if (blocked.has(seat)) return '빈자리로 둔 곳에 고정한 학생이 있어요.';
+    if (blocked.has(seat)) return '막은 자리에 고정한 학생이 있어요.';
     if (!ids.has(id)) return `고정한 ${id}번 학생이 명단에 없어요.`;
   }
   if (new Set(fixedIds).size !== fixedIds.length) return '한 학생을 두 자리에 고정했어요.';
