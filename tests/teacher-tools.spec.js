@@ -111,3 +111,68 @@ for (const width of [1440, 390]) test(`레이싱 번호 뽑기 화면 ${width}px
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: `/tmp/science-race-${width}.png`, fullPage: true });
 });
+
+async function openSeats(page) {
+  await page.addInitScript(() => sessionStorage.setItem('poe-teacher', 'on'));
+  await page.goto('/teacher/seat-draw/');
+  await expect(page.locator('#gate-dialog')).toHaveCount(0);
+}
+const deskAt = (page, r, c) => page.locator(`.sd-desk[data-r="${r}"][data-c="${c}"]`);
+
+test('자리 뽑기: 빈자리·고정 자리를 지키고 모두 한 번씩 앉으며, 두 자리를 맞바꿀 수 있음', async ({ page }) => {
+  const errors = []; page.on('pageerror', e => errors.push(e.message));
+  await openSeats(page);
+  await expect(page.locator('.sd-desk')).toHaveCount(30);
+  await deskAt(page, 4, 5).click();
+  await page.getByLabel('빈자리로 두기(아무도 앉지 않아요)').check();
+  await page.locator('#sd-dialog-ok').click();
+  await expect(deskAt(page, 4, 5)).toHaveText('빈자리');
+  // 자리 수보다 학생이 많으면 까닭을 알려 줘요.
+  await page.locator('#sd-draw').click();
+  await expect(page.locator('#sd-status')).toContainText('29자리');
+  await page.locator('#sd-count').fill('27'); await page.locator('#sd-count').press('Tab');
+  await deskAt(page, 0, 0).click();
+  await page.getByLabel('이 자리에 고정할 학생').selectOption('7');
+  await page.locator('#sd-dialog-ok').click();
+  await page.locator('#sd-draw').click();
+  await expect(page.locator('#sd-status')).toHaveText('두 자리를 차례로 누르면 서로 바꿔요.', { timeout: 10000 });
+  const seats = await page.evaluate(() => seatDraw.result);
+  expect(seats[0]).toBe(7);
+  expect(seats[29]).toBeNull();
+  expect(seats.filter(Boolean).sort((a, b) => a - b)).toEqual(Array.from({ length: 27 }, (_, i) => i + 1));
+  expect(seats.slice(27, 29)).toEqual([null, null]); // 남는 자리는 뒤쪽
+  const a = seats[1], b = seats[2];
+  await deskAt(page, 0, 1).click(); await deskAt(page, 0, 2).click();
+  await expect(deskAt(page, 0, 1)).toHaveText(String(b));
+  await expect(deskAt(page, 0, 2)).toHaveText(String(a));
+  await page.getByRole('button', { name: '교사 시점' }).click();
+  await expect(page.locator('#sd-room')).toHaveClass(/flipped/);
+  await expect(page.locator('.sd-row').first().locator('.sd-desk').first()).toHaveAttribute('data-r', '4');
+  expect(errors).toEqual([]);
+});
+
+test('자리 뽑기: 이름 명단으로 뽑고, 눌러서 한 자리씩 공개', async ({ page }) => {
+  await openSeats(page);
+  await page.getByText('이름으로 뽑기').click();
+  await page.getByLabel('이름 명단(한 줄에 한 명, 줄 차례가 번호)').fill('김하늘\n이바다\n박산');
+  await page.getByLabel('이름 명단(한 줄에 한 명, 줄 차례가 번호)').press('Tab');
+  await expect(page.locator('#sd-count')).toHaveValue('3');
+  await expect(page.locator('#sd-count')).toBeDisabled();
+  await page.locator('#sd-rows').fill('1'); await page.locator('#sd-rows').press('Tab');
+  await page.locator('#sd-cols').fill('3'); await page.locator('#sd-cols').press('Tab');
+  await page.getByLabel('눌러서 한 자리씩').check();
+  await page.locator('#sd-draw').click();
+  await expect(page.locator('.sd-desk.hidden-card')).toHaveCount(3);
+  await deskAt(page, 0, 1).click();
+  await expect(page.locator('.sd-desk.hidden-card')).toHaveCount(2);
+  await page.getByRole('button', { name: '모두 공개' }).click();
+  await expect(page.locator('.sd-desk.hidden-card')).toHaveCount(0);
+  const names = (await page.locator('.sd-desk small').allInnerTexts()).sort();
+  expect(names).toEqual(['김하늘', '박산', '이바다']);
+});
+
+test('자리 뽑기 화면 390px: 가로로 넘치지 않음', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await openSeats(page);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
