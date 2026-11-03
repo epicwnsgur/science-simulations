@@ -98,11 +98,11 @@ export function createWater3D({ stage, box, reducedMotion }) {
   }
 
   let h = HEIGHTS[1], level = 1, fill = 0, offset = 0, wheelAngle = 0, fanAngle = 0, flash = {}, matchedKey = '';
-  // 이름표: 짝을 찾으면 ‘펌프 = 전지’처럼 바뀌고 짝의 색이 돼요.
+  // 이름표: 짝을 찾으면 ‘펌프 = 전지’처럼 바뀌고 짝의 색이 돼요. 글이 흐리다는 학생 의견으로 크고 진한 바탕에 흰 글씨로 써요.
   const labels = {};
   function setLabel(key, matched) {
     labels[key] && scene.remove(labels[key]);
-    const s = label(NAMES[key][matched ? 1 : 0], { size: .3, color: matched ? '#0a1029' : '#eef1ff', bg: matched ? PAIR_COLORS[key] : '#0a1029cc' });
+    const s = label(NAMES[key][matched ? 1 : 0], { size: .4, color: matched ? '#0a1029' : '#ffffff', bg: matched ? PAIR_COLORS[key] : '#0a1029' });
     labels[key] = s; scene.add(s); placeLabels();
   }
   function placeLabels() {

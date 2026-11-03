@@ -96,6 +96,23 @@ test('과학 낱말: 주요 낱말을 누르면 쉬운 뜻이 나오고, 바깥�
   await expect(page.locator('.review-choice button.term')).toHaveCount(0);
 });
 
+test('과학 낱말: 화면 크기를 줄여도 뜻 풀이가 누른 낱말 바로 위(자리가 없으면 아래)에 붙어서 뜸', async ({ page }) => {
+  for (const zoom of ['0.8', '1', '1.25']) {
+    await page.addInitScript(z => localStorage.setItem('page-zoom', z), zoom);
+    await page.goto('/simulations/ohms-law/');
+    const term = page.locator('#review-panel button.term').last();
+    await term.scrollIntoViewIfNeeded();
+    await page.mouse.wheel(0, 200);
+    await term.click();
+    const t = await term.boundingBox(), p = await page.locator('.term-pop').boundingBox();
+    const gap = p.y + p.height <= t.y + 1 ? t.y - (p.y + p.height) : p.y - (t.y + t.height);
+    expect(gap, `zoom ${zoom}`).toBeGreaterThanOrEqual(-1);
+    expect(gap, `zoom ${zoom}`).toBeLessThan(20);
+    expect(Math.abs(p.x + p.width / 2 - (t.x + t.width / 2)) < p.width / 2 + 2, `zoom ${zoom}`).toBe(true);
+    await page.keyboard.press('Escape');
+  }
+});
+
 test('과학 낱말: 모든 실험의 예상하기·실험 안내·개념 정리에 뜻 풀이 낱말이 있음', async ({ page }) => {
   test.setTimeout(90000); // 여러 실험을 차례로 열어 보는 시험이에요.
   for (const slug of LABS) {

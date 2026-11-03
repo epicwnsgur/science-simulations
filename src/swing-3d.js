@@ -40,7 +40,7 @@ export function createSwing3D({ stage, svg, reducedMotion }) {
   const bend = new THREE.Mesh(new THREE.TorusGeometry((TOP_ARM_Y - BOTTOM_ARM_Y) / 2, ARM_H / 2, 16, 40, Math.PI), bendMat);
   bend.rotation.z = -Math.PI / 2; bend.scale.z = ARM * 2 / ARM_H; bend.position.set(ARM_X1, (TOP_ARM_Y + BOTTOM_ARM_Y) / 2, 0); scene.add(bend);
   const stand = new THREE.Mesh(new THREE.BoxGeometry(1.8, .4, 1), mat.carbon); stand.position.set(1.2, -2.0, 0); scene.add(stand);
-  const magnetLabel = label('말굽자석', { size: .26, color: '#aab4d6' }); magnetLabel.position.set(1.4, -2.0, 1.1); scene.add(magnetLabel);
+  const magnetLabel = label('말굽자석', { size: .26, color: '#dfe6ff' }); magnetLabel.position.set(1.4, -2.0, 1.1); scene.add(magnetLabel);
 
   /* ---------- 그네(코일): 막대에 매달려 z축 둘레로 흔들려요 ---------- */
   const swing = new THREE.Group(); swing.position.y = PIVOT_Y; scene.add(swing);
@@ -71,7 +71,7 @@ export function createSwing3D({ stage, svg, reducedMotion }) {
     g.shadowColor = '#ff4d4d'; g.shadowBlur = 14; g.fillStyle = '#ff4d4d'; g.fillText(`${text} V`, 128, 52);
     screenTex.needsUpdate = true;
   }
-  const supplyLabel = label('전원 장치', { size: .24, color: '#aab4d6' }); supplyLabel.position.set(SUP.x, SUP.y + .65, SUP.z); scene.add(supplyLabel);
+  const supplyLabel = label('전원 장치', { size: .24, color: '#dfe6ff' }); supplyLabel.position.set(SUP.x, SUP.y + .65, SUP.z); scene.add(supplyLabel);
   // 단자: 오른쪽 옆면의 뒤쪽이 (+)극(빨강), 앞쪽이 (−)극
   const terminals = [[1, 0xd83b3b, '+'], [-1, 0x222222, '−']].map(([side, color, text]) => {
     const t = new THREE.Mesh(new THREE.CylinderGeometry(.08, .08, .14, 14), new THREE.MeshStandardMaterial({ color, roughness: .5 }));

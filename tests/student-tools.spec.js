@@ -22,6 +22,7 @@ test('테마 바꾸기: 단추로 어두운 테마 ↔ 밝은 테마(핑크)를 
   await expect(labToggle).toContainText('어두운 테마');
   const ink = await page.evaluate(() => getComputedStyle(document.querySelector('#review-title')).color);
   expect(ink).toBe('rgb(61, 26, 51)');
+  await page.locator('.settings-btn').click(); // 테마 단추는 머리글의 ‘설정’ 안에 있어요.
   await labToggle.click();
   await expect(html).not.toHaveAttribute('data-theme', 'light');
   await page.reload();

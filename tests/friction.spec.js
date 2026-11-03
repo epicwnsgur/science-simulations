@@ -348,6 +348,7 @@ test('글씨 크기 소·중·대: 누르면 바로 바뀌고 다른 실험에�
   await expect(page.locator('[data-text-size="m"]')).toHaveAttribute('aria-pressed', 'true');
   const medium = await size();
   expect(medium).toBeGreaterThanOrEqual(16);
+  await page.locator('.settings-btn').click(); // 글씨 크기는 머리글의 ‘설정’ 안에 있어요.
   await page.locator('[data-text-size="s"]').click();
   expect(await size()).toBeLessThan(medium);
   await page.locator('[data-text-size="l"]').click();

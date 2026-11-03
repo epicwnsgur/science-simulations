@@ -160,3 +160,12 @@
 /* 휴대폰은 두 손가락으로 화면을 키울 수 있어서 화면 크기 단추를 숨기고, 머리글이 두 줄을 넘지 않게 해요. 제목은 낱말 중간에서 끊지 않아요. */
 @media(max-width:600px){.page-zoom{display:none}.text-size button{min-width:44px;padding:0 6px}.memo-head-btn,.theme-toggle{padding:0 12px}.header-right{flex-wrap:wrap;row-gap:8px}}
 .lab-readable h1{word-break:keep-all;text-wrap:balance}
+/* 설정 상자(테마 · 화면 크기 · 글씨 크기): 머리글에는 ‘설정’ 단추 하나만 보이고, 누르면 아래로 펼쳐져요. */
+.settings-menu{position:relative}
+.settings-btn{display:inline-flex;align-items:center;gap:6px;height:44px;padding:0 16px;border-radius:22px;border:1px solid var(--line-2);background:#0a1029;color:#cfe6ff;font-size:14px;font-weight:700;white-space:nowrap;cursor:pointer;list-style:none}
+.settings-btn::-webkit-details-marker{display:none}
+.settings-btn:hover,.settings-menu[open] .settings-btn{border-color:var(--current)}
+.settings-panel{position:absolute;right:0;top:calc(100% + 8px);z-index:80;display:flex;flex-direction:column;align-items:flex-start;gap:12px;padding:16px;border-radius:14px;border:1px solid var(--line-2);background:#0d1430;box-shadow:0 14px 34px #000a}
+.settings-panel .page-zoom{margin-right:0}
+.settings-panel .page-zoom span,.settings-panel .text-size span{min-width:64px}
+@media(max-width:600px){.settings-panel .page-zoom{display:none}}

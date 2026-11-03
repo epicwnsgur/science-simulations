@@ -57,7 +57,7 @@ ${headerHTML()}
 <div class="instruction"><span class="step-icon">↔</span><div><strong id="guide"></strong><p id="subguide"></p></div><label class="toggle"><input type="checkbox" id="show-charges"><span>전하 보기</span></label></div>
 <div id="spoon-controls" class="pair-controls choice-row" role="group" aria-label="가까이 할 물체">${Object.entries(SPOON_OBJECTS).map(([key, o]) => `<button data-spoon="${key}" aria-pressed="${key === spoonKey}">${o.label}</button>`).join('')}</div>
 <div id="scope-controls" class="pair-controls choice-row" hidden><div role="group" aria-label="가까이 할 물체">${Object.entries(SCOPE_OBJECTS).map(([key, o]) => `<button data-scope="${key}" aria-pressed="${key === scopeKey}">${o.label}</button>`).join('')}</div><div role="group" aria-label="문지른 정도">${RUB_LEVELS.map(l => `<button data-rub="${l.id}" aria-pressed="${l.id === rubLevel}">${l.label}</button>`).join('')}</div><p id="rub-note"></p></div>
-<div class="stage night"><div class="stage-label"><span id="stage-state" aria-live="polite"></span></div>
+<div class="stage night"><div class="stage-label"><span class="model-badge" title="실제 모습을 보기 쉽게 나타낸 모형 그림이에요">모형 그림</span><span id="stage-state" aria-live="polite"></span></div>
 <svg id="scene" viewBox="0 0 800 440" aria-label="대전체를 금속 물체에 가까이 하는 실험 공간">
 ${FX_DEFS}
 <defs>
@@ -96,7 +96,7 @@ ${FX_DEFS}
 <g id="charged-object" class="draggable" role="button" tabindex="0" aria-label="대전체, 방향키로 이동"><ellipse id="object-aura" rx="70" ry="70" opacity="0" filter="url(#glow-strong)"/><g class="shape"></g><g class="particles" id="object-particles"></g><text class="object-name" id="object-name" text-anchor="middle"></text></g>
 <g id="fx"></g></svg><div class="stage-hint" id="stage-hint">↔ 물체를 잡고 움직여 보세요</div><div class="toast" id="toast" role="status" aria-live="polite"></div></div>
 <div class="lab-bottom"><div class="legend"><span><b class="positive">+</b> 원자핵의 (+)전하</span><span><b class="negative">−</b> 전자의 (−)전하</span></div><button id="approach-button" class="primary">가까이 가져가기</button><button id="withdraw-button" class="secondary">멀리 하기</button></div>
-<p class="model-note" id="model-note"></p></section>
+<details class="model-note-box"><summary>모형과 실제의 다른 점 보기</summary><p class="model-note" id="model-note"></p></details></section>
 <aside><section class="observation"><div class="section-label"><span>◉</span> 무엇이 달라졌나요?</div><h2 id="note-title"></h2><p id="note-text"></p><div id="charge-cards"></div><div class="discovery" id="discovery"></div></section>
 <section class="mission"></section></aside></div>
 <section class="vocabulary"><div class="vocab-heading"><h2>실험 속 핵심 개념</h2><span>단어를 누르면 뜻을 확인할 수 있어요.</span></div><div class="term-buttons">${terms.map(([t], i) => `<button data-term="${i}" class="${i === 0 ? 'active' : ''}">${t}</button>`).join('')}</div><p id="term-definition"><strong>${terms[0][0]}</strong> ${terms[0][1]}</p></section>

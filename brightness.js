@@ -117,7 +117,7 @@ function meterSVG(xd, lux) {
       <rect x="-30" y="190" width="60" height="96" rx="10" fill="#111528" stroke="#aab4d6" stroke-width="2"/><rect x="-25" y="198" width="50" height="80" rx="5" fill="#0d2240"/>
       <text x="0" y="214" text-anchor="middle" class="app-small">빛의 세기</text><text x="0" y="245" text-anchor="middle" class="app-big">${Math.round(lux)}</text><text x="0" y="262" text-anchor="middle" class="app-small">lx</text>
       <rect x="-18" y="268" width="36" height="5" rx="2" fill="#1d3d66"/><rect x="-18" y="268" width="${Math.min(36, 36 * lux / LUX20).toFixed(1)}" height="5" rx="2" fill="#ffd166"/>
-      <text x="0" y="178" text-anchor="middle" class="obj-name">스마트 기기(밝기 측정 앱)</text></g>`;
+      <text x="40" y="226" class="obj-name">스마트 기기</text><text x="40" y="246" class="obj-name">(밝기 측정 앱)</text></g>`;
   }
   const k = Math.min(1, (20 / dShown) ** 2);
   return `<g transform="translate(${xd} 0)"><rect x="-6" y="${LENS.y - 92}" width="12" height="172" rx="2" fill="#0b0b0f" stroke="#3a3f5c"/><ellipse cx="-6" cy="${LENS.y}" rx="${(3 + r * .08).toFixed(1)}" ry="${Math.min(88, r).toFixed(1)}" fill="url(#spot)" opacity="${(.25 + .75 * k).toFixed(2)}"/>

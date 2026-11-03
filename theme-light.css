@@ -213,7 +213,7 @@ html[data-theme=light] .teacher-dialog label{color:var(--ink)}
 html[data-theme=light] .teacher-dialog input{border:1px solid var(--line-2);background:#fdf4f8;color:var(--ink)}
 html[data-theme=light] .teacher-dialog input:focus{outline:2px solid var(--current)}
 html[data-theme=light] .teacher-error{color:#c20017}
-html[data-theme=light] button.term{border:0;color:inherit;background:var(--mark);box-shadow:inset 0 -2px 0 var(--mark-line)}
+html[data-theme=light] button.term{border:0;color:inherit;background:none;box-shadow:none}
 html[data-theme=light] button.term:hover,html[data-theme=light] button.term[aria-expanded=true]{background:var(--mark-strong);box-shadow:inset 0 -2px 0 var(--mark-line),0 0 0 1px var(--mark-line);color:var(--ink)}
 html[data-theme=light] button.term:focus-visible{outline:2px solid var(--current)}
 html[data-theme=light] .term-pop{background:#f7d0e0;border:1px solid var(--current);box-shadow:0 12px 30px #8131513b;color:var(--ink)}
@@ -233,7 +233,7 @@ html[data-theme=light] .sticky-progress{background:#faf6ec;border:1px solid #ffd
 html[data-theme=light] .sticky-progress.done{background:#edfaf3;border-color:var(--ok);color:var(--ok)!important}
 html[data-theme=light] .pair-area{background:#fceef4;border:1px solid var(--line)}
 html[data-theme=light] .pair-title{color:var(--ink)!important}
-html[data-theme=light] .pair-title small{color:var(--muted)}
+html[data-theme=light] .pair-title small{color:var(--ink)}
 html[data-theme=light] .pair-row button{border:1px solid var(--line-2);background:#fbe8f0;color:#38192d}
 html[data-theme=light] .pair-row button[aria-pressed=true]{border-color:var(--volt);background:#f9f4e7;color:#ad5c00;box-shadow:0 0 0 2px #ffd16655}
 html[data-theme=light] .pair-row button.paired{background:var(--pair);border-color:var(--pair);color:#0a1029}
@@ -280,6 +280,13 @@ html[data-theme=light] .challenge-think h3{color:var(--ink)}
 html[data-theme=light] .challenge-think textarea{border:1px solid var(--line-2);background:#fdf4f8;color:var(--ink)}
 html[data-theme=light] .challenge-think textarea:focus{outline:2px solid var(--current)}
 html[data-theme=light] .challenge .challenge-score{color:var(--volt)}
+@media (min-width:801px){html[data-theme=light] #simulation-mount .workspace>aside{border:1px solid var(--line);background:linear-gradient(180deg,var(--panel-2),var(--panel))}}
+html[data-theme=light] .model-note-box>summary{border:1px solid var(--line-2);color:var(--muted)}
+html[data-theme=light] .model-note-box>summary:hover{border-color:var(--current);color:var(--ink)}
+html[data-theme=light] .next-target{outline:2px solid var(--volt)}
+html[data-theme=light] .model-badge{border:1px solid #b49cff;background:#f5c4d8;color:#38192d}
+html[data-theme=light] .look-ring{border:3px solid #ff9f6b;box-shadow:0 0 0 4px #ff9f6b33,0 0 24px #ff9f6b66}
+html[data-theme=light] .look-ring span{background:#ff9f6b;color:#2a1000}
 /* readable.css */
 html[data-theme=light] .lab-readable{--faint:#8f6683;--muted:#6f4462}
 html[data-theme=light] .lab-now{color:var(--volt)}
@@ -306,6 +313,9 @@ html[data-theme=light] .page-zoom .zoom-value{color:var(--ink)}
 html[data-theme=light] .text-size span{color:var(--muted)}
 html[data-theme=light] .text-size button{border:1px solid var(--line-2);background:#fceef4;color:#38192d}
 html[data-theme=light] .text-size button[aria-pressed=true]{background:var(--volt);border-color:var(--volt);color:#ffffff}
+html[data-theme=light] .settings-btn{border:1px solid var(--line-2);background:#fceef4;color:#38192d}
+html[data-theme=light] .settings-btn:hover,html[data-theme=light] .settings-menu[open] .settings-btn{border-color:var(--current)}
+html[data-theme=light] .settings-panel{border:1px solid var(--line-2);background:#fbe8f0;box-shadow:0 14px 34px #8131513b}
 /* theme-space.css */
 html[data-theme=light] body.lab-space{--bg:#fbf5ff;--panel:#ffffff;--panel-2:#f8f0ff;--line:#e9d5f5;--line-2:#d4b0ea;--current:#c2255c;--current-2:#9c36b5;--volt:#b35c00;--volt-2:#e8590c;--nebula:#9c36b5;--glow-c:0 0 0 3px #d6336c22,0 4px 14px #d6336c26;--glow-v:0 0 0 3px #c2410c22,0 4px 14px #f7670726;--mark:rgba(214,170,255,.42);--mark-strong:rgba(200,150,255,.6);--mark-line:#9c36b5;background:radial-gradient(1200px 520px at 78% -12%,#f1aac740,transparent 62%),
     radial-gradient(900px 480px at -8% 22%,#f2b2cb2e,transparent 60%),

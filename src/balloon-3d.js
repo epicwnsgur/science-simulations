@@ -25,6 +25,9 @@ export function createBalloon3D({ stage, svg, reducedMotion }) {
   const red = new THREE.MeshStandardMaterial({ color: 0xe04848, roughness: .45 });
   const dark = new THREE.MeshStandardMaterial({ color: 0x1c2442, roughness: .7 });
   const pump = new THREE.Group(); pump.position.set(2.6, 0, .6); scene.add(pump);
+  // 이름표(학생 의견: 그림이 무엇인지 모르겠어요): 풍선 이름표는 풍선 크기에 맞춰 왼쪽에 둬요.
+  const balloonName = label('풍선', { size: .34, bg: '#0a1029cc' }); scene.add(balloonName);
+  const pumpName = label('공기 펌프', { size: .3, bg: '#0a1029cc' }); pumpName.position.set(.85, .55, .2); pump.add(pumpName);
   const barrel = new THREE.Mesh(new THREE.CylinderGeometry(.22, .22, 1.8, 28), red); barrel.position.y = .9; pump.add(barrel);
   const foot = new THREE.Mesh(new THREE.BoxGeometry(1.1, .08, .5), dark); foot.position.y = .04; pump.add(foot);
   const rod = new THREE.Mesh(new THREE.CylinderGeometry(.04, .04, 1.2, 12), steel); pump.add(rod);
@@ -62,6 +65,7 @@ export function createBalloon3D({ stage, svg, reducedMotion }) {
         paint: () => {
           body.scale.setScalar(s.r);
           balloon.position.y = .95 + s.r * .98;
+          balloonName.position.set(C[0] - s.r - .6, C[1] + s.r * .4, C[2]);
           neck.position.set(0, balloon.position.y - s.r - .1, 0); knot.position.set(0, neck.position.y - .17, 0);
           // 붙임딱지: 크기는 그대로, 자리는 풍선 표면을 따라가요. 붙일 때는 바깥에서 날아와 붙어요.
           stickers.forEach(({ m, dir }, i) => {

@@ -151,12 +151,14 @@ test('개념 정리: 주요 개념은 포스트잇으로 가려져 있고, 모�
 test('화면 크기: 작게·크게 단추로 페이지 전체를 줄이고 키우며, 다른 실험에서도 기억해요', async ({ page }) => {
   await page.goto(URL_);
   await expect(page.locator('.zoom-value')).toHaveText('100%');
+  await page.locator('.settings-btn').click(); // 화면 크기는 머리글의 ‘설정’ 안에 있어요.
   await page.locator('[data-zoom="-"]').click();
   await page.locator('[data-zoom="-"]').click();
   await expect(page.locator('.zoom-value')).toHaveText('80%');
   expect(await page.evaluate(() => document.documentElement.style.zoom)).toBe('0.8');
   await page.goto('/simulations/star-color/');
   await expect(page.locator('.zoom-value')).toHaveText('80%');
+  await page.locator('.settings-btn').click();
   for (let i = 0; i < 8; i++) if (await page.locator('[data-zoom="+"]').isEnabled()) await page.locator('[data-zoom="+"]').click();
   await expect(page.locator('.zoom-value')).toHaveText('125%');
   await expect(page.locator('[data-zoom="+"]')).toBeDisabled();

@@ -109,7 +109,9 @@ button:focus-visible,a:focus-visible,[tabindex]:focus-visible{outline-color:var(
 .stage .stage-label{color:#9fdcff;font-weight:600;letter-spacing:.3px;z-index:1}
 .stage-hint{color:var(--faint)}
 .stage text{fill:#d8def5}
-.stage .muted{fill:#8f9bc4}
+.stage .muted{fill:#a9b5dc}
+/* 그림 속 작은 이름표(절연 손잡이 등): 흐리지 않게 밝은 글씨로 써요(학생 의견: 글이 흐려요). */
+.stage .object-name.sub-name{font-size:15px;font-weight:600}
 .stage .object-name{fill:#eef1ff}
 
 /* 오른쪽 관찰 정보 */
@@ -460,7 +462,8 @@ body.teacher-on .teacher-btn{color:var(--ink)}
 /* 눌러서 뜻을 보는 낱말: 연한 형광펜으로 글자 아래쪽 절반만 칠한 모습(누르면 진해져요). */
 /* 낱말 전체를 테마 색 형광펜으로 칠하고 아래에 진한 선을 그어 ‘누르면 뜻이 나오는 낱말’임을 알려요.
    형광펜 색은 테마마다 달라요(--mark: 칠, --mark-line: 아랫선, --mark-strong: 누르거나 올렸을 때). 밝은 테마는 theme-light.css가 바꿔요. */
-button.term{display:inline;padding:1px 3px;margin:0;border:0;font:inherit;color:inherit;text-decoration:none;cursor:pointer;border-radius:5px;background:var(--mark);box-shadow:inset 0 -2px 0 var(--mark-line);-webkit-box-decoration-break:clone;box-decoration-break:clone;transition:background-color .2s,color .2s,box-shadow .2s}
+/* 뜻 풀이 낱말: 단추 상자 대신 점선 밑줄로 가볍게 표시해요(학생 의견: 글 곳곳의 단추가 복잡해요). */
+button.term{display:inline;padding:0 1px;margin:0;border:0;font:inherit;color:inherit;text-decoration:underline dotted var(--mark-line);text-decoration-thickness:2px;text-underline-offset:4px;cursor:help;border-radius:4px;background:none;box-shadow:none;-webkit-box-decoration-break:clone;box-decoration-break:clone;transition:background-color .2s,color .2s,box-shadow .2s}
 button.term:hover,button.term[aria-expanded=true]{background:var(--mark-strong);box-shadow:inset 0 -2px 0 var(--mark-line),0 0 0 1px var(--mark-line);color:var(--ink)}
 button.term:focus-visible{outline:2px solid var(--current);outline-offset:2px}
 .term-pop{position:absolute;z-index:70;padding:14px 16px 12px;border-radius:12px;background:#16264f;border:1px solid var(--current);box-shadow:0 12px 30px #000a;color:var(--ink);font-size:16px;line-height:1.65}
@@ -506,7 +509,7 @@ button.term:focus-visible{outline:2px solid var(--current);outline-offset:2px}
 .stage.water-3d #scene{pointer-events:auto}
 .pair-area{display:grid;gap:8px;width:100%;padding:12px 14px;border-radius:10px;background:#0a1029;border:1px solid var(--line)}
 .pair-title{margin:0;color:var(--ink)!important;font-weight:700}
-.pair-title small{display:block;margin-top:2px;font-weight:400;color:var(--muted)}
+.pair-title small{display:block;margin-top:4px;font-size:14px;font-weight:500;color:var(--ink)}
 .pair-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
 .pair-row button{padding:8px 14px;border-radius:999px;border:1px solid var(--line-2);background:#0d1430;color:#cfe6ff;font:inherit;font-weight:700}
 .pair-row button[aria-pressed=true]{border-color:var(--volt);background:#3a2c08;color:#ffe9a6;box-shadow:0 0 0 2px #ffd16655}
@@ -614,3 +617,52 @@ button.term:focus-visible{outline:2px solid var(--current);outline-offset:2px}
 .lab-readable .challenge-item h3,.lab-readable .challenge-think h3{font-size:calc(18px * var(--fs))}
 @media(max-width:600px){.challenge{padding:18px 14px 12px}.challenge-foot button{width:100%}}
 @media print{.challenge{display:none!important}}
+
+/* ---------- 관찰하기 화면 배치(학생 의견: 배치가 정신없어요, 그림이 작아요) ----------
+   큰 화면에서는 실험 순서 안내를 그림 위 한 줄(진행 막대)로 두고, 그림을 화면 가로로 크게 써요.
+   ‘무엇이 달라졌나요?’ 칸은 그림 오른쪽 대신 아래로 내려, 눈이 위에서 아래로만 읽게 해요.
+   지금 할 단계만 펼치고 나머지 단계는 번호(✓, 자물쇠)만 보여요. 단계를 누르면 할 일을 알려 주는 것은 그대로예요. */
+@media(min-width:801px){
+  .observe-body{display:block}
+  .step-guide{position:relative;top:0;max-height:none;margin:0 0 16px;padding:12px 16px;display:flex;flex-wrap:wrap;align-items:center;column-gap:16px;row-gap:10px}
+  .step-guide .guide-kicker{margin:0}
+  .step-guide .guide-progress{flex:1;margin:0}
+  .step-guide .guide-steps{flex:1 0 100%;flex-direction:row;flex-wrap:nowrap;align-items:stretch;gap:6px}
+  .step-guide .guide-steps li{flex:0 0 auto}
+  .step-guide .guide-steps li.current{flex:1 1 auto;min-width:0}
+  .step-guide .guide-steps li:not(.current) .guide-item>div{display:none}
+  .step-guide .guide-steps li:not(.current) .guide-item{padding:10px 8px;height:100%;align-items:center}
+  .step-guide .guide-steps li.current .guide-item{padding:8px 12px}
+  .step-guide.attention li.current::before{content:'▼';left:18px;top:-20px;transform:none;font-size:18px;animation:none}
+  #simulation-mount .workspace{grid-template-columns:minmax(0,1fr)}
+  #simulation-mount .workspace>aside{padding:4px 22px 0;border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,var(--panel-2),var(--panel))}
+  #simulation-mount .observation{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:32px;align-items:start}
+  #simulation-mount .observation>*{grid-column:1}
+  #simulation-mount .observation>#readout{grid-column:2;grid-row:1/span 6;margin-top:18px}
+  #simulation-mount .observation:has(>#readout:empty){grid-template-columns:minmax(0,1fr)}
+  body[data-poe=observe] .lab-page>.breadcrumb,body[data-poe=observe] .lab-page>.intro p{display:none}
+  body[data-poe=observe] .lab-page>.intro{margin:12px 0 14px}
+}
+/* 모형 설명: 접어 두고, 누르면 펼쳐져요. */
+.model-note-box{margin:12px 22px 20px}
+.model-note-box>summary{cursor:pointer;width:max-content;max-width:100%;padding:6px 14px;border-radius:16px;border:1px solid var(--line-2);color:var(--muted);font-size:14px;font-weight:600}
+.model-note-box>summary:hover{border-color:var(--current);color:var(--ink)}
+.model-note-box .model-note{padding:0;margin:10px 0 0}
+/* 다음에 누를 조작: 은은하게 빛나서 무엇을 눌러야 할지 보여요(‘여기를 눌러요’ 표시와 따로 늘 켜져 있어요). */
+.next-target{outline:2px solid var(--volt);outline-offset:3px;animation:next-glow 1.8s ease-in-out infinite}
+@keyframes next-glow{0%,100%{box-shadow:0 0 0 0 #ffd23f00}50%{box-shadow:0 0 0 7px #ffd23f40}}
+@media(prefers-reduced-motion:reduce){.next-target{animation:none}}
+
+/* 무대 왼쪽 위 ‘모형 그림’ 꼬리표: 그림이 실제 모습을 보기 쉽게 나타낸 모형임을 알려요(오개념 막기). */
+.stage-label:has(.model-badge){display:flex;align-items:center;gap:8px}
+.model-badge{display:inline-block;flex:none;padding:1px 8px;border-radius:8px;border:1px solid #b49cff;background:#2a1f5a;color:#e6dcff;font-size:12px;font-weight:700;vertical-align:1px}
+/* 단추를 누른 뒤 바뀐 값: 잠깐 노랗게 빛나요. */
+.just-changed{animation:just-changed 2.4s ease-out}
+@keyframes just-changed{0%,30%{background:#ffd23f55;box-shadow:0 0 0 3px #ffd23f55;color:var(--ink)}100%{background:transparent;box-shadow:none}}
+/* 지금 볼 곳: 단추를 누른 뒤 결과가 나타나는 곳을 3초 동안 가리켜요. */
+.look-ring{position:absolute;z-index:4;pointer-events:none;border:3px solid #ff9f6b;border-radius:16px;opacity:0;transition:opacity .3s;box-shadow:0 0 0 4px #ff9f6b33,0 0 24px #ff9f6b66}
+.look-ring.show{opacity:1;animation:look-pulse 1s ease-in-out 3}
+.look-ring span{position:absolute;left:-3px;top:-32px;white-space:nowrap;padding:3px 12px;border-radius:12px;background:#ff9f6b;color:#2a1000;font-weight:800;font-size:15px}
+.look-ring.below span{top:auto;bottom:-32px}
+@keyframes look-pulse{50%{box-shadow:0 0 0 10px #ff9f6b22,0 0 32px #ff9f6b99}}
+@media(prefers-reduced-motion:reduce){.just-changed,.look-ring.show{animation:none}}

@@ -36,7 +36,7 @@ export function createCoil3D({ stage, svg, reducedMotion, ring, moveProbe, probe
   }
   const north = arrow(0xd8def5, .03); setArrow(north, [BOARD.x1 - .75, .02, BOARD.z0 + 1.1], [0, 0, -1], .7); scene.add(north);
   const northLabel = label('북', { size: .3, color: '#d8def5' }); northLabel.position.set(BOARD.x1 - .75, .3, BOARD.z0 + .2); scene.add(northLabel);
-  const boardLabel = label('투명한 판', { size: .22, color: '#8fa6d8' }); boardLabel.position.set(BOARD.x0 + .9, .2, BOARD.z1 - .25); scene.add(boardLabel);
+  const boardLabel = label('투명한 판', { size: .22, color: '#c9d6ff' }); boardLabel.position.set(BOARD.x0 + .9, .2, BOARD.z1 - .25); scene.add(boardLabel);
 
   /* ---------- 코일과 전원 장치 ---------- */
   const coil = new THREE.Group(); scene.add(coil);
@@ -76,7 +76,7 @@ export function createCoil3D({ stage, svg, reducedMotion, ring, moveProbe, probe
     });
     return [dir, set];
   }));
-  const supplyLabel = label('전원 장치', { size: .24, color: '#aab4d6' }); supplyLabel.position.set(SUP.x, SUP.y + .62, SUP.z); coil.add(supplyLabel);
+  const supplyLabel = label('전원 장치', { size: .24, color: '#dfe6ff' }); supplyLabel.position.set(SUP.x, SUP.y + .62, SUP.z); coil.add(supplyLabel);
   const coilLabel = label('코일', { size: .26, color: '#e8c15a' }); coilLabel.position.set(-.5, COIL3.radius + .25, .55); coil.add(coilLabel);
   // 전류 알갱이: 가운데 감은 줄을 따라 전류의 방향으로 흘러요.
   const dots = Array.from({ length: 16 }, () => { const d = new THREE.Mesh(new THREE.SphereGeometry(.055, 10, 8), mat.dot); coil.add(d); return d; });
@@ -94,7 +94,7 @@ export function createCoil3D({ stage, svg, reducedMotion, ring, moveProbe, probe
     const top = decal(letter, .42); top.rotation.x = -Math.PI / 2; top.position.set(side * .79, MY + .003, 0); magnet.add(top);
     const front = decal(letter, .32); front.position.set(side * .79, MY / 2, MZ / 2 + .003); magnet.add(front);
   }
-  const magnetLabel = label('막대자석', { size: .24, color: '#aab4d6' }); magnetLabel.position.set(0, .05, MZ / 2 + .5); magnet.add(magnetLabel);
+  const magnetLabel = label('막대자석', { size: .24, color: '#dfe6ff' }); magnetLabel.position.set(0, .05, MZ / 2 + .5); magnet.add(magnetLabel);
 
   /* ---------- 나침반 ---------- */
   function compass(r, probe = false) {
@@ -115,7 +115,7 @@ export function createCoil3D({ stage, svg, reducedMotion, ring, moveProbe, probe
   }
   const compasses = ring.map(([x, y]) => { const c = compass(.38); const [X, Z] = toXZ({ x, y }); c.g.position.set(X, 0, Z); return c; });
   const probe = compass(.45, true);
-  const probeLabel = label('끌어서 옮겨요', { size: .2, color: '#ffd166' }); scene.add(probeLabel);
+  const probeLabel = label('나침반 · 끌어서 옮겨요', { size: .22, color: '#ffd166' }); scene.add(probeLabel);
 
   /* ---------- 자기장의 모습 ---------- */
   const lineGroups = new Map();

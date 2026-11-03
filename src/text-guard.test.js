@@ -94,6 +94,9 @@ test('뜻 없는 글: 교사가 보내 준 예시(자음·모음 섞기, 잘 쓰
   // 잘 쓰는 글자로만 마구 쳐도 ‘모르겠어요’ 오타는 글자 수에 세지 않아요.
   assert.match(writingProblem('잘모루갯어요절모루개어요잘모흐겟러노루세료', { min: 20 }), /20자 이상/);
   assert.match(writingProblem('모르겠어요 그냥 모르겠어요 진짜 모르겠어요 몰라요', { min: 20 }), /20자 이상/);
+  // 영어로 쓴 ‘모르겠어요’도 글자 수에 세지 않아요(학생 의견).
+  for (const t of ["i don't know what happened here", 'moreugesseoyo jal moreugesseoyo', 'I dont know. No idea. Not sure at all'])
+    assert.match(writingProblem(t, { min: 20 }), /20자 이상/, t);
   assert.match(writingProblem('결과가 됬어요. 전구에 불이 켜졌다가 꺼졌어요.', { min: 20 }), /‘됬’은 ‘됐’/);
   for (const t of ['아무거나 쓰면 되죠 ㅋㅋㅋ 전구가 켜졌다가 꺼졌어요', '전구가 켜졌다가 꺼졌어요ㅠㅠ 신기했어요 정말로요', '전구가 켜졌다가 꺼졌어요 하하하하 신기했어요 정말로', 'dkssudgktpdy 전구가 켜졌다가 꺼졌어요 신기해요', 'asdf 전구가 켜졌다가 꺼졌어요 신기했어요 정말']) {
     assert.notEqual(writingProblem(t, { min: 20 }), '', t);
@@ -127,6 +130,8 @@ test('자주 쓰는 한글 2,350자(KS X 1001) 목록과 거르기 규칙이 화
   assert.equal(common(server), list);
   const dontKnow = src => src.match(/const DONT_KNOW = (\/.*\/g);/)[1];
   assert.equal(dontKnow(server), dontKnow(client));
+  const dontKnowEn = src => src.match(/const DONT_KNOW_EN = (\/.*\/gi);/)[1];
+  assert.equal(dontKnowEn(server), dontKnowEn(client));
   const body = src => src.match(/function junkProblem\(text\) \{\n([\s\S]*?)\n\}/)[1];
   assert.equal(body(server), body(client));
 });
