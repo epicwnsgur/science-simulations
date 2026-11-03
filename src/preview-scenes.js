@@ -141,7 +141,8 @@ export const SCENES = {
       steps: [
         h => h.pulse(163, 108, 44),
         h => { h.press('switch'); h.text('volt', ['1.0'], 200); h.ask(200, 104, 900); },
-        h => { h.text('volt', ['1.0'], 0); h.text('pl', ['−'], 300); h.text('pr', ['+'], 300); h.pulse(288, 41, 14, 200); h.hide('magnet', 400, 1100); h.show('magnet2', 400, 1100); h.text('volt', ['1.0', '3.0'], 1300); h.ask(200, 104, 2300); },
+        // 하나씩: 전선 바꾸기(전류의 방향) → 되돌리고 자석 뒤집기(자석의 극) → 되돌리고 전압 키우기
+        h => { h.text('volt', ['1.0'], 0); h.text('pl', ['−', '−', '−', '+'], 400); h.text('pr', ['+', '+', '+', '−'], 400); h.pulse(288, 41, 14, 200); h.ask(200, 104, 600); h.hide('magnet', 400, 1300); h.show('magnet2', 400, 1300); h.hide('magnet2', 400, 2500); h.show('magnet', 400, 2500); h.text('volt', ['1.0', '1.0', '1.0', '3.0'], 1000); },
       ],
     },
   },
@@ -265,17 +266,19 @@ export const SCENES = {
     },
   },
   'charles-law': {
-    // 실제 실험(시뮬레이션과 같음): 유리병–실리콘 튜브–피펫, 뜨거운 물이 담긴 비커, 온도 센서. 방울이 움직이는 방향은 ‘?’로만 보여 줘요.
+    // 실제 실험(시뮬레이션과 같음): 먼저 풍선 씌운 플라스크, 그다음 유리병에 피펫을 세워 연결하고 뜨거운 물에 담가요. 풍선과 방울의 변화는 ‘?’로만 보여 줘요.
     main: {
-      svg: `<path d="M90 50 V136 H190 V50" fill="none" stroke="#cfe6f5" stroke-width="2"/><g data-o="hot" class="pv-off"><rect x="91" y="72" width="98" height="63" fill="#ff8a5c" opacity=".35"/></g>
-        <rect x="124" y="92" width="28" height="36" rx="5" fill="#dfeffa22" stroke="#cfe6f5" stroke-width="2"/><path d="M138 92 V40 H230" fill="none" stroke="#9fb3d9" stroke-width="4"/>
-        <rect x="230" y="34" width="70" height="12" rx="3" fill="#dfeffa22" stroke="#cfe6f5"/>${Array.from({ length: 6 }, (_, i) => `<path d="M${238 + i * 11} 46 v4" stroke="#aab4d6"/>`).join('')}
-        <g data-o="drop" class="pv-off"><rect x="290" y="36" width="8" height="8" rx="2" fill="#ff6b9a"/></g>
-        <text x="58" y="70" font-size="12" fill="#ffd166" text-anchor="middle" data-o="temp">온도</text><path d="M70 62 L110 100" stroke="#aab4d6"/>${label(140, 148, '5 mL 유리병', 10)}${label(266, 64, '1 mL 피펫', 10)}${label(212, 30, '실리콘 튜브', 9)}`,
+      svg: `<path d="M30 92 V136 H120 V92" fill="none" stroke="#cfe6f5" stroke-width="2"/><g data-o="bath1" class="pv-off"><rect x="31" y="104" width="88" height="31" fill="#7fc4ff" opacity=".35"/></g>
+        <path d="M58 132 L92 132 L80 100 V82 H70 V100 Z" fill="#dfeffa22" stroke="#cfe6f5" stroke-width="2"/><ellipse cx="75" cy="76" rx="8" ry="7" fill="#ff7aa2"/>${label(75, 148, '풍선 씌운 플라스크', 10)}
+        <path d="M160 60 V136 H260 V60" fill="none" stroke="#cfe6f5" stroke-width="2"/><g data-o="hot" class="pv-off"><rect x="161" y="74" width="98" height="61" fill="#ff8a5c" opacity=".35"/></g>
+        <rect x="196" y="96" width="28" height="34" rx="5" fill="#dfeffa22" stroke="#cfe6f5" stroke-width="2"/><rect x="206" y="14" width="8" height="82" rx="2" fill="#dfeffa22" stroke="#cfe6f5"/>${Array.from({ length: 6 }, (_, i) => `<path d="M214 ${22 + i * 11} h4" stroke="#aab4d6"/>`).join('')}
+        <g data-o="drop" class="pv-off"><rect x="206" y="16" width="8" height="7" rx="2" fill="#ff6b9a"/></g>
+        <text x="292" y="96" font-size="12" fill="#ffd166" text-anchor="middle" data-o="temp">온도</text><path d="M280 100 L250 112" stroke="#aab4d6"/>${label(210, 148, '5 mL 유리병', 10)}${label(258, 62, '1 mL 피펫', 10)}`,
       steps: [
-        h => { h.pulse(138, 40, 16); h.pulse(230, 40, 12, 500); },
-        h => { h.show('hot', 600); h.show('drop', 500, 700); h.pulse(294, 40, 12, 1100); },
-        h => { h.text('temp', ['60 ℃', '50 ℃', '40 ℃', '30 ℃'], 600); h.ask(266, 18, 1900); },
+        h => { h.show('bath1', 600); h.pulse(75, 76, 14, 400); h.ask(96, 70, 1200); },
+        h => { h.show('hot', 600); h.pulse(210, 60, 14, 500); },
+        h => { h.show('hot', 10); h.show('drop', 500); h.pulse(210, 20, 12, 700); },
+        h => { h.show('hot', 10); h.show('drop', 10); h.text('temp', ['60 ℃', '55 ℃', '50 ℃', '45 ℃', '40 ℃'], 500); h.ask(232, 20, 2400); },
       ],
     },
   },
