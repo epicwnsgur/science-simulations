@@ -29,7 +29,7 @@ main.sd-main{max-width:1280px;padding-bottom:60px}
 .sd-status{min-height:26px;margin:0 0 12px;font-size:15px;color:#c9cde0}
 .sd-status.error{color:#ff9a9a;font-weight:700}
 
-.sd-room{display:flex;flex-direction:column;gap:22px;padding:22px clamp(12px,3vw,34px) 30px;border-radius:22px;border:1px solid #3b3424;background:radial-gradient(ellipse at 50% 0,#3a2f22,#1d1812 75%);box-shadow:0 20px 60px #000a,inset 0 0 0 1px #ffffff08;overflow-x:auto}
+.sd-room{display:flex;flex-direction:column;gap:22px;padding:22px clamp(12px,3vw,34px) 30px;border-radius:22px;border:1px solid #3b3424;background:radial-gradient(ellipse at 50% 0,#3a2f22,#1d1812 75%);box-shadow:0 20px 60px #000a,inset 0 0 0 1px #ffffff08;overflow-x:auto;position:relative}
 .sd-room.flipped{flex-direction:column-reverse}
 .sd-board{position:relative;align-self:center;width:min(640px,86%);min-height:58px;display:grid;place-items:center;border-radius:8px;border:6px solid #8a6a43;background:linear-gradient(160deg,#2c4a38,#1b3226);box-shadow:inset 0 0 24px #0008,0 8px 20px #0007;color:#e8efe0;font-family:var(--font-title);font-size:20px;letter-spacing:6px}
 .sd-desk-t{position:absolute;bottom:-34px;left:50%;transform:translateX(-50%);padding:3px 16px;border-radius:6px;background:#6b4f30;color:#f3e3c8;font-style:normal;font-size:12px;letter-spacing:2px;box-shadow:0 4px 10px #0006}
@@ -54,10 +54,45 @@ main.sd-main{max-width:1280px;padding-bottom:60px}
 @keyframes sd-flip{0%{transform:rotateY(90deg) scale(.9);filter:brightness(1.6)}}
 .sd-desk.selected{outline:4px solid #2ee6a6;outline-offset:3px;transform:translateY(-4px)}
 .sd-room-actions{display:flex;justify-content:center;gap:10px;margin-top:14px}
+.sd-fs-draw{display:none}
+/* 막은 자리: X 표시 */
+.sd-desk.blocked:before,.sd-desk.blocked:after{content:'';position:absolute;left:18%;right:18%;top:50%;height:3px;border-radius:2px;background:#c0563f;opacity:.75}
+.sd-desk.blocked:before{transform:rotate(24deg)}
+.sd-desk.blocked:after{transform:rotate(-24deg)}
+.sd-desk.blocked .sd-empty{position:relative;z-index:1;padding:1px 6px;border-radius:6px;background:#2a221bcc}
+.sd-room.blocking .sd-desk{cursor:crosshair}
+.sd-room.blocking .sd-desk:not(.blocked):hover{outline:3px dashed #c0563f;outline-offset:2px}
+
+/* 전체 화면 */
+.sd-fs{position:absolute;top:12px;right:12px;z-index:3;width:44px;height:44px;display:grid;place-items:center;border-radius:12px;border:1px solid #ffffff33;background:#00000066;color:#fff;cursor:pointer}
+.sd-fs:hover{background:#000000a0;border-color:#ffd65a}
+.sd-fs svg{width:24px;height:24px}
+.sd-stage:fullscreen{display:flex;flex-direction:column;gap:12px;padding:2vh 2vw;background:#120e0a;overflow:auto}
+.sd-stage:fullscreen .sd-status{margin:0;text-align:center;font-size:clamp(15px,1.6vw,22px)}
+.sd-stage:fullscreen .sd-room{flex:1;justify-content:center}
+.sd-stage:fullscreen .sd-desk{flex-basis:clamp(80px,11vw,180px);min-height:clamp(64px,10vh,130px)}
+.sd-stage:fullscreen .sd-desk strong{font-size:clamp(26px,3.4vw,52px)}
+.sd-stage:fullscreen .sd-desk small{font-size:clamp(13px,1.4vw,20px)}
+.sd-stage:fullscreen .sd-board{font-size:clamp(20px,2vw,30px);min-height:clamp(52px,7vh,90px)}
+.sd-stage:fullscreen .sd-fs-draw{display:inline-flex}
+.sd-stage:fullscreen .sd-room-actions{margin-top:0}
+
+/* 긴장감: 셋·둘·하나, 흔들리는 책상, 지나가는 조명, 마지막 번쩍임 */
+.sd-countdown{position:absolute;inset:0;z-index:2;display:grid;place-items:center;pointer-events:none;font-family:var(--font-title);font-size:clamp(90px,18vw,240px);color:#ffe27a;text-shadow:0 0 30px #ffb703,0 6px 0 #0008;opacity:0}
+.sd-countdown.show{animation:sd-count 1s ease-out forwards}
+@keyframes sd-count{0%{opacity:0;transform:scale(1.8)}22%{opacity:1;transform:scale(1)}78%{opacity:.9}99%{opacity:0;transform:scale(.7)}}
+.sd-room.tension{box-shadow:0 20px 60px #000a,inset 0 0 120px #000c}
+.sd-room.tension:after{content:'';position:absolute;inset:0;z-index:1;pointer-events:none;background:radial-gradient(circle,#ffe9a838 0,transparent 26%) no-repeat;background-size:200% 200%;animation:sd-sweep 1.4s ease-in-out infinite alternate}
+@keyframes sd-sweep{0%{background-position:0 30%}99%{background-position:100% 70%}}
+.sd-room.tension .sd-desk.spin{animation:sd-shake .16s linear infinite}
+@keyframes sd-shake{0%{transform:translate(0,0) rotate(0)}34%{transform:translate(-1px,1px) rotate(-1.2deg)}67%{transform:translate(1px,-1px) rotate(1.2deg)}}
+.sd-fx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:2}
+.sd-room.flash{animation:sd-flash .9s ease-out}
+@keyframes sd-flash{0%{box-shadow:0 20px 60px #000a,inset 0 0 0 4px #ffe27a,0 0 70px #ffb70388}}
 .sd-dialog select{font-size:17px;padding:10px 12px;border-radius:12px;border:1px solid #4a4560;background:#0e0e18;color:#fff}
 
 @media(max-width:620px){.sd-setup{padding:14px}.sd-field input{width:76px;font-size:19px}.sd-desk{min-width:48px;min-height:60px}.sd-desk.gap{margin-right:12px}.sd-board{font-size:16px}}
-@media(prefers-reduced-motion:reduce){.sd-desk,.sd-desk.pop{transition:none;animation:none}}
+@media(prefers-reduced-motion:reduce){.sd-desk,.sd-desk.pop,.sd-room.tension .sd-desk.spin,.sd-room.tension:after,.sd-room.flash{transition:none;animation:none}}
 
 /* 밝은 테마: 교실 밖의 판만 밝게 */
 html[data-theme=light] .sd-setup{background:#fff;border-color:#f3cfe0;box-shadow:0 10px 30px #d6336c14}
@@ -74,7 +109,7 @@ html[data-theme=light] .sd-dialog select{background:#fff;color:#3d1a33;border-co
 /* 인쇄: 교실 자리만 */
 @media print{
   html:has(body.seat-page),body.seat-page{background:#fff !important}
-  .seat-page .site-header,.sd-head,.sd-setup,.sd-status,.sd-room-actions{display:none !important}
+  .seat-page .site-header,.sd-head,.sd-setup,.sd-status,.sd-room-actions,.sd-fs,.sd-fx{display:none !important}
   .sd-room{box-shadow:none;border:1px solid #999;background:#fff;overflow:visible}
   .sd-board{border-color:#555;background:#eee;color:#000;box-shadow:none}
   .sd-desk{box-shadow:none !important;background:#fff;border:1.5px solid #333;color:#000}

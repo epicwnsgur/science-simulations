@@ -1,12 +1,12 @@
 // 자리 뽑기(교사용 자료): 교실 자리(세로 줄 × 가로 줄)에 학생을 무작위로 앉혀요.
-// 뽑기 전에는 자리를 눌러 빈자리·고정 학생을 정하고, 뽑은 뒤에는 두 자리를 차례로 눌러 맞바꿔요.
+// 뽑기 전에는 자리를 눌러 막은 자리·고정 학생을 정하고(‘자리 막기’를 켜면 누르는 자리마다 바로 막혀요), 뽑은 뒤에는 두 자리를 차례로 눌러 맞바꿔요.
+// ‘차례로 공개’는 5초쯤 긴장감을 줘요: 3·2·1 세는 동안 번호가 섞이고(북소리·조명), 이어서 앞줄부터 한 자리씩 열리고 끝에 꽃가루가 터져요.
 // 계산은 src/seat-model.js(번호를 고르게 섞음, crypto 난수). 이름 명단은 이 화면에만 있고 어디에도 저장하거나 보내지 않아요.
 import './seat-draw.css';
 import { setupTheme } from './src/theme.js';
 import { guardTeacherPage } from './src/teacher-gate.js';
 import { icon } from './src/icons.js';
 import { LIMITS, makeStudents, checkSetup, drawSeats } from './src/seat-model.js';
-import { shuffle } from './src/race-model.js';
 
 setupTheme();
 guardTeacherPage({ home: '../../' });
@@ -14,13 +14,14 @@ guardTeacherPage({ home: '../../' });
 const $ = id => document.getElementById(id);
 const rowsIn = $('sd-rows'), colsIn = $('sd-cols'), countIn = $('sd-count'), pairsIn = $('sd-pairs'), namesIn = $('sd-names-text');
 const grid = $('sd-grid'), room = $('sd-room'), status = $('sd-status'), drawBtn = $('sd-draw'), flipBtn = $('sd-flip'), skipBtn = $('sd-skip'), allBtn = $('sd-all');
+const blockBtn = $('sd-block'), soundBtn = $('sd-sound'), stage = $('sd-stage'), fsBtn = $('sd-fs'), fsDraw = $('sd-fs-draw'), countdown = $('sd-countdown'), fx = $('sd-fx');
 const dialog = $('sd-dialog'), blockedIn = $('sd-blocked'), fixedIn = $('sd-fixed'), dialogError = $('sd-dialog-error');
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 let rows = 5, cols = 6, flipped = false;
 const blocked = new Set(), fixed = new Map(); // 열쇠: "줄,칸"(앞줄 0, 왼쪽 0)
 let phase = 'setup', result = null, revealed = new Set(), selected = -1, spinning = null, timers = [];
-let editing = null, autoReveal = false;
+let editing = null, autoReveal = false, blockMode = false, sound = true;
 
 const key = (r, c) => `${r},${c}`;
 const clampIn = (input, [lo, hi]) => { const v = Math.min(hi, Math.max(lo, Math.round(Number(input.value)) || lo)); input.value = v; return v; };
@@ -36,10 +37,10 @@ function setupMaps() {
 /* ---------- 그리기 ---------- */
 function deskHTML(r, c) {
   const i = seatIndex(r, c), k = key(r, c), where = `앞에서 ${r + 1}째 줄 왼쪽에서 ${c + 1}째 자리`;
-  if (blocked.has(k)) return { cls: 'blocked', html: '<span class="sd-empty">빈자리</span>', aria: `${where}, 빈자리` };
+  if (blocked.has(k)) return { cls: 'blocked', html: '<span class="sd-empty">막은 자리</span>', aria: `${where}, 막은 자리${phase === 'setup' ? ', 누르면 풀려요' : ''}` };
   if (phase === 'setup') {
     const id = fixed.get(k);
-    if (!id) return { cls: '', html: '', aria: `${where}, 설정하려면 누르세요` };
+    if (!id) return { cls: '', html: '', aria: `${where}, ${blockMode ? '누르면 막혀요' : '설정하려면 누르세요'}` };
     const s = studentOf(id);
     return { cls: 'fixed', html: `<span class="sd-lock">${icon('lock')}</span><strong>${id}</strong>${s?.name ? `<small>${s.name}</small>` : ''}`, aria: `${where}, ${s ? label(s) : `${id}번`} 고정` };
   }
@@ -67,7 +68,7 @@ function render() {
 }
 function updateStatus(text) {
   status.textContent = text ?? (
-    phase === 'setup' ? '자리를 누르면 빈자리나 고정 학생을 정할 수 있어요.'
+    phase === 'setup' ? (blockMode ? '막을 자리를 누르세요. 막은 자리를 다시 누르면 풀려요.' : '자리를 누르면 막은 자리나 고정 학생을 정할 수 있어요.')
     : phase === 'drawing' ? '자리를 뽑고 있어요.'
     : autoReveal ? '자리를 공개하고 있어요.'
     : result.some((id, i) => id !== null && !revealed.has(i)) ? '자리를 눌러 한 자리씩 공개해요.'
@@ -76,11 +77,15 @@ function updateStatus(text) {
   status.classList.toggle('error', !!text);
   skipBtn.hidden = !(phase === 'drawing' || autoReveal);
   allBtn.hidden = !(phase === 'result' && !autoReveal && result.some((id, i) => id !== null && !revealed.has(i)));
-  drawBtn.textContent = phase === 'setup' ? '자리 뽑기' : '다시 뽑기';
+  drawBtn.textContent = fsDraw.textContent = phase === 'setup' ? '자리 뽑기' : '다시 뽑기';
+  room.classList.toggle('blocking', phase === 'setup' && blockMode);
 }
 
 /* ---------- 뽑기와 공개 ---------- */
-function clearTimers() { timers.forEach(clearTimeout); timers = []; autoReveal = false; cancelAnimationFrame(spinning); spinning = null; }
+function clearTimers() {
+  timers.forEach(clearTimeout); timers = []; autoReveal = false; cancelAnimationFrame(spinning); spinning = null;
+  room.classList.remove('tension'); countdown.textContent = ''; countdown.className = 'sd-countdown';
+}
 function spinFaces() {
   const ids = students().map(s => s.id);
   const faces = [...grid.querySelectorAll('.sd-spin')];
@@ -102,14 +107,21 @@ function draw() {
   if (revealMode() === 'click') { phase = 'result'; render(); return; }
   if (reduceMotion) { finishReveal(); return; }
   phase = 'drawing'; render();
-  // 섞는 모습을 잠깐 보여 준 뒤 앞줄부터 차례로 공개해요(30자리면 3초쯤).
+  // 0~3초: 3·2·1을 세는 동안 번호가 섞이고 북소리가 점점 커져요. 3~5초: 앞줄부터 한 자리씩 열려요.
+  room.classList.add('tension');
+  drumroll(3);
+  [3, 2, 1].forEach((n, k) => timers.push(setTimeout(() => {
+    countdown.textContent = n; countdown.className = 'sd-countdown';
+    void countdown.offsetWidth; countdown.className = 'sd-countdown show';
+  }, k * 1000)));
   const seats = result.map((id, i) => i).filter(i => result[i] !== null);
-  const step = Math.min(80, 2200 / Math.max(1, seats.length));
+  const step = 2000 / Math.max(1, seats.length);
   timers.push(setTimeout(() => {
     cancelAnimationFrame(spinning); spinning = null;
+    room.classList.remove('tension'); countdown.textContent = ''; countdown.className = 'sd-countdown';
     phase = 'result'; autoReveal = true; render();
-    seats.forEach((i, n) => timers.push(setTimeout(() => reveal(i), n * step)));
-  }, 1000));
+    seats.forEach((i, n) => timers.push(setTimeout(() => { reveal(i); blip(n / seats.length); }, n * step)));
+  }, 3000));
 }
 function reveal(i) {
   revealed.add(i);
@@ -118,7 +130,11 @@ function reveal(i) {
   const d = deskHTML(r, c);
   btn.className = `sd-desk ${d.cls}${btn.classList.contains('gap') ? ' gap' : ''} pop`;
   btn.innerHTML = d.html; btn.setAttribute('aria-label', d.aria);
-  if (!result.some((id, k) => id !== null && !revealed.has(k))) { autoReveal = false; updateStatus(); }
+  if (!result.some((id, k) => id !== null && !revealed.has(k))) {
+    const wasAuto = autoReveal;
+    autoReveal = false; updateStatus();
+    if (wasAuto) celebrate();
+  }
 }
 function finishReveal() {
   clearTimers();
@@ -133,9 +149,10 @@ grid.addEventListener('click', ev => {
   const btn = ev.target.closest('.sd-desk');
   if (!btn) return;
   const r = Number(btn.dataset.r), c = Number(btn.dataset.c), i = seatIndex(r, c);
+  if (phase === 'setup' && blockMode) { toggleBlock(r, c); return; }
   if (phase === 'setup') return openSeat(r, c);
   if (phase !== 'result' || blocked.has(key(r, c))) return;
-  if (result[i] !== null && !revealed.has(i)) return reveal(i);
+  if (result[i] !== null && !revealed.has(i)) { reveal(i); blip(0.5); return; }
   if (autoReveal) return;
   if (result.some((id, k) => id !== null && !revealed.has(k))) return;
   if (selected < 0) { if (result[i] === null) return; selected = i; render(); grid.querySelector(`[data-r="${r}"][data-c="${c}"]`).focus(); return; }
@@ -157,17 +174,97 @@ function openSeat(r, c) {
 }
 $('sd-dialog-form').addEventListener('submit', ev => {
   const id = Number(fixedIn.value);
-  if (blockedIn.checked && id) { ev.preventDefault(); dialogError.textContent = '빈자리에는 학생을 고정할 수 없어요. 둘 중 하나만 골라 주세요.'; return; }
+  if (blockedIn.checked && id) { ev.preventDefault(); dialogError.textContent = '막은 자리에는 학생을 고정할 수 없어요. 둘 중 하나만 골라 주세요.'; return; }
   if (blockedIn.checked) blocked.add(editing); else blocked.delete(editing);
   if (id) fixed.set(editing, id); else fixed.delete(editing);
   render();
 });
 $('sd-dialog-cancel').onclick = () => dialog.close();
 
+/* ---------- 자리 막기 ---------- */
+function toggleBlock(r, c) {
+  const k = key(r, c);
+  if (blocked.has(k)) blocked.delete(k); else { blocked.add(k); fixed.delete(k); }
+  render();
+  grid.querySelector(`[data-r="${r}"][data-c="${c}"]`).focus();
+}
+blockBtn.onclick = () => {
+  if (phase !== 'setup') resetToSetup();
+  blockMode = !blockMode;
+  blockBtn.setAttribute('aria-pressed', String(blockMode));
+  render();
+};
+
+/* ---------- 전체 화면 ---------- */
+function renderFs() {
+  const on = document.fullscreenElement === stage;
+  fsBtn.innerHTML = icon(on ? 'shrink' : 'expand');
+  fsBtn.setAttribute('aria-label', on ? '전체 화면 끝내기' : '전체 화면');
+  fsBtn.title = on ? '전체 화면 끝내기' : '전체 화면';
+}
+fsBtn.hidden = !document.fullscreenEnabled; // 전체 화면을 쓸 수 없는 기기(아이폰 등)에서는 단추를 숨겨요.
+fsBtn.onclick = () => { if (document.fullscreenElement) document.exitFullscreen(); else stage.requestFullscreen().catch(() => {}); };
+document.addEventListener('fullscreenchange', renderFs);
+renderFs();
+
+/* ---------- 소리(Web Audio로 직접 만들어요) ---------- */
+let audio = null;
+function ctx() {
+  if (!sound) return null;
+  try { audio ??= new (window.AudioContext || window.webkitAudioContext)(); if (audio.state === 'suspended') audio.resume(); } catch { audio = null; }
+  return audio;
+}
+function noise(at, dur, vol, freq) {
+  const a = ctx(); if (!a) return;
+  const buf = a.createBuffer(1, Math.floor(a.sampleRate * dur), a.sampleRate), data = buf.getChannelData(0);
+  for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
+  const src = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain();
+  f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = 0.8; g.gain.value = vol;
+  src.buffer = buf; src.connect(f).connect(g).connect(a.destination); src.start(a.currentTime + at);
+}
+function tone(at, freq, dur, vol = 0.06, type = 'triangle') {
+  const a = ctx(); if (!a) return;
+  const o = a.createOscillator(), g = a.createGain(), t = a.currentTime + at;
+  o.type = type; o.frequency.setValueAtTime(freq, t);
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t + dur + 0.02);
+}
+// 북소리: 점점 빠르고 커져요.
+function drumroll(seconds) {
+  if (!ctx()) return;
+  for (let t = 0; t < seconds; ) { const k = t / seconds; noise(t, 0.05, 0.05 + 0.12 * k, 180 + 120 * k); t += 0.09 - 0.05 * k; }
+  [0, 1, 2].forEach(n => tone(n, 330 + n * 110, 0.18, 0.07, 'square'));
+}
+const blip = k => tone(0, 520 + 700 * k, 0.07, 0.035);
+soundBtn.onclick = () => { sound = !sound; soundBtn.setAttribute('aria-pressed', String(sound)); };
+
+/* ---------- 마지막: 심벌과 꽃가루 ---------- */
+const COLORS = ['#ffd65a', '#ff5d8f', '#2ec4ff', '#7cff4f', '#b388ff', '#ff8a3d'];
+function celebrate() {
+  noise(0, 1.2, 0.12, 5000); tone(0, 784, 0.4); tone(0.12, 1046, 0.5);
+  room.classList.remove('flash'); void room.offsetWidth; room.classList.add('flash');
+  if (reduceMotion) return;
+  const dpr = Math.min(2, devicePixelRatio || 1), w = (fx.width = room.clientWidth * dpr), h = (fx.height = room.clientHeight * dpr), k = fx.getContext('2d');
+  const bits = Array.from({ length: 160 }, (_, i) => {
+    const left = i % 2 === 0, a = (left ? -1 : 1) * (0.5 + Math.random() * 0.9);
+    return { x: left ? 0 : w, y: h * 0.9, vx: Math.sin(Math.abs(a)) * (left ? 1 : -1) * (6 + Math.random() * 9) * dpr, vy: -(9 + Math.random() * 9) * dpr, r: Math.random() * 6, vr: (Math.random() - 0.5) * 0.4, s: (5 + Math.random() * 5) * dpr, c: COLORS[i % COLORS.length] };
+  });
+  const t0 = performance.now();
+  (function tick(now) {
+    k.clearRect(0, 0, w, h);
+    const fade = Math.max(0, 1 - (now - t0 - 1600) / 900);
+    for (const b of bits) {
+      b.vy += 0.35 * dpr; b.vx *= 0.99; b.x += b.vx; b.y += b.vy; b.r += b.vr;
+      k.save(); k.globalAlpha = fade; k.translate(b.x, b.y); k.rotate(b.r); k.fillStyle = b.c; k.fillRect(-b.s / 2, -b.s / 4, b.s, b.s / 2); k.restore();
+    }
+    if (fade > 0 && phase === 'result') requestAnimationFrame(tick); else k.clearRect(0, 0, w, h);
+  })(t0);
+}
+
 /* ---------- 설정 바꾸기 ---------- */
 function onShapeChange() {
   rows = clampIn(rowsIn, LIMITS.rows); cols = clampIn(colsIn, LIMITS.cols);
-  // 교실 밖으로 나간 빈자리·고정 자리는 지워요.
+  // 교실 밖으로 나간 막은 자리·고정 자리는 지워요.
   for (const k of [...blocked]) { const [r, c] = k.split(',').map(Number); if (r >= rows || c >= cols) blocked.delete(k); }
   for (const k of [...fixed.keys()]) { const [r, c] = k.split(',').map(Number); if (r >= rows || c >= cols) fixed.delete(k); }
   resetToSetup();
@@ -186,6 +283,7 @@ countIn.addEventListener('change', onStudentsChange);
 namesIn.addEventListener('change', onStudentsChange);
 pairsIn.addEventListener('change', render);
 drawBtn.onclick = draw;
+fsDraw.onclick = draw;
 skipBtn.onclick = finishReveal;
 allBtn.onclick = finishReveal;
 $('sd-reset').onclick = resetToSetup;

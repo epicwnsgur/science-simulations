@@ -119,14 +119,14 @@ async function openSeats(page) {
 }
 const deskAt = (page, r, c) => page.locator(`.sd-desk[data-r="${r}"][data-c="${c}"]`);
 
-test('자리 뽑기: 빈자리·고정 자리를 지키고 모두 한 번씩 앉으며, 두 자리를 맞바꿀 수 있음', async ({ page }) => {
+test('자리 뽑기: 막은 자리·고정 자리를 지키고 모두 한 번씩 앉으며, 두 자리를 맞바꿀 수 있음', async ({ page }) => {
   const errors = []; page.on('pageerror', e => errors.push(e.message));
   await openSeats(page);
   await expect(page.locator('.sd-desk')).toHaveCount(30);
   await deskAt(page, 4, 5).click();
-  await page.getByLabel('빈자리로 두기(아무도 앉지 않아요)').check();
+  await page.getByLabel('이 자리 막기(아무도 앉지 않아요)').check();
   await page.locator('#sd-dialog-ok').click();
-  await expect(deskAt(page, 4, 5)).toHaveText('빈자리');
+  await expect(deskAt(page, 4, 5)).toHaveText('막은 자리');
   // 자리 수보다 학생이 많으면 까닭을 알려 줘요.
   await page.locator('#sd-draw').click();
   await expect(page.locator('#sd-status')).toContainText('29자리');
@@ -134,8 +134,14 @@ test('자리 뽑기: 빈자리·고정 자리를 지키고 모두 한 번씩 앉
   await deskAt(page, 0, 0).click();
   await page.getByLabel('이 자리에 고정할 학생').selectOption('7');
   await page.locator('#sd-dialog-ok').click();
+  // 차례로 공개는 5초쯤 걸려요(3·2·1 세기 3초 + 한 자리씩 공개 2초).
+  await page.evaluate(() => { window.__t0 = performance.now(); });
   await page.locator('#sd-draw').click();
+  await expect(page.locator('#sd-countdown')).toHaveText(/[321]/);
   await expect(page.locator('#sd-status')).toHaveText('두 자리를 차례로 누르면 서로 바꿔요.', { timeout: 10000 });
+  const took = await page.evaluate(() => performance.now() - window.__t0);
+  expect(took).toBeGreaterThan(4500);
+  expect(took).toBeLessThan(7000);
   const seats = await page.evaluate(() => seatDraw.result);
   expect(seats[0]).toBe(7);
   expect(seats[29]).toBeNull();
@@ -175,4 +181,36 @@ test('자리 뽑기 화면 390px: 가로로 넘치지 않음', async ({ page }) 
   await page.setViewportSize({ width: 390, height: 844 });
   await openSeats(page);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+
+test('자리 뽑기: 자리 막기를 켜면 누르는 자리마다 바로 막히고, 다시 누르면 풀림', async ({ page }) => {
+  await openSeats(page);
+  await page.getByRole('button', { name: '자리 막기' }).click();
+  await expect(page.getByRole('button', { name: '자리 막기' })).toHaveAttribute('aria-pressed', 'true');
+  for (const [r, c] of [[0, 0], [2, 3], [4, 5]]) await deskAt(page, r, c).click();
+  await expect(page.locator('#sd-dialog')).not.toBeVisible();
+  await expect(page.locator('.sd-desk.blocked')).toHaveCount(3);
+  await deskAt(page, 2, 3).click();
+  await expect(page.locator('.sd-desk.blocked')).toHaveCount(2);
+  await page.getByRole('button', { name: '자리 막기' }).click();
+  await page.locator('#sd-count').fill('28'); await page.locator('#sd-count').press('Tab');
+  await page.getByLabel('눌러서 한 자리씩').check();
+  await page.locator('#sd-draw').click();
+  const seats = await page.evaluate(() => seatDraw.result);
+  expect(seats[0]).toBeNull();
+  expect(seats[29]).toBeNull();
+  expect(seats.filter(Boolean)).toHaveLength(28);
+});
+
+test('자리 뽑기: 전체 화면 단추로 교실만 크게 보고 다시 돌아옴', async ({ page }) => {
+  await openSeats(page);
+  const fs = page.locator('#sd-fs');
+  await expect(fs).toHaveAttribute('aria-label', '전체 화면');
+  await fs.click();
+  await expect.poll(() => page.evaluate(() => document.fullscreenElement?.id)).toBe('sd-stage');
+  await expect(fs).toHaveAttribute('aria-label', '전체 화면 끝내기');
+  await expect(page.locator('#sd-fs-draw')).toBeVisible();
+  await fs.click();
+  await expect.poll(() => page.evaluate(() => document.fullscreenElement)).toBeNull();
+  await expect(page.locator('#sd-fs-draw')).toBeHidden();
 });
