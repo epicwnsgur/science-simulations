@@ -56,6 +56,7 @@ const scene = `
   ${['b', 'a'].map(k => { const P = k === 'a' ? A : B; return `<g id="plate-${k}">
     <rect x="${P.x - 7}" y="196" width="14" height="110" rx="6" fill="url(#cur-handle)" stroke="#bfe6ff" stroke-width="1"/><circle cx="${P.x}" cy="196" r="11" fill="url(#cur-handle)" stroke="#bfe6ff"/>
     ${k === 'a' ? `<text class="object-name sub-name" x="${P.x - 14}" y="240" text-anchor="end" font-size="12">절연 손잡이</text>` : ''}
+    <text class="plate-hint" x="${P.x}" y="178" text-anchor="middle" font-size="13" font-weight="700" style="fill:#ffd166" opacity="0">↓ 끌어서 내려놓기</text>
     <text class="object-name" x="${k === 'a' ? P.x - 108 : P.x + 108}" y="${P.y + 6}" text-anchor="${k === 'a' ? 'end' : 'start'}">알루미늄 접시</text>
     <ellipse cx="${P.x}" cy="${P.y + 3}" rx="100" ry="23" fill="#000" opacity=".2"/>
     <ellipse cx="${P.x}" cy="${P.y}" rx="98" ry="22" fill="url(#cur-alu)" stroke="#f4f7fa" stroke-width="2"/>
@@ -74,6 +75,9 @@ const scene = `
     </g>
     <path id="lead-b" stroke="#d8dde3" stroke-width="2.5" fill="none"/>
     <circle id="lead-tip" r="4" fill="#eef2f6"/>
+    <circle id="lead-tip-ring" r="13" fill="none" stroke="#ffd166" stroke-width="2.5" stroke-dasharray="5 4" opacity="0"/>
+    <text id="tip-hint" font-size="13" font-weight="700" text-anchor="start" style="fill:#ffd166" opacity="0">끝을 끌어 오른쪽 접시에 대요</text>
+    <circle id="lead-tip-hit" r="20" fill="#ffffff" fill-opacity="0" style="cursor:grab" role="button" tabindex="0" aria-label="네온전구 끝, 끌어서 다른 접시에 대요"/>
     <text class="object-name" x="${BULB.x}" y="${BULB.y - 30}" text-anchor="middle">네온전구</text>` : ''}
   </g>`; }).join('')}
   <path id="discharge-path" fill="none" stroke="none" d="M${A.x} ${A.y - 6} L318 312 C334 266 352 228 ${BULB.x - 30} ${BULB.y} L${BULB.x + 30} ${BULB.y} C${BULB.x + 50} ${BULB.y + 4} ${TIP_TOUCH.x - 10} ${TIP_TOUCH.y - 30} ${TIP_TOUCH.x} ${TIP_TOUCH.y} L${B.x} ${B.y - 6}"/>
@@ -87,17 +91,13 @@ const scene = `
   <path id="wire" d="M180 372 H60 V110 H360 V372 H240" stroke="#d98c45" stroke-width="7" fill="none" stroke-linejoin="round" opacity=".7"/>
   <g id="ions"></g>
   <g id="battery">
-    <rect x="172" y="356" width="76" height="32" rx="7" fill="#1b2136" stroke="#5e6a92"/>
-    <g id="cell">
-      <rect x="182" y="361" width="50" height="22" rx="4" fill="url(#cur-cell-dark)"/>
-      <rect x="182" y="361" width="16" height="22" rx="3" fill="url(#cur-cell)"/>
-      <rect x="232" y="366" width="5" height="12" rx="1.5" fill="url(#cur-screw)"/>
-      <text id="cell-volt" x="214" y="376" text-anchor="middle" font-size="9" font-weight="700" style="fill:#e8edf8">1.5 V</text>
-      <path d="M186 364 h44" stroke="#fff" stroke-width="1.5" opacity=".35"/>
-    </g>
-    ${pole(162, 372, '−', { id: 'cell-minus' })}${pole(260, 372, '+', { id: 'cell-plus' })}
+    <rect id="slot-box" x="160" y="354" width="100" height="36" rx="8" fill="#1b2136" stroke="#5e6a92"/>
+    <path id="bridge" d="M160 372 H260" stroke="#d98c45" stroke-width="7" opacity=".7"/>
+    <g id="cell"></g>
+    ${pole(148, 372, '−', { id: 'cell-minus' })}${pole(272, 372, '+', { id: 'cell-plus' })}
   </g>
-  <path id="bridge" d="M180 372 H240" stroke="#d98c45" stroke-width="7" opacity=".7"/>
+  <!-- 전지 상자: 여기 있는 전지를 끌어다 아래 전지 자리에 끼워요(교사 의견: 단추로만 조작하면 흥미가 떨어져요). -->
+  <g id="cell-tray"><rect x="250" y="128" width="98" height="96" rx="10" fill="#0f1730" stroke="#5e6a92" stroke-dasharray="5 4"/><text x="299" y="146" text-anchor="middle" font-size="12" style="fill:#aab4d6">전지 상자</text><g id="tray-cells"></g></g>
   <text class="muted" x="210" y="410" text-anchor="middle" font-size="12" id="battery-label">전지</text>
   <g id="bulb">
     <circle id="bulb-glow" cx="210" cy="78" r="66" fill="url(#bulb-light)" opacity="0"/>
@@ -112,7 +112,7 @@ const scene = `
   <text class="muted" x="250" y="96" font-size="12">전구</text>
   <g id="electron-layer"></g>
   <g id="direction" opacity="0"><path d="M92 320 V170" stroke="#5cc8ff" stroke-width="4" marker-end="url(#arrow-head)"/><path d="M118 170 V320" stroke="#ff9f43" stroke-width="4" marker-end="url(#arrow-head)"/><text x="136" y="236" font-size="13" fill="#9fdcff">↑ 전자의 이동 방향</text><text x="136" y="258" font-size="13" fill="#ffc48a">↓ 전류의 방향</text></g>
-  <text id="bulb-count" x="210" y="300" text-anchor="middle" font-size="12" class="muted"></text>
+  <text id="bulb-count" x="236" y="282" text-anchor="middle" font-size="12" class="muted"></text><text id="bulb-count2" x="236" y="299" text-anchor="middle" font-size="12" class="muted"></text><text id="bulb-count3" x="236" y="316" text-anchor="middle" font-size="12" class="muted"></text>
   <!-- 수로 모형(2D, 3D 화면을 쓸 수 없을 때): 관 속을 물이 돌아요. 펌프 → (높은 곳) → 물레방아 → (낮은 곳) → 펌프 -->
   <g id="water-2d">
   <path d="M450 250 A150 105 0 0 1 750 250 A150 105 0 0 1 450 250" stroke="#4a5f8a" stroke-width="40" fill="none" opacity=".9"/>
@@ -138,6 +138,7 @@ const scene = `
   <text class="muted" x="750" y="318" text-anchor="middle" font-size="12">물레방아</text>
   </g>
   <g id="pair-marks"></g>
+  <g id="cell-ghost" pointer-events="none"></g>
 </g>`;
 
 const lab = buildLab({
@@ -183,7 +184,7 @@ function choosePair(side, key) {
   const pair = pairOf(key);
   if (matched.has(pair[2])) return;
   if (side === 'left') { pick = key; renderControls(); return; }
-  if (!pick) { toast('먼저 왼쪽(전기 회로)에서 하나를 골라요'); return; }
+  if (!pick) { toast('먼저 위 줄(전기 회로)에서 하나를 골라요'); return; }
   const left = pairOf(pick);
   if (left[2] === key) {
     matched.add(key); justMatched = key; pick = null;
@@ -197,7 +198,7 @@ function choosePair(side, key) {
 }
 // 찾은 짝을 그림에 표시해요(전기 회로 쪽 + 3D를 쓸 수 없을 때의 2D 수로 모형 쪽).
 const MARKS = {
-  pump: { circuit: [210, 372, 46, 24], tag: [210, 334], water: [450, 250, 48, 44] },
+  pump: { circuit: [210, 372, 70, 26], tag: [210, 334], water: [450, 250, 48, 44] },
   channel: { circuit: [60, 240, 16, 120], tag: [132, 240], water: [600, 148, 120, 22] },
   wheel: { circuit: [210, 80, 44, 46], tag: [318, 70], water: [750, 250, 62, 62] },
   flow: { circuit: [360, 240, 16, 110], tag: [288, 200], water: [600, 352, 120, 22] },
@@ -231,8 +232,8 @@ function applyWaterView() {
 const U_IN = (120 + 262 + (188 - 60)) / WIRE_LEN, U_OUT = (120 + 262 + (232 - 60)) / WIRE_LEN;
 
 /* ---------- 네온전구 ---------- */
-function plateOffset() { return placed ? 0 : -130; }
-function tipPoint() { return touching ? TIP_TOUCH : TIP_FREE; }
+function plateOffset() { return plateDrag ? plateDrag.off : placed ? 0 : -130; }
+function tipPoint() { return tipDrag?.moved ? tipDrag.p : touching ? TIP_TOUCH : TIP_FREE; }
 function chargeTokens() {
   // 대전된 만큼 남는 전하만 나타냅니다. 마찰 후 플라스틱 접시 쪽은 (−), 털가죽 쪽은 (+)전하를 띱니다.
   if (!show) return '';
@@ -252,6 +253,13 @@ function paintNeon(now) {
   $('#plate-b').setAttribute('transform', `translate(0 ${off})`);
   $('#lead-b').setAttribute('d', `M${BULB.x + 34} ${BULB.y} C${BULB.x + 50} ${BULB.y + 4} ${tip.x - 10} ${tip.y - 30} ${tip.x} ${tip.y}`);
   $('#lead-tip').setAttribute('cx', tip.x); $('#lead-tip').setAttribute('cy', tip.y);
+  // 끌 수 있는 곳을 알려 줘요: 접시를 내려놓기 전에는 손잡이 위 ‘↓ 끌어서 내려놓기’, 내려놓은 뒤에는 네온전구 끝의 노란 점선 고리.
+  const wantTip = placed && !touching && !tipDrag && !plateDrag;
+  ['#lead-tip-ring', '#lead-tip-hit'].forEach(sel => { $(sel).setAttribute('cx', tip.x); $(sel).setAttribute('cy', tip.y); });
+  $('#lead-tip-ring').setAttribute('opacity', wantTip ? (.55 + .45 * Math.sin(now / 260)).toFixed(2) : 0);
+  $('#tip-hint').setAttribute('x', tip.x + 20); $('#tip-hint').setAttribute('y', tip.y - 18);
+  $('#tip-hint').setAttribute('opacity', wantTip && !seen.lit ? 1 : 0);
+  $$('.plate-hint').forEach(t => t.setAttribute('opacity', !placed && !plateDrag && rubs >= 1 ? 1 : 0));
   const furShift = motion?.kind === 'rub' ? Math.sin(Math.max(0, Math.min(1, (now - motion.start) / motion.duration)) * Math.PI) * -(B.x - A.x - 40) : 0;
   $('#fur').setAttribute('transform', `translate(${furShift} ${furShift ? -18 : 0})`);
   $('#neon-gas').setAttribute('opacity', (flash * .95).toFixed(2));
@@ -366,11 +374,218 @@ function stepCircuit(now, dt) {
   $('#filament').setAttribute('filter', bulbLevel > .3 ? 'url(#glow)' : '');
   $('#direction').setAttribute('opacity', show && battery ? 1 : 0);
   $('#ions').style.display = show ? '' : 'none';
-  ['#cell', '#cell-minus', '#cell-plus'].forEach(s => $(s).style.display = battery ? '' : 'none');
+  ['#cell-minus', '#cell-plus'].forEach(s => $(s).style.display = battery ? '' : 'none');
   $('#bridge').style.display = battery ? 'none' : '';
-  setText('#battery-label', battery ? (cells === 2 ? '전지 2개 연결(3 V)' : '전지 1개 연결(1.5 V)') : '전지가 없는 회로');
-  setText('#cell-volt', cells === 2 ? '3 V' : '1.5 V');
-  setText('#bulb-count', battery ? `전구로 들어간 전자 ${inCount} · 나온 전자 ${outCount} · 전구를 지나는 중 ${inCount - outCount}` : '');
+  setText('#battery-label', battery ? (cells === 2 ? '전지 2개 연결(3 V)' : '전지 1개 연결(1.5 V)') : '전지가 없는 회로 · 전지를 끌어다 끼워 보세요');
+  // 전구로 들어간 전자와 나온 전자를 세 줄로 나눠 써요(한 줄로 쓰면 방향 화살표 글자와 겹쳤어요).
+  setText('#bulb-count', battery ? `전구로 들어간 전자 ${inCount}` : '');
+  setText('#bulb-count2', battery ? `전구에서 나온 전자 ${outCount}` : '');
+  setText('#bulb-count3', battery ? `전구를 지나는 중 ${inCount - outCount}` : '');
+}
+
+/* ---------- 끌어서 조작하기 ----------
+   교사 의견: 단추로만 조작하니 학생들의 흥미가 떨어져요. 그래서 실제 실험처럼 손으로 옮기는 조작을 더했어요(단추로도 그대로 할 수 있어요).
+   네온전구: 알루미늄 접시를 끌어 내려놓고, 네온전구 끝을 끌어 오른쪽 접시에 대요.
+   전기 회로: 전지 상자의 전지를 끌어 전지 자리에 끼우고(끌어내면 빠져요), ‘펌프 세기’ 손잡이를 돌려요.
+   짝 찾기: 위(전기 회로)의 낱말을 끌어 아래(수로 모형)의 닮은 낱말에 놓으면 선으로 이어져요. */
+const svgEl = $('#scene');
+const svgPt = e => new DOMPoint(e.clientX, e.clientY).matrixTransform(svgEl.getScreenCTM().inverse());
+let plateDrag = null, tipDrag = null, cellDrag = null, pairDrag = null, dialDrag = null, suppressPairClick = false;
+const nearPlateB = q => Math.hypot(q.x - TIP_TOUCH.x, q.y - TIP_TOUCH.y) < 34 || ((q.x - B.x) / 100) ** 2 + ((q.y - B.y) / 28) ** 2 <= 1;
+function setTouch(on) { if (on !== touching) touch(); }
+
+// 네온전구 쪽: 접시 끌기, 네온전구 끝 끌기
+svgEl.addEventListener('pointerdown', e => {
+  if (mode !== 'neon') return;
+  const p = svgPt(e);
+  if (e.target.closest('#lead-tip-hit')) {
+    e.preventDefault();
+    if (!placed) { toast('먼저 알루미늄 접시를 끌어 내려놓아요'); return; }
+    tipDrag = { p: { ...tipPoint() }, sx: p.x, sy: p.y, moved: false };
+    svgEl.setPointerCapture?.(e.pointerId);
+  } else if (e.target.closest('#plate-a, #plate-b') && !motion) {
+    e.preventDefault();
+    plateDrag = { y0: p.y, off0: plateOffset(), off: plateOffset(), moved: false };
+    svgEl.setPointerCapture?.(e.pointerId);
+  }
+});
+svgEl.addEventListener('pointermove', e => {
+  if (mode !== 'neon' || (!tipDrag && !plateDrag)) return;
+  const p = svgPt(e);
+  if (plateDrag) {
+    plateDrag.off = Math.max(-130, Math.min(0, plateDrag.off0 + p.y - plateDrag.y0));
+    if (Math.abs(p.y - plateDrag.y0) > 4) plateDrag.moved = true;
+    return;
+  }
+  if (!tipDrag.moved && Math.hypot(p.x - tipDrag.sx, p.y - tipDrag.sy) < 5) return;
+  tipDrag.moved = true;
+  const off = plateOffset(), q = { x: Math.max(380, Math.min(700, p.x)), y: Math.max(150, Math.min(340, p.y - off)) };
+  // 닿아 있던 끝을 접시에서 멀리 떼면 ‘네온전구 떼기’와 같아요.
+  if (touching && !nearPlateB(q) && Math.hypot(q.x - TIP_TOUCH.x, q.y - TIP_TOUCH.y) > 50) setTouch(false);
+  tipDrag.p = q;
+  // 끝이 오른쪽 접시에 닿는 순간 전하가 이동해요(실제처럼 닿을 때 바로 켜져요).
+  if (!touching && nearPlateB(q)) { tipDrag = null; setTouch(true); }
+});
+function endNeonDrag() {
+  if (plateDrag) {
+    const d = plateDrag; plateDrag = null;
+    const next = d.moved ? d.off > -65 : placed;
+    if (next !== placed) { placed = next; touching = false; if (placed) toast(rubs ? '알루미늄 접시를 내려놓았어요. 이제 네온전구 끝을 끌어 오른쪽 접시에 대 보세요' : '알루미늄 접시를 내려놓았어요. 그런데 아직 문지르지 않았어요'); }
+    renderControls();
+  }
+  if (tipDrag) { tipDrag = null; renderControls(); }
+}
+svgEl.addEventListener('pointerup', endNeonDrag);
+svgEl.addEventListener('pointercancel', endNeonDrag);
+$('#lead-tip-hit').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); touch(); } });
+
+// 전기 회로 쪽: 전지 끼우기·빼기
+const cellsIn = () => (battery ? cells : 0);
+function setCells(n) {
+  n = Math.max(0, Math.min(2, n));
+  if (n === cellsIn()) return;
+  if (n === 0) battery = false; else { battery = true; cells = n; }
+  batteryTime = 0;
+  renderControls();
+}
+const cellSVG = (x, y, w) => `<rect x="${x}" y="${y}" width="${w}" height="22" rx="4" fill="url(#cur-cell-dark)"/><rect x="${x}" y="${y}" width="${Math.round(w * .32)}" height="22" rx="3" fill="url(#cur-cell)"/><rect x="${x + w}" y="${y + 5}" width="5" height="12" rx="1.5" fill="url(#cur-screw)"/><text x="${x + w * .62}" y="${y + 15}" text-anchor="middle" font-size="9" font-weight="700" style="fill:#e8edf8">1.5 V</text><path d="M${x + 4} ${y + 3} h${w - 8}" stroke="#fff" stroke-width="1.5" opacity=".35"/>`;
+const cellButton = (where, x, y, w, i) => `<g data-cell-drag="${where}" data-i="${i}" role="button" tabindex="0" aria-label="${where === 'tray' ? '전지 상자의 전지(1.5 V), 끌어서 회로의 전지 자리에 끼워요' : '회로에 끼운 전지, 끌어내면 빠져요'}" style="cursor:grab"><rect x="${x - 4}" y="${y - 6}" width="${w + 13}" height="34" fill="#ffffff" fill-opacity="0"/>${cellSVG(x, y, w)}</g>`;
+function renderCells() {
+  const n = cellsIn();
+  setHTML('#cell', n === 1 ? cellButton('slot', 185, 361, 50, 0) : n === 2 ? cellButton('slot', 164, 361, 40, 0) + cellButton('slot', 212, 361, 40, 1) : '');
+  setHTML('#tray-cells', Array.from({ length: 2 - n }, (_, i) => cellButton('tray', 274, 158 + i * 32, 50, i)).join(''));
+  // 비어 있는 전지 자리는 점선으로 ‘여기에 끼워요’를 알려 줘요.
+  $('#slot-box').setAttribute('stroke-dasharray', n ? '' : '6 4');
+}
+const overSlot = q => q.x > 130 && q.x < 290 && q.y > 330 && q.y < 412;
+const overTray = q => q.x > 240 && q.x < 358 && q.y > 118 && q.y < 232;
+svgEl.addEventListener('pointerdown', e => {
+  const el = mode === 'circuit' && e.target.closest('[data-cell-drag]');
+  if (!el) return;
+  e.preventDefault();
+  const p = svgPt(e);
+  cellDrag = { from: el.dataset.cellDrag, el, sx: p.x, sy: p.y, moved: false };
+  svgEl.setPointerCapture?.(e.pointerId);
+});
+svgEl.addEventListener('pointermove', e => {
+  if (!cellDrag) return;
+  const p = svgPt(e);
+  if (!cellDrag.moved && Math.hypot(p.x - cellDrag.sx, p.y - cellDrag.sy) < 6) return;
+  cellDrag.moved = true; cellDrag.el.style.opacity = .3;
+  setHTML('#cell-ghost', `<g transform="translate(${(p.x - 25).toFixed(0)} ${(p.y - 11).toFixed(0)})" opacity=".95">${cellSVG(0, 0, 50)}</g>`);
+  const target = cellDrag.from === 'tray' ? overSlot(p) : !overSlot(p);
+  $('#slot-box').setAttribute('stroke', cellDrag.from === 'tray' && target ? '#ffd23f' : '#5e6a92');
+  $('#slot-box').setAttribute('stroke-width', cellDrag.from === 'tray' && target ? 3 : 1);
+});
+function endCellDrag(e, cancel = false) {
+  if (!cellDrag) return;
+  const d = cellDrag; cellDrag = null;
+  setHTML('#cell-ghost', ''); d.el.style.opacity = '';
+  $('#slot-box').setAttribute('stroke', '#5e6a92'); $('#slot-box').setAttribute('stroke-width', 1);
+  if (cancel) return;
+  const p = svgPt(e), n = cellsIn();
+  // 누르기만 해도 돼요: 상자의 전지를 누르면 끼우고, 끼운 전지를 누르면 빼요.
+  if (!d.moved) { setCells(d.from === 'tray' ? n + 1 : n - 1); return; }
+  if (d.from === 'tray' && overSlot(p)) setCells(n + 1);
+  else if (d.from === 'slot' && !overSlot(p)) setCells(n - 1);
+  else if (d.from === 'tray') toast('전지를 아래 전지 자리(점선)에 놓아 보세요');
+}
+svgEl.addEventListener('pointerup', e => endCellDrag(e));
+svgEl.addEventListener('pointercancel', e => endCellDrag(e, true));
+svgEl.addEventListener('keydown', e => {
+  const el = e.target.closest?.('[data-cell-drag]');
+  if (!el || (e.key !== 'Enter' && e.key !== ' ')) return;
+  e.preventDefault(); setCells(cellsIn() + (el.dataset.cellDrag === 'tray' ? 1 : -1));
+});
+
+// 펌프 세기 손잡이: 멈춤 · 약하게 · 세게. 끌어서 돌리거나 글자를 누르거나 방향키로 바꿔요.
+const DIAL_ANGLES = [-60, 0, 60], DIAL_NAMES = ['멈춤', '약하게', '세게'];
+$('.stage').insertAdjacentHTML('beforeend', `<div id="pump-dial" role="slider" tabindex="0" aria-label="펌프 세기" aria-valuemin="0" aria-valuemax="2" style="position:absolute;right:12px;bottom:10px;width:172px;touch-action:none;user-select:none;z-index:4;cursor:grab;display:none">
+  <svg viewBox="0 0 172 140" width="172" height="140" style="display:block"><rect x="1" y="1" width="170" height="138" rx="16" fill="#0a1029" fill-opacity=".92" stroke="#3a4a7a"/>
+  <path d="M42 80 A47 47 0 0 1 130 80" fill="none" stroke="#2c365a" stroke-width="12" stroke-linecap="round"/>
+  ${DIAL_ANGLES.map((a, i) => { const r = a * Math.PI / 180, x = 86 + 66 * Math.sin(r), y = 96 - 66 * Math.cos(r); return `<text data-dial="${i}" x="${x.toFixed(0)}" y="${(y + 5).toFixed(0)}" text-anchor="middle" font-size="14" font-weight="800" style="fill:#cfe6ff;cursor:pointer">${DIAL_NAMES[i]}</text>`; }).join('')}
+  <g id="dial-knob"><circle cx="86" cy="96" r="28" fill="#2c365a" stroke="#9fb0dc" stroke-width="2.5"/><path d="M86 96 V72" stroke="#ffd166" stroke-width="6" stroke-linecap="round"/><circle cx="86" cy="96" r="6" fill="#9fb0dc"/></g>
+  <text x="86" y="134" text-anchor="middle" font-size="13" font-weight="800" style="fill:#ffd166">펌프 세기 · 돌려요</text></svg></div>`);
+const dial = $('#pump-dial');
+const pumpStep = () => (pump ? pumpLevel : 0);
+function setPump(level) {
+  level = Math.max(0, Math.min(2, level));
+  if (level === pumpStep()) { renderDial(); return; }
+  if (!level) pump = false; else { if (!pump) pumpTime = 0; pump = true; pumpLevel = level; }
+  renderControls();
+}
+function renderDial(angle = DIAL_ANGLES[pumpStep()]) {
+  $('#dial-knob').setAttribute('transform', `rotate(${angle.toFixed(1)} 86 96)`);
+  dial.setAttribute('aria-valuenow', pumpStep()); dial.setAttribute('aria-valuetext', `펌프 ${DIAL_NAMES[pumpStep()]}`);
+  $$('[data-dial]').forEach(t => t.style.fill = +t.dataset.dial === pumpStep() ? '#ffd166' : '#cfe6ff');
+}
+const dialAngle = e => { const r = dial.querySelector('svg').getBoundingClientRect(), cx = r.left + r.width * 86 / 172, cy = r.top + r.height * 96 / 140; return Math.max(-75, Math.min(75, Math.atan2(e.clientX - cx, cy - e.clientY) * 180 / Math.PI)); };
+const nearestStep = a => DIAL_ANGLES.reduce((best, v, i) => (Math.abs(v - a) < Math.abs(DIAL_ANGLES[best] - a) ? i : best), 0);
+dial.addEventListener('pointerdown', e => {
+  e.preventDefault();
+  const label = e.target.closest('[data-dial]');
+  dialDrag = { label: label ? +label.dataset.dial : null, moved: false };
+  dial.setPointerCapture?.(e.pointerId); dial.style.cursor = 'grabbing';
+});
+dial.addEventListener('pointermove', e => { if (!dialDrag) return; dialDrag.moved = true; renderDial(dialAngle(e)); });
+dial.addEventListener('pointerup', e => {
+  if (!dialDrag) return;
+  const d = dialDrag; dialDrag = null; dial.style.cursor = 'grab';
+  setPump(d.label !== null && !d.moved ? d.label : nearestStep(dialAngle(e)));
+});
+dial.addEventListener('pointercancel', () => { dialDrag = null; renderDial(); });
+dial.addEventListener('keydown', e => {
+  const d = { ArrowRight: 1, ArrowUp: 1, ArrowLeft: -1, ArrowDown: -1 }[e.key];
+  if (d) { e.preventDefault(); setPump(pumpStep() + d); }
+});
+
+// 짝 찾기 선 잇기
+function drawPairLines(temp = null) {
+  const area = $('#pair-area'), svg = $('#pair-lines');
+  if (!area || !svg) return;
+  const R = area.getBoundingClientRect();
+  if (!R.width) return;
+  svg.setAttribute('viewBox', `0 0 ${R.width.toFixed(1)} ${R.height.toFixed(1)}`);
+  const end = (el, top) => { const r = el.getBoundingClientRect(); return [r.left + r.width / 2 - R.left, (top ? r.top : r.bottom) - R.top]; };
+  const line = ([x1, y1], [x2, y2], color, dash = '') => `<path d="M${x1.toFixed(1)} ${y1.toFixed(1)} L${x2.toFixed(1)} ${y2.toFixed(1)}" stroke="${color}" stroke-width="4" stroke-linecap="round"${dash ? ` stroke-dasharray="${dash}"` : ''}/><circle cx="${x1.toFixed(1)}" cy="${y1.toFixed(1)}" r="5" fill="${color}"/><circle cx="${x2.toFixed(1)}" cy="${y2.toFixed(1)}" r="5" fill="${color}"/>`;
+  let html = [...matched].map(w => {
+    const left = $(`[data-pair-left="${pairOf(w)[0]}"]`), right = $(`[data-pair-right="${w}"]`);
+    return left && right ? line(end(left, false), end(right, true), PAIR_COLORS[w]) : '';
+  }).join('');
+  if (temp) html += line(end(temp.el, temp.side === 'right'), [temp.x - R.left, temp.y - R.top], temp.color ?? '#ffd23f', '8 6');
+  svg.innerHTML = html;
+}
+addEventListener('resize', () => drawPairLines());
+// 누르기(탭)는 단추의 onclick이 그대로 처리하도록 포인터를 붙잡지 않고, 끄는 동안만 창 전체에서 움직임을 따라가요.
+addEventListener('pointermove', e => {
+  if (!pairDrag) return;
+  if (!pairDrag.moved && Math.hypot(e.clientX - pairDrag.sx, e.clientY - pairDrag.sy) < 8) return;
+  pairDrag.moved = true;
+  drawPairLines({ el: pairDrag.el, side: pairDrag.side, x: e.clientX, y: e.clientY });
+});
+function bindPairDrag() {
+  const area = $('#pair-area');
+  area.addEventListener('pointerdown', e => {
+    const el = e.target.closest('[data-pair-left]:enabled, [data-pair-right]:enabled');
+    if (!el) return;
+    if (e.pointerType === 'mouse') e.preventDefault();   // 끄는 동안 글자가 선택되지 않게
+    pairDrag = { el, side: el.dataset.pairLeft ? 'left' : 'right', key: el.dataset.pairLeft ?? el.dataset.pairRight, sx: e.clientX, sy: e.clientY, moved: false };
+  });
+}
+{
+  const finish = (e, cancel) => {
+    if (!pairDrag) return;
+    const d = pairDrag; pairDrag = null;
+    if (!d.moved) return;   // 누르기는 단추의 onclick이 처리해요.
+    suppressPairClick = true; setTimeout(() => { suppressPairClick = false; }, 0);
+    const target = cancel ? null : document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-pair-left]:enabled, [data-pair-right]:enabled');
+    const otherSide = target && (d.side === 'left' ? target.dataset.pairRight : target.dataset.pairLeft);
+    if (!otherSide) { drawPairLines(); if (!cancel) toast(d.side === 'left' ? '아래 줄(수로 모형)의 낱말 위에 놓아 이어요' : '위 줄(전기 회로)의 낱말 위에 놓아 이어요'); return; }
+    pick = d.side === 'left' ? d.key : otherSide;
+    choosePair('right', d.side === 'left' ? otherSide : d.key);
+  };
+  addEventListener('pointerup', e => finish(e, false));
+  addEventListener('pointercancel', e => finish(e, true));
 }
 
 /* ---------- 화면 문구와 조작 ---------- */
@@ -385,22 +600,25 @@ function renderControls() {
     // 짝 찾기: 왼쪽(전기 회로)에서 하나, 오른쪽(수로 모형)에서 하나
     const leftBtn = ([k, name, w]) => `<button data-pair-left="${k}" class="${matched.has(w) ? 'paired' : ''}" aria-pressed="${pick === k}" ${matched.has(w) ? `disabled style="--pair:${PAIR_COLORS[w]}"` : ''}>${name}</button>`;
     const rightBtn = w => { const [, , , name] = pairOf(w); return `<button data-pair-right="${w}" class="${matched.has(w) ? 'paired' : ''}" ${matched.has(w) ? `disabled style="--pair:${PAIR_COLORS[w]}"` : ''}>${name}</button>`; };
-    $('#actions').innerHTML = `<div class="pair-area" id="pair-area"><p class="pair-title">짝 찾기: 전기 회로의 무엇이 수로 모형의 무엇과 닮았을까요? <small>왼쪽에서 하나, 오른쪽에서 하나를 차례로 눌러요 (${matched.size} / ${PAIRS.length})</small></p>
+    $('#actions').innerHTML = `<div class="pair-area" id="pair-area" style="position:relative;user-select:none;-webkit-user-select:none;touch-action:none"><p class="pair-title">짝 찾기: 전기 회로의 무엇이 수로 모형의 무엇과 닮았을까요? <small>위 줄의 낱말을 끌어 아래 줄의 닮은 낱말에 놓으면 선으로 이어져요. 차례로 눌러도 돼요 (${matched.size} / ${PAIRS.length})</small></p>
       <div class="pair-row"><span class="group-label">전기 회로</span>${PAIRS.map(leftBtn).join('')}</div>
-      <div class="pair-row"><span class="group-label">수로 모형</span>${RIGHT_ORDER.map(rightBtn).join('')}</div></div>`;
+      <div class="pair-row" style="margin-top:30px"><span class="group-label">수로 모형</span>${RIGHT_ORDER.map(rightBtn).join('')}</div>
+      <svg id="pair-lines" aria-hidden="true" preserveAspectRatio="none" style="position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;overflow:visible"></svg></div>`;
     $('#battery-btn').onclick = () => { battery = !battery; batteryTime = 0; renderControls(); };
     $('#pump-btn').onclick = () => { pump = !pump; pumpTime = 0; renderControls(); };
     $$('[data-cells]').forEach(b => b.onclick = () => { cells = +b.dataset.cells; renderControls(); });
     $$('[data-pump-level]').forEach(b => b.onclick = () => { pumpLevel = +b.dataset.pumpLevel; renderControls(); });
-    $$('[data-pair-left]').forEach(b => b.onclick = () => choosePair('left', b.dataset.pairLeft));
-    $$('[data-pair-right]').forEach(b => b.onclick = () => choosePair('right', b.dataset.pairRight));
+    $$('[data-pair-left]').forEach(b => b.onclick = () => { if (!suppressPairClick) choosePair('left', b.dataset.pairLeft); });
+    $$('[data-pair-right]').forEach(b => b.onclick = () => { if (!suppressPairClick) choosePair('right', b.dataset.pairRight); });
+    bindPairDrag(); requestAnimationFrame(() => drawPairLines());
+    renderCells(); renderDial();
   }
   renderText();
 }
 function renderText() {
   if (mode === 'neon') {
     setText('#guide', '마찰 전기만으로 네온전구에 불을 켤 수 있을까요?');
-    setText('#subguide', '① 문지르기 → ② 알루미늄 접시 올려놓기 → ③ 네온전구 끝을 다른 접시에 대기 순서로 해 보세요. 문지르기는 플라스틱 접시나 털가죽을 마우스로 누른 채 좌우로 문질러도 돼요.');
+    setText('#subguide', '① 플라스틱 접시나 털가죽을 누른 채 좌우로 문질러요(3번 이상) → ② 알루미늄 접시를 아래로 끌어 내려놓아요 → ③ 네온전구 끝(노란 점선 고리)을 끌어 오른쪽 접시에 대요. 아래 단추로도 할 수 있어요.');
     setText('#stage-state', `문지른 횟수 ${rubs}번 · ${placed ? '알루미늄 접시를 올려놓음' : '알루미늄 접시를 듦'}${touching ? ' · 네온전구 닿음' : ''}`);
     setText('#note-title', seen.lit ? (seen.noLight ? '불빛이 계속 켜져 있었나요?' : '한 번 더 대 보면 어떻게 될까요?') : '네온전구를 관찰해 보세요');
     setText('#note-text', show ? '네온전구를 대는 순간 전하가 어디에서 어디로 이동하나요?' : '‘전하·방향 보기’를 켜면 접시에 있는 전하를 볼 수 있어요.');
@@ -408,8 +626,8 @@ function renderText() {
     setText('#model-note', '알루미늄 접시에는 손이 닿지 않도록 절연 손잡이(빨대)를 잡고 옮겨요. 전하는 대전된 만큼 남는 전하만 나타냈고, 입자의 수와 이동 속도는 보기 쉽게 나타낸 모형이에요.');
     setText('#discovery', '마찰 전기는 일상생활에서 쓰는 전기와 어떤 관계가 있을까요?');
   } else {
-    setText('#guide', '왼쪽 전기 회로와 오른쪽 수로 모형을 나란히 놓고 비교해 보세요.');
-    setText('#subguide', water3d ? '수로 모형은 3D예요. 끌어서 돌려 보면 펌프가 물을 높은 곳으로 올리고, 물이 물레방아에서 낮은 곳으로 떨어지는 모습(높이 차)이 잘 보여요.' : '전지가 없을 때와 있을 때 도선 속 전자의 움직임, 펌프가 없을 때와 있을 때 물의 흐름을 비교해요.');
+    setText('#guide', '전지를 끌어다 회로에 끼우고, ‘펌프 세기’ 손잡이를 돌려 수로 모형과 비교해 보세요.');
+    setText('#subguide', `전지 상자의 전지를 아래 전지 자리(점선)에 끌어다 놓으면 끼워지고, 끌어내면 빠져요. 오른쪽 아래 ‘펌프 세기’ 손잡이를 돌리면 펌프가 작동해요.${water3d ? ' 수로 모형은 3D라서 끌어서 돌려 볼 수 있어요.' : ''}`);
     setText('#stage-state', `전지 ${battery ? (cells === 2 ? '2개' : '1개') : '없음'} · 펌프 ${pump ? (pumpLevel === 2 ? '세게' : '약하게') : '멈춤'} · 짝 ${matched.size}/${PAIRS.length}`);
     setText('#note-title', battery ? '전자가 어느 쪽으로 움직이나요?' : '도선 속 전자를 살펴보세요');
     setText('#note-text', show ? '전자의 이동 방향과 전류의 방향을 비교해 보세요. 전구로 들어간 전자와 나온 전자의 수도 비교해요.' : '‘전하·방향 보기’를 켜면 도선 속 원자핵과 전류의 방향을 볼 수 있어요.');
@@ -424,13 +642,14 @@ function setMode(next) {
   $('#circuit-scene').toggleAttribute('hidden', next !== 'circuit');
   $('.legend').hidden = next !== 'neon' || !show;
   if (next === 'circuit') loadWater3D();
+  dial.style.display = next === 'circuit' ? '' : 'none';
   applyWaterView();
   renderControls();
 }
 function resetScene() {
   rubs = 0; placed = false; touching = false; charge = 0; discharged = false; motion = null; flight = null; flash = 0;
   battery = false; pump = false; batteryTime = 0; pumpTime = 0; inCount = 0; outCount = 0; bulbLevel = 0; electrons.offset = 0;
-  cells = 1; pumpLevel = 1; strongTime = 0; pick = null;
+  cells = 1; pumpLevel = 1; strongTime = 0; pick = null; plateDrag = tipDrag = cellDrag = pairDrag = dialDrag = null;
   setMode(mode);
 }
 $('#tab-neon').onclick = () => setMode('neon');
@@ -449,14 +668,14 @@ function frame(now) {
     if (show && mode === 'neon' && rubs > 0) seen.viewNeon = true;
     if (show && mode === 'circuit' && battery) seen.viewCircuit = true;
     flow?.update(checklist([
-      ['마찰 전기로 네온전구 켜기', seen.lit, '‘털가죽으로 접시 문지르기’ 3번 이상 → ‘알루미늄 접시 올려놓기’ → ‘네온전구 끝을 접시에 대기’', '', '', ['#neon', '네온전구']],
+      ['마찰 전기로 네온전구 켜기', seen.lit, '접시를 3번 이상 문지르기(‘털가죽으로 접시 문지르기’) → 알루미늄 접시를 끌어 내려놓기 → 네온전구 끝을 끌어 오른쪽 접시에 대기', '', '', ['#neon', '네온전구']],
       ['‘전하·방향 보기’로 접시의 전하 살펴보기', seen.viewNeon, '‘전하·방향 보기’가 켜진 채로 네온전구를 댈 때 전하가 어디로 이동하는지 봐요', '', '', ['#neon-scene', '접시와 네온전구의 전하']],
-      ['네온전구를 다시 대어 보기', seen.noLight, '‘네온전구 떼기’를 누른 뒤 한 번 더 ‘네온전구 끝을 접시에 대기’', '', '', ['#neon', '네온전구']],
-      ['전지를 연결해 전자의 움직임 관찰하기', seen.battery, '‘전기 회로와 수로 모형’ 탭 → ‘전지 연결하기’', '#tab-circuit, #battery-btn', '', ['#wire', '도선 속 전자']],
+      ['네온전구를 다시 대어 보기', seen.noLight, '네온전구 끝을 접시에서 끌어 뗀 뒤 한 번 더 대어 봐요(‘네온전구 떼기’ → ‘네온전구 끝을 접시에 대기’)', '', '', ['#neon', '네온전구']],
+      ['전지를 연결해 전자의 움직임 관찰하기', seen.battery, '‘전기 회로와 수로 모형’ 탭 → 전지 상자의 전지를 끌어 전지 자리에 끼우기(‘전지 연결하기’)', '#tab-circuit, #battery-btn, [data-cell-drag]', '', ['#wire', '도선 속 전자']],
       ['‘전하·방향 보기’로 전자와 전류의 방향 비교하기', seen.viewCircuit, '‘전하·방향 보기’가 켜진 채로 전자가 움직이는 방향과 전류의 방향(화살표)을 비교해요', '', '', ['#wire', '전자와 전류의 방향']],
-      ['펌프를 작동해 수로 모형 관찰하기', seen.pump, '‘펌프 작동하기’를 누르고, 높은 곳과 낮은 곳의 물(높이 차)과 물레방아를 살펴요', '#pump-btn', '', ['#water-box', '수로 모형']],
-      ['전기 회로와 수로 모형의 짝 5개 찾기', matched.size === PAIRS.length, '아래 ‘짝 찾기’에서 전기 회로(왼쪽) 하나와 수로 모형(오른쪽) 하나를 차례로 눌러 닮은 것끼리 짝을 지어요', '[data-pair-left], [data-pair-right]', '#pair-area'],
-      ['전지 2개와 펌프 세게: 전압과 높이 차를 함께 키워 비교하기', seen.strong, '‘전지 2개’와 ‘펌프 세게’를 누르고 전지 연결·펌프 작동을 켠 채로, 전구의 밝기·전자의 빠르기와 물의 높이 차·흐름을 비교해요', '[data-cells], [data-pump-level]', '[data-cells="2"]', ['#bulb', '전구의 밝기']],
+      ['펌프를 작동해 수로 모형 관찰하기', seen.pump, '오른쪽 아래 ‘펌프 세기’ 손잡이를 돌리거나 ‘펌프 작동하기’를 누르고, 높은 곳과 낮은 곳의 물(높이 차)과 물레방아를 살펴요', '#pump-btn, #pump-dial', '', ['#water-box', '수로 모형']],
+      ['전기 회로와 수로 모형의 짝 5개 찾기', matched.size === PAIRS.length, '아래 ‘짝 찾기’에서 위 줄(전기 회로)의 낱말을 끌어 아래 줄(수로 모형)의 닮은 낱말에 이어요', '[data-pair-left], [data-pair-right]', '#pair-area'],
+      ['전지 2개와 펌프 세게: 전압과 높이 차를 함께 키워 비교하기', seen.strong, '전지를 2개 끼우고(‘전지 2개’) 펌프 세기를 ‘세게’로 돌려(‘펌프 세게’), 전구의 밝기·전자의 빠르기와 물의 높이 차·흐름을 비교해요', '[data-cells], [data-pump-level]', '[data-cells="2"]', ['#bulb', '전구의 밝기']],
     ]));
   }
   requestAnimationFrame(frame);
