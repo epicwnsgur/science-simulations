@@ -35,7 +35,8 @@ const SPACE_VARS = { ...VARS, '--bg': '#fbf5ff', '--panel-2': '#f8f0ff', '--line
   '--mark': 'rgba(214,170,255,.42)', '--mark-strong': 'rgba(200,150,255,.6)', '--mark-line': '#9c36b5' };
 const ACCENT_VARS = /var\(--(current|current-2|volt|volt-2|ok|north|south|nebula)\)/;
 // 실험 무대 안(그림·3D·미리 보기 그림)은 그대로 둬요.
-const SKIP_SELECTOR = /\.stage|#scene|\.pv-scene|\.lab3d|#leads|#crossings|\.water-box|\.hero-field|\.photo-card|\.sky-|\.star-viewer|canvas/;
+// 전지의 극 표시(.pole)도 어디서나 빨강·검정 바탕에 흰 글자 그대로예요.
+const SKIP_SELECTOR = /\.pole|\.stage|#scene|\.pv-scene|\.lab3d|#leads|#crossings|\.water-box|\.hero-field|\.photo-card|\.sky-|\.star-viewer|canvas/;
 
 /* ---------- 색 계산 ---------- */
 const NAMED = { white: '#ffffff', black: '#000000' };

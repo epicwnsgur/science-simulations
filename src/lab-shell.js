@@ -13,6 +13,15 @@ export const $$ = s => [...document.querySelectorAll(s)];
 export function setText(selector, text) { const el = $(selector); if (el && el.textContent !== text) el.textContent = text; }
 export function setHTML(selector, html) { const el = $(selector); if (el && el.dataset.html !== html) { el.innerHTML = html; el.dataset.html = html; } }
 
+// 전지·전원 장치의 (+)극·(−)극 표시: 빨간 동그라미에 흰 ‘+’, 검은 동그라미에 흰 ‘−’(교사 의견: 회색 글자라 잘 보이지 않아요).
+// 모든 실험이 같은 모양을 써요. 극이 바뀌는 그림은 setPole(요소, '+' 또는 '−')로 바꿔요.
+export const pole = (x, y, sign, { id = '', r = 11 } = {}) => `<g class="pole ${sign === '+' ? 'pole-plus' : 'pole-minus'}"${id ? ` id="${id}"` : ''} transform="translate(${x} ${y})" role="img" aria-label="${sign === '+' ? '(+)극' : '(−)극'}"><circle r="${r}"/><text y="${(r * .46).toFixed(1)}" text-anchor="middle" font-size="${Math.round(r * 1.55)}" font-weight="800">${sign}</text></g>`;
+export function setPole(el, sign) {
+  if (!el) return;
+  el.classList.toggle('pole-plus', sign === '+'); el.classList.toggle('pole-minus', sign !== '+');
+  el.setAttribute('aria-label', sign === '+' ? '(+)극' : '(−)극');
+  const t = el.querySelector('text'); if (t.textContent !== sign) t.textContent = sign;
+}
 // 받침 유무에 따라 조사를 고릅니다. 예: josa('빨대', '을', '를') → '빨대를'
 export const josa = (word, withFinal, without) => { const code = word.charCodeAt(word.length - 1) - 0xac00; return word + (code >= 0 && code % 28 ? withFinal : without); };
 

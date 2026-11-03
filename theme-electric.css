@@ -682,3 +682,26 @@ button.term:focus-visible{outline:2px solid var(--current);outline-offset:2px}
 /* 마우스로 직접 문지를 수 있는 물체 */
 .rubbable{cursor:grab;touch-action:none}
 .rubbable:active{cursor:grabbing}
+
+/* 전지·전원 장치의 (+)극·(−)극: 빨간 동그라미에 흰 ‘+’, 검은 동그라미에 흰 ‘−’(모든 실험, 미리 보기 공통) */
+.pole circle{stroke-width:2}
+.pole-plus circle{fill:#d83b3b;stroke:#ffc2c2}
+.pole-minus circle{fill:#161a26;stroke:#d5dcef}
+.pole text{fill:#fff!important;stroke:none!important;font-family:inherit}
+
+/* 자유 회로 실험실(저항의 연결) */
+#scene .sb-dot{fill:#5b6a9a}
+#scene .sb-hit{stroke:transparent;stroke-width:30;stroke-linecap:round;cursor:pointer;pointer-events:stroke}
+#scene .sb-hit:hover,#scene .sb-hit:focus-visible{stroke:#7fe7ff22;outline:none}
+#scene .sb-wire,#scene .sb-lead{stroke:#9fb3d9;stroke-width:5;stroke-linecap:round;fill:none}
+#scene .sb-probe{stroke:#c9a7ff;stroke-width:3;fill:none;stroke-dasharray:6 4}
+#scene .sb-electron{fill:#2f9bff;stroke:#cfe8ff;stroke-width:1}
+#scene .sb-read{fill:#ffd166;font-size:15px;font-weight:800;font-family:monospace}
+#scene .sb-val{fill:#e8c15a;font-size:13px;font-weight:700}
+#scene .sb-warn{fill:#ff8a8a;font-size:13px;font-weight:700}
+.sb-tools{flex-wrap:wrap}
+.sb-tools button[aria-pressed=true]{outline:2px solid var(--volt);outline-offset:1px}
+.sb-readout .sb-note{font-size:14px;line-height:1.6}
+.sb-readout .sb-bad{color:#ff6b6b}
+#actions:has([data-sb-preset]){flex-wrap:wrap;justify-content:flex-start;align-items:center;gap:8px}
+#scene .sb-letter{fill:#1b2340!important}

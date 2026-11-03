@@ -7,7 +7,7 @@ const el = (tag, attrs = {}) => { const e = document.createElementNS(NS, tag); f
 // ---------- 공통 그림 조각 ----------
 const fur = (x, y, w = 140, id = 'fur') => `<g data-o="${id}"><rect x="${x}" y="${y}" width="${w}" height="26" rx="12" fill="#7d5c3e"/><path d="${Array.from({ length: Math.floor(w / 8) }, (_, i) => `M${x + 4 + i * 8} ${y + 4} l3 -9 l3 9`).join(' ')}" fill="#a98559"/></g>`;
 const balloon = (x, y) => `<ellipse cx="${x}" cy="${y}" rx="24" ry="30" fill="#e8504f"/><path d="M${x} ${y + 30} l-4 6 h8z" fill="#c63d3c"/><path d="M${x} ${y + 36} q7 12 -2 24" stroke="#cfd6e4" fill="none" stroke-width="1.5"/><ellipse cx="${x - 9}" cy="${y - 11}" rx="5" ry="9" fill="#fff" opacity=".35"/>`;
-const battery = (x, y, id = 'battery') => `<g data-o="${id}"><rect x="${x}" y="${y}" width="46" height="20" rx="4" fill="#2c365a" stroke="#8f9bc4"/><rect x="${x}" y="${y}" width="14" height="20" rx="3" fill="#d98c45"/><rect x="${x + 46}" y="${y + 6}" width="4" height="8" fill="#c9d1db"/><text x="${x - 8}" y="${y + 15}" font-size="12" fill="#cfe6ff" text-anchor="middle" data-o="${id}-l">−</text><text x="${x + 58}" y="${y + 15}" font-size="12" fill="#cfe6ff" text-anchor="middle" data-o="${id}-r">+</text></g>`;
+const battery = (x, y, id = 'battery') => `<g data-o="${id}"><rect x="${x}" y="${y}" width="46" height="20" rx="4" fill="#2c365a" stroke="#8f9bc4"/><rect x="${x}" y="${y}" width="14" height="20" rx="3" fill="#d98c45"/><rect x="${x + 46}" y="${y + 6}" width="4" height="8" fill="#c9d1db"/><g class="pole pole-minus" transform="translate(${x - 10} ${y + 10})"><circle r="7"/><text y="3.5" text-anchor="middle" font-size="11" font-weight="800" data-o="${id}-l">−</text></g><g class="pole pole-plus" transform="translate(${x + 60} ${y + 10})"><circle r="7"/><text y="3.5" text-anchor="middle" font-size="11" font-weight="800" data-o="${id}-r">+</text></g></g>`;
 const button = (x, y, id = 'switch') => `<g data-o="${id}"><rect x="${x}" y="${y}" width="34" height="22" rx="6" fill="#1c2442" stroke="#8f9bc4"/><circle cx="${x + 17}" cy="${y + 11}" r="7" fill="#ff6b6b"/></g>`;
 const compass = (x, y, r = 11) => `<g><circle cx="${x}" cy="${y}" r="${r}" fill="#f4f1e6" stroke="#5e6a92"/><path d="M${x} ${y - r + 3} l3 ${r - 3} h-6z" fill="#e04848"/><path d="M${x} ${y + r - 3} l3 ${-r + 3} h-6z" fill="#cfd6e4"/></g>`;
 const star = (cx, cy, r, fill = '#ffd84a') => `<path d="${Array.from({ length: 10 }, (_, i) => { const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * .45 : r; return `${i ? 'L' : 'M'}${(cx + Math.cos(a) * rr).toFixed(1)} ${(cy + Math.sin(a) * rr).toFixed(1)}`; }).join('')}Z" fill="${fill}"/>`;
@@ -115,7 +115,7 @@ export const SCENES = {
   'coil-magnetic-field': {
     // 실제 실험(시뮬레이션과 같음): 전원 장치에 이은 코일이 판을 뚫고 서 있고, 둘레에 나침반 8개. 먼저 막대자석 둘레의 나침반을 봐요.
     main: {
-      svg: `<g><rect x="12" y="24" width="64" height="38" rx="6" fill="#2c365a" stroke="#8f9bc4"/><rect x="20" y="30" width="36" height="18" rx="3" fill="#081022"/><text x="38" y="44" font-size="11" fill="#ff6b6b" text-anchor="middle" data-o="volt">0.0</text><text x="30" y="58" font-size="10" fill="#ffb3b3" text-anchor="middle" data-o="pl">+</text><text x="54" y="58" font-size="10" fill="#cfd6e4" text-anchor="middle" data-o="pr">−</text>${label(44, 76, '전원 장치', 10)}</g>
+      svg: `<g><rect x="12" y="24" width="64" height="38" rx="6" fill="#2c365a" stroke="#8f9bc4"/><rect x="20" y="30" width="36" height="18" rx="3" fill="#081022"/><text x="38" y="44" font-size="11" fill="#ff6b6b" text-anchor="middle" data-o="volt">0.0</text><g class="pole pole-plus" transform="translate(30 54)"><circle r="7"/><text y="3.5" text-anchor="middle" font-size="11" font-weight="800" data-o="pl">+</text></g><g class="pole pole-minus" transform="translate(54 54)"><circle r="7"/><text y="3.5" text-anchor="middle" font-size="11" font-weight="800" data-o="pr">−</text></g>${label(44, 76, '전원 장치', 10)}</g>
         <path d="M30 62 V130 H196 V112 M54 62 V124 H204 V112" stroke="#e05656" stroke-width="2" fill="none"/>
         <ellipse cx="200" cy="80" rx="96" ry="40" fill="#1c2442" stroke="#5e6a92"/>
         <ellipse cx="200" cy="74" rx="9" ry="38" fill="none" stroke="#d88a4a" stroke-width="5"/>
@@ -134,7 +134,7 @@ export const SCENES = {
     // 실제 실험(시뮬레이션과 같음): 스탠드에 매단 코일(전기 그네)의 아래 변이 눕혀 놓은 말굽자석의 두 팔 사이에 있어요.
     main: {
       svg: `<path d="M70 140 H250" stroke="#5a6388" stroke-width="5"/><path d="M84 140 V18 H214" stroke="#cfd6e4" stroke-width="5" fill="none"/>
-        <g><rect x="230" y="20" width="70" height="36" rx="6" fill="#2c365a" stroke="#8f9bc4"/><rect x="238" y="26" width="38" height="18" rx="3" fill="#081022"/><text x="257" y="40" font-size="11" fill="#ff6b6b" text-anchor="middle" data-o="volt">0.0</text><text x="288" y="34" font-size="10" fill="#ffb3b3" text-anchor="middle" data-o="pl">+</text><text x="288" y="48" font-size="10" fill="#cfd6e4" text-anchor="middle" data-o="pr">−</text>${label(265, 70, '전원 장치', 10)}</g>
+        <g><rect x="230" y="20" width="70" height="36" rx="6" fill="#2c365a" stroke="#8f9bc4"/><rect x="238" y="26" width="38" height="18" rx="3" fill="#081022"/><text x="257" y="40" font-size="11" fill="#ff6b6b" text-anchor="middle" data-o="volt">0.0</text><g class="pole pole-plus" transform="translate(288 31)"><circle r="7"/><text y="3.5" text-anchor="middle" font-size="11" font-weight="800" data-o="pl">+</text></g><g class="pole pole-minus" transform="translate(288 46)"><circle r="7"/><text y="3.5" text-anchor="middle" font-size="11" font-weight="800" data-o="pr">−</text></g>${label(265, 70, '전원 장치', 10)}</g>
         <g data-o="coil"><path d="M150 18 V110 H176 V18" stroke="#d88a4a" stroke-width="4" fill="none"/>${label(198, 64, '코일', 10)}</g>
         <g data-o="magnet"><path d="M110 98 H218" stroke="#3a6fd8" stroke-width="12"/><path d="M110 126 H218" stroke="#e04848" stroke-width="12"/><path d="M218 98 Q248 112 218 126" stroke="#aab4d6" stroke-width="12" fill="none"/>${label(102, 102, 'S', 12, '#3a6fd8')}${label(102, 130, 'N', 12, '#e04848')}</g><g data-o="magnet2" class="pv-off"><path d="M110 98 H218" stroke="#e04848" stroke-width="12"/><path d="M110 126 H218" stroke="#3a6fd8" stroke-width="12"/><path d="M218 98 Q248 112 218 126" stroke="#aab4d6" stroke-width="12" fill="none"/>${label(102, 102, 'N', 12, '#e04848')}${label(102, 130, 'S', 12, '#3a6fd8')}</g>
         ${button(246, 98)}${label(263, 134, '스위치', 9)}`,
@@ -336,7 +336,9 @@ function helpers(root) {
     text(id, list, every = 600) {
       const t = o(id); if (!t) return;
       t.dataset.orig ??= t.textContent;
-      list.forEach((v, i) => later(() => { t.textContent = v; }, i * every));
+      // 극 표시(+·−)는 글자와 함께 동그라미 색(빨강·검정)도 바꿔요.
+      const g = t.closest('.pole');
+      list.forEach((v, i) => later(() => { t.textContent = v; if (g) { g.classList.toggle('pole-plus', v === '+'); g.classList.toggle('pole-minus', v === '−'); } }, i * every));
     },
   };
   return h;

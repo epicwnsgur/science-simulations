@@ -76,7 +76,7 @@ export function createSwing3D({ stage, svg, reducedMotion }) {
   const terminals = [[1, 0xd83b3b, '+'], [-1, 0x222222, '−']].map(([side, color, text]) => {
     const t = new THREE.Mesh(new THREE.CylinderGeometry(.08, .08, .14, 14), new THREE.MeshStandardMaterial({ color, roughness: .5 }));
     t.rotation.z = Math.PI / 2; t.position.set(SUP.x + .82, SUP.y + .1, SUP.z - side * .2); scene.add(t);
-    const l = label(text, { size: .3, color: side > 0 ? '#ff7b7b' : '#d8def5' }); l.position.set(SUP.x + .85, SUP.y + .45, SUP.z - side * .2); scene.add(l);
+    const l = label(text, { size: .36, color: '#ffffff', bg: side > 0 ? '#d83b3b' : '#161a26' }); l.position.set(SUP.x + .85, SUP.y + .45, SUP.z - side * .2); scene.add(l);
     return t;
   });
   const plusWire = new THREE.MeshStandardMaterial({ color: 0xd83b3b, roughness: .5 }), minusWire = new THREE.MeshStandardMaterial({ color: 0xaab4d6, roughness: .5 });

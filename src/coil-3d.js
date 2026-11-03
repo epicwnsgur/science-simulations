@@ -65,7 +65,7 @@ export function createCoil3D({ stage, svg, reducedMotion, ring, moveProbe, probe
     const t = new THREE.Mesh(new THREE.CylinderGeometry(.075, .075, .12, 14), new THREE.MeshStandardMaterial({ color, roughness: .5 }));
     t.rotation.z = Math.PI / 2; t.position.set(SUP.x + .74, SUP.y - .12, SUP.z + side * .14); coil.add(t); return t;
   });
-  [['−', '#d8def5', 0], ['+', '#ff7b7b', 1]].forEach(([text, color, i]) => { const l = label(text, { size: .3, color }); const t = terminals[i].position; l.position.set(t.x + .05, t.y + .3, t.z + (i ? .12 : -.12)); coil.add(l); });
+  [['−', '#161a26', 0], ['+', '#d83b3b', 1]].forEach(([text, bg, i]) => { const l = label(text, { size: .36, color: '#ffffff', bg }); const t = terminals[i].position; l.position.set(t.x + .05, t.y + .3, t.z + (i ? .12 : -.12)); coil.add(l); });
   const plusWire = new THREE.MeshStandardMaterial({ color: 0xd83b3b, roughness: .5 }), minusWire = new THREE.MeshStandardMaterial({ color: 0xaab4d6, roughness: .5 });
   const leadSets = new Map([1, -1].map(dir => {
     const set = [[COIL3.turns - 1, dir > 0 ? 1 : 0], [0, dir > 0 ? 0 : 1]].map(([k, ti], n) => {

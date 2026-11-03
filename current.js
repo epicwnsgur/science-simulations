@@ -6,7 +6,7 @@ import './readable.css';
 import { setupPOEFlow } from './src/poe-flow.js';
 import { webglAvailable } from './src/view-toggle.js';
 import { PAIRS } from './src/water-model.js';
-import { $, $$, setText, setHTML, buildLab, checklist, toast, burst, arc, PathFlow, ELECTRON_GLYPH, reducedMotion, instantLessons } from './src/lab-shell.js';
+import { $, $$, setText, setHTML, buildLab, checklist, toast, burst, arc, PathFlow, ELECTRON_GLYPH, reducedMotion, instantLessons, pole } from './src/lab-shell.js';
 
 // 교과서 242–243쪽, 지도서 552–557쪽(4차시).
 // 마찰 전기로 네온전구를 순간적으로 켜고, 전지를 연결한 회로와 수로 모형을 비교합니다.
@@ -95,7 +95,7 @@ const scene = `
       <text id="cell-volt" x="214" y="376" text-anchor="middle" font-size="9" font-weight="700" style="fill:#e8edf8">1.5 V</text>
       <path d="M186 364 h44" stroke="#fff" stroke-width="1.5" opacity=".35"/>
     </g>
-    <text id="cell-minus" x="164" y="378" text-anchor="middle" font-size="16" font-weight="700">−</text><text id="cell-plus" x="258" y="378" text-anchor="middle" font-size="16" font-weight="700">+</text>
+    ${pole(162, 372, '−', { id: 'cell-minus' })}${pole(260, 372, '+', { id: 'cell-plus' })}
   </g>
   <path id="bridge" d="M180 372 H240" stroke="#d98c45" stroke-width="7" opacity=".7"/>
   <text class="muted" x="210" y="410" text-anchor="middle" font-size="12" id="battery-label">전지</text>
@@ -153,7 +153,7 @@ const lab = buildLab({
 });
 
 /* ---------- 상태 ---------- */
-let mode = 'neon', show = false;
+let mode = 'neon', show = true;
 let rubs = 0, placed = false, touching = false, charge = 0, discharged = false, motion = null, flight = null, flash = 0;
 let battery = false, pump = false, batteryTime = 0, pumpTime = 0, lastFrame = 0;
 // 전기 회로와 수로 모형 잇기: 전지 개수(전압), 펌프 세기(물의 높이 차), 학생이 찾은 짝
@@ -436,6 +436,9 @@ function resetScene() {
 $('#tab-neon').onclick = () => setMode('neon');
 $('#tab-circuit').onclick = () => setMode('circuit');
 $('#reset').onclick = resetScene;
+// 전기와 자기 실험은 처음부터 전하·전자(자기장·힘)를 보여 줘요(교사 의견). 학생은 언제든 끄고 다시 켤 수 있어요.
+$('#show-detail').checked = true;
+$('.legend').hidden = mode !== 'neon';
 $('#show-detail').onchange = e => { show = e.target.checked; $('.legend').hidden = mode !== 'neon' || !show; renderText(); };
 
 function frame(now) {
@@ -447,10 +450,10 @@ function frame(now) {
     if (show && mode === 'circuit' && battery) seen.viewCircuit = true;
     flow?.update(checklist([
       ['마찰 전기로 네온전구 켜기', seen.lit, '‘털가죽으로 접시 문지르기’ 3번 이상 → ‘알루미늄 접시 올려놓기’ → ‘네온전구 끝을 접시에 대기’', '', '', ['#neon', '네온전구']],
-      ['‘전하·방향 보기’를 켜고 접시의 전하 살펴보기', seen.viewNeon, '위쪽 ‘전하·방향 보기’를 켜고, 네온전구를 댈 때 전하가 어디로 이동하는지 봐요', '', '#show-detail', ['#neon-scene', '접시와 네온전구의 전하']],
+      ['‘전하·방향 보기’로 접시의 전하 살펴보기', seen.viewNeon, '‘전하·방향 보기’가 켜진 채로 네온전구를 댈 때 전하가 어디로 이동하는지 봐요', '', '', ['#neon-scene', '접시와 네온전구의 전하']],
       ['네온전구를 다시 대어 보기', seen.noLight, '‘네온전구 떼기’를 누른 뒤 한 번 더 ‘네온전구 끝을 접시에 대기’', '', '', ['#neon', '네온전구']],
       ['전지를 연결해 전자의 움직임 관찰하기', seen.battery, '‘전기 회로와 수로 모형’ 탭 → ‘전지 연결하기’', '#tab-circuit, #battery-btn', '', ['#wire', '도선 속 전자']],
-      ['‘전하·방향 보기’를 켜고 전자와 전류의 방향 비교하기', seen.viewCircuit, '‘전하·방향 보기’를 켜고, 전자가 움직이는 방향과 전류의 방향(화살표)을 비교해요', '', '#show-detail', ['#wire', '전자와 전류의 방향']],
+      ['‘전하·방향 보기’로 전자와 전류의 방향 비교하기', seen.viewCircuit, '‘전하·방향 보기’가 켜진 채로 전자가 움직이는 방향과 전류의 방향(화살표)을 비교해요', '', '', ['#wire', '전자와 전류의 방향']],
       ['펌프를 작동해 수로 모형 관찰하기', seen.pump, '‘펌프 작동하기’를 누르고, 높은 곳과 낮은 곳의 물(높이 차)과 물레방아를 살펴요', '#pump-btn', '', ['#water-box', '수로 모형']],
       ['전기 회로와 수로 모형의 짝 5개 찾기', matched.size === PAIRS.length, '아래 ‘짝 찾기’에서 전기 회로(왼쪽) 하나와 수로 모형(오른쪽) 하나를 차례로 눌러 닮은 것끼리 짝을 지어요', '[data-pair-left], [data-pair-right]', '#pair-area'],
       ['전지 2개와 펌프 세게: 전압과 높이 차를 함께 키워 비교하기', seen.strong, '‘전지 2개’와 ‘펌프 세게’를 누르고 전지 연결·펌프 작동을 켠 채로, 전구의 밝기·전자의 빠르기와 물의 높이 차·흐름을 비교해요', '[data-cells], [data-pump-level]', '[data-cells="2"]', ['#bulb', '전구의 밝기']],
@@ -492,7 +495,7 @@ flow = setupPOEFlow({
   },
   onStageChange: () => { motion = null; },
   onRestart: () => {
-    show = false; $('#show-detail').checked = false;
+    show = true; $('#show-detail').checked = true; $('.legend').hidden = mode !== 'neon';
     Object.keys(seen).forEach(k => seen[k] = false);
     matched.clear(); renderPairMarks();
     lab.resetQuiz(); mode = 'neon'; resetScene();

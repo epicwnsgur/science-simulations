@@ -55,7 +55,7 @@ export function createMotor3D({ stage, svg, reducedMotion }) {
   const battery = new THREE.Group(); battery.position.set(0, BY, BZ); motor.add(battery);
   const cell = new THREE.Mesh(new THREE.CylinderGeometry(.3, .3, 1.9, 28), mat.copper); cell.rotation.z = Math.PI / 2; battery.add(cell);
   const cap = new THREE.Mesh(new THREE.CylinderGeometry(.306, .306, .5, 28), mat.dark); cap.rotation.z = Math.PI / 2; battery.add(cap);
-  const batLabels = { '+': [-1, 1].map(s => { const l = label('+', { size: .42, color: '#ffd166' }); l.position.set(s * 1.3, .42, 0); battery.add(l); return l; }), '−': [-1, 1].map(s => { const l = label('−', { size: .42, color: '#9fdcff' }); l.position.set(s * 1.3, .42, 0); battery.add(l); return l; }) };
+  const batLabels = { '+': [-1, 1].map(s => { const l = label('+', { size: .42, color: '#ffffff', bg: '#d83b3b' }); l.position.set(s * 1.3, .42, 0); battery.add(l); return l; }), '−': [-1, 1].map(s => { const l = label('−', { size: .42, color: '#ffffff', bg: '#161a26' }); l.position.set(s * 1.3, .42, 0); battery.add(l); return l; }) };
   const motorTexts = [label('전지', { size: .26, color: '#dfe6ff' }), label('브러시', { size: .24, color: '#dfe6ff' }), label('금색 고리', { size: .24, color: '#e8c15a' })];
   motorTexts[0].position.set(0, BY - .62, BZ); motorTexts[1].position.set(-1.0, -.42, ZC + .1); motorTexts[2].position.set(.72, -.42, ZC + .25);
   motor.add(...motorTexts);
