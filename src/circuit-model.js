@@ -2,6 +2,13 @@
 // 크기가 같은 전구만 다루며, 값은 전구 1개 회로를 1로 둔 상대값입니다(계산 활동에 쓰지 않음).
 export const CIRCUITS = ['single', 'series', 'parallel'];
 
+// 전구 1개 회로(=1)와 비교한 값: 회로 전체 저항, 회로 전체 전류, 전구 A에 걸리는 전압.
+// 전지의 전압이 같으므로 전체 저항 = 1 ÷ 전체 전류, 전구의 밝기(전력)는 걸리는 전압의 제곱에 비례해요.
+export function compareValues(r) {
+  const total = r.total, v = Math.sqrt(r.brightness.A ?? 0);
+  return { r: total ? 1 / total : Infinity, i: total, v };
+}
+
 // closed: 스위치가 닫혔는지. 반환값 currents는 도선 구간별 상대 전류, brightness는 전구별 상대 밝기(전구 1개 = 1).
 export function solve(kind, closed) {
   if (kind === 'single') {

@@ -97,7 +97,7 @@ $('#controls').insertAdjacentHTML('afterend', '<div id="autoplay" class="autopla
 $('#autoplay').after($('#actions'));
 
 /* ---------- 상태 ---------- */
-let mode = 'rub', show = false, lastFrame = 0;
+let mode = 'rub', show = true, lastFrame = 0;
 let pos = { ...START }, motion = null, rubDistance = 0, transfers = 0, flights = [];
 let tool = 'spoon', toolPos = { ...TOOL_START }, angle = 0, rubbedSpoons = false, spoonFlights = [];
 // viewRub·viewSpoon: ‘전하 보기’를 켜고 문지른 뒤의 전하를 직접 본 적이 있는지(꼭 봐야 다음으로 넘어가요).
@@ -386,6 +386,8 @@ function setMode(next) {
   renderControls();
 }
 $('#reset').onclick = resetExperiment;
+// 전기와 자기 실험은 처음부터 전하·전자(자기장·힘)를 보여 줘요(교사 의견). 학생은 언제든 끄고 다시 켤 수 있어요.
+$('#show-detail').checked = true;
 $('#show-detail').onchange = e => { show = e.target.checked; renderText(); };
 
 /* ---------- 자동 재생 ----------
@@ -434,11 +436,11 @@ function frame() {
     if (show && mode === 'spoon' && rubbedSpoons) seen.viewSpoon = true;
     flow?.update(checklist(mode === 'rub' ? [
       ['풍선을 털에 문지르기', seen.rubbed, '‘① 털에 문지르기’를 누르거나 풍선을 끌어 털 위에서 좌우로'],
-      ['‘전하 보기’를 켜고 털과 풍선의 전하 비교하기', seen.viewRub, '위쪽 ‘전하 보기’를 켜고, 털과 풍선의 (+)·(−) 개수가 어떻게 달라졌는지 세어 봐요', '', '#show-detail'],
+      ['‘전하 보기’로 털과 풍선의 전하 비교하기', seen.viewRub, '‘전하 보기’가 켜진 채로 털과 풍선의 (+)·(−) 개수가 어떻게 달라졌는지 세어 봐요', '', ''],
       ['문지른 풍선을 털 가까이에서 들어 올리기', seen.lifted, '‘② 털 가까이에서 들어 올리기’를 누르고 털끝을 살펴요', '#lift-btn, #away-btn'],
     ] : [
       ['장갑으로 숟가락 ㉮와 ㉯ 문지르기', rubbedSpoons, '‘① 장갑으로 ㉮와 ㉯ 문지르기’'],
-      ['‘전하 보기’를 켜고 숟가락과 장갑의 전하 살펴보기', seen.viewSpoon, '위쪽 ‘전하 보기’를 켜고, 숟가락 ㉮·㉯와 장갑이 어떤 전하를 띠는지 살펴봐요', '', '#show-detail'],
+      ['‘전하 보기’로 숟가락과 장갑의 전하 살펴보기', seen.viewSpoon, '‘전하 보기’가 켜진 채로 숟가락 ㉮·㉯와 장갑이 어떤 전하를 띠는지 살펴봐요', '', ''],
       ['숟가락 ㉯를 숟가락 ㉮에 가까이 하기', seen.repel, '‘숟가락 ㉯’를 고르고 ‘② 가까이 가져가기’', '#approach, #away, #tool'],
       ['장갑을 숟가락 ㉮에 가까이 하기', seen.attract, '‘장갑’을 고르고 ‘② 가까이 가져가기’', '[data-tool="glove"]'],
     ]));
@@ -506,7 +508,7 @@ flow = setupPOEFlow({
   onExperimentChange: id => setMode(id),
   onRestart: () => {
     stopAutoplay();
-    show = false; $('#show-detail').checked = false;
+    show = true; $('#show-detail').checked = true;
     Object.keys(seen).forEach(k => seen[k] = false);
     resetBalloon(); resetSpoons(); tool = 'spoon';
     lab.resetQuiz();

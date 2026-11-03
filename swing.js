@@ -49,7 +49,7 @@ const lab = buildLab({
 });
 
 /* ---------- 상태 ---------- */
-let show = false, on = false, current = 1, magnet = 1, vIndex = 0, onTime = 0, warned = false, lastFrame = 0;
+let show = true, on = false, current = 1, magnet = 1, vIndex = 0, onTime = 0, warned = false, lastFrame = 0;
 let angle = 0, vel = 0;
 const results = {}; // '1,1': 'out' 처럼 조건별 관찰 결과
 const maxByVoltage = {};
@@ -162,6 +162,8 @@ const view3d = setupViewToggle({
   onChange: active => { use3d = active; renderText(); },
 });
 $('#reset').onclick = () => { press(false); current = 1; magnet = 1; vIndex = 0; angle = 0; vel = 0; renderControls(); };
+// 전기와 자기 실험은 처음부터 전하·전자(자기장·힘)를 보여 줘요(교사 의견). 학생은 언제든 끄고 다시 켤 수 있어요.
+$('#show-detail').checked = true;
 $('#show-detail').onchange = e => { show = e.target.checked; };
 
 function frame(now) {
@@ -171,7 +173,7 @@ function frame(now) {
     if (show && on) seen.view = true;
     flow?.update(checklist([
       ['과정 2: 처음 상태에서 그네 관찰하기', seen.first, '‘스위치 누르고 있기’를 눌러 움직이는 방향을 봐요'],
-      ['‘자기장·전류·힘 보기’를 켜고 힘의 방향 살펴보기', seen.view, '‘자기장·전류·힘 보기’를 켠 채로 ‘스위치 누르고 있기’를 눌러, 자기장·전류·힘의 방향을 비교해요', '', '#show-detail'],
+      ['‘자기장·전류·힘 보기’로 힘의 방향 살펴보기', seen.view, '‘자기장·전류·힘 보기’를 켠 채로 ‘스위치 누르고 있기’를 눌러, 자기장·전류·힘의 방향을 비교해요', '', ''],
       ['과정 3: 전류의 방향을 바꾸어 관찰하기', seen.reversed, '‘전류의 방향 바꾸기’를 누른 뒤 ‘스위치 누르고 있기’', '#flip-current'],
       ['과정 4: 자석의 극을 바꾸어 관찰하기', seen.flipped, '‘자석의 N극과 S극 바꾸기’를 누른 뒤 ‘스위치 누르고 있기’', '#flip-magnet'],
       ['과정 5: 전압을 바꾸어 움직이는 정도 비교하기', seen.voltage, '‘5 V’처럼 전압을 바꾸어 두 번 이상 ‘스위치 누르고 있기’', '[data-v]'],
@@ -210,7 +212,7 @@ flow = setupPOEFlow({
     ],
     note: '코일 모양이 달라도 힘의 크기는 전류의 세기와 자기장의 세기에 따라, 힘의 방향은 전류와 자기장의 방향에 따라 달라져요.',
   },
-  onRestart: () => { show = false; $('#show-detail').checked = false; Object.keys(seen).forEach(k => seen[k] = false); Object.keys(results).forEach(k => delete results[k]); Object.keys(maxByVoltage).forEach(k => delete maxByVoltage[k]); lab.resetQuiz(); $('#reset').click(); },
+  onRestart: () => { show = true; $('#show-detail').checked = true; Object.keys(seen).forEach(k => seen[k] = false); Object.keys(results).forEach(k => delete results[k]); Object.keys(maxByVoltage).forEach(k => delete maxByVoltage[k]); lab.resetQuiz(); $('#reset').click(); },
 });
 renderControls();
 requestAnimationFrame(frame);

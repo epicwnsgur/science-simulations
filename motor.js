@@ -4,7 +4,7 @@ import './lab.css';
 import './theme-electric.css';
 import './readable.css';
 import { setupPOEFlow } from './src/poe-flow.js';
-import { $, $$, setText, setHTML, buildLab, checklist, toast, burst, reducedMotion, instantLessons } from './src/lab-shell.js';
+import { $, $$, setText, setHTML, buildLab, checklist, toast, burst, reducedMotion, instantLessons, pole, setPole } from './src/lab-shell.js';
 import { motorTorque, simpleMotorContact, simpleMotorTorque } from './src/force-model.js';
 import { setupViewToggle } from './src/view-toggle.js';
 
@@ -28,7 +28,7 @@ const scene = `
   <g id="rotor"></g>
   <g id="commutator"></g>
   <path d="M352 372 V300 H366 V236 M448 372 V300 H434 V236" stroke="#8f9bc4" stroke-width="3" fill="none"/>
-  <g id="battery"><rect x="350" y="372" width="100" height="34" rx="6" fill="#2a3150" stroke="#8f9bc4"/><rect x="356" y="378" width="88" height="22" rx="4" fill="url(#copper)"/><text id="bat-left" x="340" y="396" text-anchor="end" font-size="16" font-weight="700">−</text><text id="bat-right" x="460" y="396" font-size="16" font-weight="700">+</text></g>
+  <g id="battery"><rect x="350" y="372" width="100" height="34" rx="6" fill="#2a3150" stroke="#8f9bc4"/><rect x="356" y="378" width="88" height="22" rx="4" fill="url(#copper)"/>${pole(332, 389, '−', { id: 'bat-left' })}${pole(468, 389, '+', { id: 'bat-right' })}</g>
   <text x="400" y="430" text-anchor="middle" font-size="12" class="muted">전지와 브러시</text>
   <g id="force-vectors" opacity="0"></g>
   <text x="400" y="104" text-anchor="middle" font-size="12" class="muted">코일을 앞에서 본 모습 · ⊙ 앞으로 나오는 전류, ⊗ 뒤로 들어가는 전류</text>
@@ -57,7 +57,7 @@ const lab = buildLab({
 });
 
 /* ---------- 상태 ---------- */
-let mode = 'motor', show = false, on = false, current = 1, magnet = 1, vIndex = 0, lastFrame = 0;
+let mode = 'motor', show = true, on = false, current = 1, magnet = 1, vIndex = 0, lastFrame = 0;
 let angle = .5, omega = 0, phase = .3, phaseOmega = 0, stripping = 'half', turns = 0;
 // view: ‘자기장·전류·힘 보기’를 켜고 코일 양쪽이 받는 힘을 직접 본 적이 있는지(꼭 봐야 다음으로 넘어가요).
 const seen = { spin: false, reversed: false, simpleSpin: false, fullStuck: false, view: false };
@@ -107,7 +107,7 @@ function paintMotor() {
   setText('#pole-left', magnet > 0 ? 'S' : 'N'); setText('#pole-right', magnet > 0 ? 'N' : 'S');
   $('#magnet-s path').setAttribute('fill', magnet > 0 ? '#3a6fd8' : '#e04848');
   $('#magnet-n path').setAttribute('fill', magnet > 0 ? '#e04848' : '#3a6fd8');
-  setText('#bat-left', current > 0 ? '−' : '+'); setText('#bat-right', current > 0 ? '+' : '−');
+  setPole($('#bat-left'), current > 0 ? '−' : '+'); setPole($('#bat-right'), current > 0 ? '+' : '−');
 }
 
 /* ---------- 간이 전동기 ---------- */
@@ -188,6 +188,8 @@ function setMode(next) {
 $('#tab-motor').onclick = () => setMode('motor');
 $('#tab-simple').onclick = () => setMode('simple');
 $('#reset').onclick = () => { current = 1; magnet = 1; vIndex = 0; omega = 0; phaseOmega = 0; angle = .5; phase = .3; stripping = 'half'; setMode(mode); };
+// 전기와 자기 실험은 처음부터 전하·전자(자기장·힘)를 보여 줘요(교사 의견). 학생은 언제든 끄고 다시 켤 수 있어요.
+$('#show-detail').checked = true;
 $('#show-detail').onchange = e => { show = e.target.checked; };
 
 /* ---------- 3D로 보기 ---------- */
@@ -208,7 +210,7 @@ function frame(now) {
     if (show && on && mode === 'motor') seen.view = true;
     flow?.update(checklist([
       ['전동기에 전류를 흘려 회전 관찰하기', seen.spin, '‘전동기의 원리’ 탭 → ‘전류 흘리기’'],
-      ['‘자기장·전류·힘 보기’를 켜고 코일 양쪽이 받는 힘 비교하기', seen.view, '‘자기장·전류·힘 보기’를 켜고, 코일의 왼쪽과 오른쪽이 받는 힘의 방향을 비교해요', '', '#show-detail'],
+      ['‘자기장·전류·힘 보기’로 코일 양쪽이 받는 힘 비교하기', seen.view, '‘자기장·전류·힘 보기’가 켜진 채로 코일의 왼쪽과 오른쪽이 받는 힘의 방향을 비교해요', '', ''],
       ['전류의 방향이나 자석의 극을 바꾸어 회전 방향 비교하기', seen.reversed, '돌고 있을 때 ‘전류의 방향 바꾸기’나 ‘자석의 극 바꾸기’', '#flip-current, #flip-magnet'],
       ['간이 전동기: 반만 벗긴 코일 회전시키기', seen.simpleSpin, '‘간이 전동기 만들기’ 탭 → ‘전류 흘리기’ → ‘코일 살짝 밀기’', '#tab-simple'],
       ['간이 전동기: 양쪽 모두 벗긴 코일과 비교하기', seen.fullStuck, '‘양쪽 모두 완전히 벗김’으로 바꾸고 ‘코일 살짝 밀기’', '[data-strip="full"]'],
@@ -247,7 +249,7 @@ flow = setupPOEFlow({
     ],
     note: '우리 주변에서 전동기를 활용한 전기 기구를 더 찾아보세요.',
   },
-  onRestart: () => { show = false; $('#show-detail').checked = false; Object.keys(seen).forEach(k => seen[k] = false); lab.resetQuiz(); mode = 'motor'; $('#reset').click(); },
+  onRestart: () => { show = true; $('#show-detail').checked = true; Object.keys(seen).forEach(k => seen[k] = false); lab.resetQuiz(); mode = 'motor'; $('#reset').click(); },
 });
 setMode('motor');
 requestAnimationFrame(frame);

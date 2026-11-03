@@ -40,7 +40,7 @@ const PLATE_EXTRA = [-52, -26, 26, 52];
 const LEAF_NUCLEI = [22, 44, 66], LEAF_ELECTRONS = [14, 36, 58, 25, 47];
 const OBJECT_DIR = (() => { const d = Math.hypot(150, -112); return { x: 150 / d, y: -112 / d }; })();
 
-let mode = 'spoon', show = false;
+let mode = 'spoon', show = true;
 let spoonKey = 'straw', scopeKey = 'straw', rubLevel = 1;
 let obj = { ...SPOON_START }, angle = 0, shownShift = 0, motion = null, lastFrame = 0;
 let leafShown = leafAngle(0);
@@ -364,10 +364,10 @@ function progress() {
   if (show && mode === 'scope' && rubLevel && leafShown - leafAngle(0) > 6) seen.viewScope = true;
   const steps = [
     ['(−)전하를 띤 빨대로 숟가락 움직이기', seen.spoonMinus, '‘쇠숟가락 움직이기’ 탭 → ‘(−)전하를 띤 빨대’ → ‘가까이 가져가기’'],
-    ['‘전하 보기’를 켜고 숟가락 속 전자의 이동 살펴보기', seen.viewSpoon, '위쪽 ‘전하 보기’를 켠 채로 대전체를 숟가락에 가까이 가져가, 전자가 어느 쪽으로 모이는지 봐요', '', '#show-charges'],
+    ['‘전하 보기’로 숟가락 속 전자의 이동 살펴보기', seen.viewSpoon, '위쪽 ‘전하 보기’를 켠 채로 대전체를 숟가락에 가까이 가져가, 전자가 어느 쪽으로 모이는지 봐요', '', ''],
     ['(+)전하를 띤 장갑으로 숟가락 움직이기', seen.spoonPlus, '‘(+)전하를 띤 장갑’을 고르고 ‘가까이 가져가기’', '[data-spoon="glove"]'],
     ['검전기: 2~3번 문지른 물체 가까이 하기', seen.levels.has(1), '‘검전기 관찰하기’ 탭 → ‘2~3번 문지름’ → ‘가까이 가져가기’', '#scope-tab'],
-    ['‘전하 보기’를 켜고 금속판과 금속박의 전하 살펴보기', seen.viewScope, '‘전하 보기’를 켠 채로 대전체를 금속판에 가까이 가져가, 금속박으로 옮겨 간 전하를 봐요', '', '#show-charges'],
+    ['‘전하 보기’로 금속판과 금속박의 전하 살펴보기', seen.viewScope, '‘전하 보기’를 켠 채로 대전체를 금속판에 가까이 가져가, 금속박으로 옮겨 간 전하를 봐요', '', ''],
     ['검전기: 10번 이상 문지른 물체 가까이 하기', seen.levels.has(2), '‘10번 이상 문지름’으로 바꾸고 ‘가까이 가져가기’', '[data-rub="2"]'],
   ];
   return checklist(steps);
@@ -475,6 +475,8 @@ $('#withdraw-button').onclick = () => animateObject(withdrawTarget(), 900);
 $('#spoon-tab').onclick = () => setMode('spoon');
 $('#scope-tab').onclick = () => setMode('scope');
 $('#reset').onclick = () => setMode(mode);
+// 전기와 자기 실험은 처음부터 전하·전자(자기장·힘)를 보여 줘요(교사 의견). 학생은 언제든 끄고 다시 켤 수 있어요.
+$('#show-charges').checked = true;
 $('#show-charges').onchange = e => { show = e.target.checked; };
 document.querySelectorAll('[data-spoon]').forEach(b => b.onclick = () => { spoonKey = b.dataset.spoon; resetScene(); });
 document.querySelectorAll('[data-scope]').forEach(b => b.onclick = () => { scopeKey = b.dataset.scope; resetScene(); });
@@ -532,7 +534,7 @@ flow = setupPOEFlow({
   },
   onStageChange: () => { motion = null; objectDrag.cancel(); },
   onRestart: () => {
-    show = false; $('#show-charges').checked = false;
+    show = true; $('#show-charges').checked = true;
     seen.spoonMinus = false; seen.spoonPlus = false; seen.levels.clear(); seen.viewSpoon = false; seen.viewScope = false;
     spoonKey = 'straw'; scopeKey = 'straw'; rubLevel = 1;
     $('[data-term="0"]').click(); setMode('spoon');

@@ -55,7 +55,7 @@ const lab = buildLab({
 });
 
 /* ---------- 상태 ---------- */
-let mode = 'magnet', show = false, on = false, direction = 1, level = 1, onTime = 0, warned = false, lastFrame = 0;
+let mode = 'magnet', show = true, on = false, direction = 1, level = 1, onTime = 0, warned = false, lastFrame = 0;
 let probe = { ...PROBE_START }, linesKey = '', magnetTime = 0, use3d = false;
 const needles = new Map();
 // view: ‘자기장 모습 보기’를 켜고 전류가 흐르는 코일 둘레의 자기장을 직접 본 적이 있는지(꼭 봐야 다음으로 넘어가요).
@@ -227,6 +227,8 @@ const view3d = setupViewToggle({
   }),
   onChange: active => { use3d = active; linesKey = ''; renderText(); },
 });
+// 전기와 자기 실험은 처음부터 전하·전자(자기장·힘)를 보여 줘요(교사 의견). 학생은 언제든 끄고 다시 켤 수 있어요.
+$('#show-detail').checked = true;
 $('#show-detail').onchange = e => { show = e.target.checked; linesKey = ''; };
 
 function frame(now) {
@@ -239,7 +241,7 @@ function frame(now) {
     flow?.update(checklist([
       ['막대자석 주위 나침반 관찰하기', seen.magnet, '‘막대자석 주위’ 탭에서 바늘의 N극(빨강)을 살펴요'],
       ['코일에 전류를 흘려 나침반 관찰하기', seen.current, '‘코일 주위’ 탭 → ‘스위치 누르고 있기’를 누르고 있어요', '#tab-coil'],
-      ['‘자기장 모습 보기’를 켜고 코일 둘레의 자기장 살펴보기', seen.view, '‘자기장 모습 보기’를 켠 채로 ‘스위치 누르고 있기’를 눌러, 자기장 모습과 나침반 바늘의 방향을 비교해요', '', '#show-detail'],
+      ['‘자기장 모습 보기’로 코일 둘레의 자기장 살펴보기', seen.view, '‘자기장 모습 보기’를 켠 채로 ‘스위치 누르고 있기’를 눌러, 자기장 모습과 나침반 바늘의 방향을 비교해요', '', ''],
       ['전류의 방향을 바꾸어 관찰하기', seen.reversed, '‘전류 방향 바꾸기’를 누른 뒤 다시 ‘스위치 누르고 있기’', '#flip-btn'],
       ['전류의 세기를 바꾸어 관찰하기', seen.stronger, '‘세게 (5 V)’처럼 전류의 세기를 바꾸고 다시 ‘스위치 누르고 있기’', '[data-level]'],
     ]));
@@ -276,7 +278,7 @@ flow = setupPOEFlow({
     ],
     note: '나침반 바늘은 지구 자기장의 영향도 함께 받아요. 코일 가까이 있을수록, 전류가 셀수록 코일의 자기장 방향을 더 뚜렷하게 가리켜요.',
   },
-  onRestart: () => { show = false; $('#show-detail').checked = false; Object.keys(seen).forEach(k => seen[k] = false); levelsTried.clear(); lab.resetQuiz(); direction = 1; level = 1; setMode('magnet'); },
+  onRestart: () => { show = true; $('#show-detail').checked = true; Object.keys(seen).forEach(k => seen[k] = false); levelsTried.clear(); lab.resetQuiz(); direction = 1; level = 1; setMode('magnet'); },
 });
 setMode('magnet');
 requestAnimationFrame(frame);

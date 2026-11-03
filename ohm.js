@@ -4,7 +4,7 @@ import './lab.css';
 import './theme-electric.css';
 import './readable.css';
 import { setupPOEFlow } from './src/poe-flow.js';
-import { $, $$, setText, setHTML, buildLab, checklist, toast, burst, PathFlow, ELECTRON_GLYPH, reducedMotion, instantLessons, stageAlert } from './src/lab-shell.js';
+import { $, $$, setText, setHTML, buildLab, checklist, toast, burst, PathFlow, ELECTRON_GLYPH, reducedMotion, instantLessons, stageAlert, pole } from './src/lab-shell.js';
 import { WIRES, VOLTAGES, MAX_VOLTAGE, currentMA, MATERIALS, MATERIAL_VOLTAGE, materialCurrentMA, needleAngle } from './src/ohm-model.js';
 
 // 교과서 244–247쪽, 지도서 558–565쪽(5–6차시).
@@ -27,7 +27,7 @@ const meter = (id, x, y, unit, max, ticks) => `<g id="${id}" transform="translat
 const scene = `
 <path id="wire" d="${WIRE_D}" stroke="#7d8fbf" stroke-width="5" fill="none" stroke-linejoin="round"/>
 <g id="electron-layer"></g>
-<g id="supply"><rect x="36" y="44" width="200" height="106" rx="10" fill="#1d2440" stroke="#8f9bc4" stroke-width="2"/><rect x="52" y="58" width="112" height="46" rx="5" fill="#2a0c0c"/><text id="supply-v" x="156" y="94" text-anchor="end" font-size="34" font-family="monospace" style="fill:#ff4d4d" filter="url(#glow)">0.0</text><text x="186" y="94" font-size="16" class="muted">V</text><text x="136" y="124" font-size="11" text-anchor="middle" class="muted">디지털 전원 장치</text><circle cx="80" cy="150" r="7" fill="#222"/><circle cx="190" cy="150" r="7" fill="#d23"/><text x="80" y="140" font-size="11" text-anchor="middle" class="muted">−</text><text x="190" y="140" font-size="11" text-anchor="middle" class="muted">+</text></g>
+<g id="supply"><rect x="36" y="44" width="200" height="106" rx="10" fill="#1d2440" stroke="#8f9bc4" stroke-width="2"/><rect x="52" y="58" width="112" height="46" rx="5" fill="#2a0c0c"/><text id="supply-v" x="156" y="94" text-anchor="end" font-size="34" font-family="monospace" style="fill:#ff4d4d" filter="url(#glow)">0.0</text><text x="186" y="94" font-size="16" class="muted">V</text><text x="136" y="124" font-size="11" text-anchor="middle" class="muted">디지털 전원 장치</text><circle cx="80" cy="150" r="7" fill="#222"/><circle cx="190" cy="150" r="7" fill="#d23"/>${pole(80, 132, '−', { r: 9 })}${pole(190, 132, '+', { r: 9 })}</g>
 <g id="switch" role="button" tabindex="0" aria-label="스위치"><rect x="262" y="186" width="78" height="28" rx="6" fill="#2a3150" stroke="#8f9bc4"/><circle cx="276" cy="200" r="5" fill="#cfd6ec"/><circle cx="326" cy="200" r="5" fill="#cfd6ec"/><path id="lever" d="M276 200 L326 200" stroke="#ffd166" stroke-width="5" stroke-linecap="round"/><text x="301" y="236" font-size="12" text-anchor="middle" class="muted">스위치</text></g>
 ${meter('ammeter', 440, 290, 'mA', 500, [0, '', 200, '', 400, ''])}
 <text x="440" y="352" font-size="12" text-anchor="middle" class="muted">전류계</text>
