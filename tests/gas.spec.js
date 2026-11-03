@@ -67,7 +67,7 @@ test('샤를 법칙: 물이 식을수록 부피가 일정하게 작아지고, �
   await expect(page.locator('#flask-panel')).toContainText('밖으로 부풀었어요', { timeout: 5000 });
   await page.locator('[data-bath="ice"]').click();
   await expect(page.locator('#flask-panel')).toContainText('안으로 빨려 들어갔어요', { timeout: 5000 });
-  // 부피 재기: 단추 순서(①→②→④→③→④…)대로, 다음에 누를 단추가 빛나요.
+  // 부피 재기: 단추 순서(①→②→③→④→③…)대로, 다음에 누를 단추가 빛나요. 네 단추는 한 줄에 있어요.
   await page.locator('#tab-measure').click();
   await expect(page.locator('#record')).toBeDisabled();
   await expect(page.locator('#pour')).toHaveClass(/primary/);

@@ -145,7 +145,7 @@ function paintMeasure(dt) {
   let z = `<rect x="${ZOOM.w / 2 - 14}" y="0" width="28" height="${ZOOM.h}" fill="#dfeffa12"/>`;
   for (let i = from; i <= to; i++) {
     const y = mid - (i / 100 - r) * ZOOM.px;
-    z += `<path d="M${ZOOM.w / 2 - 14} ${y.toFixed(1)} h${i % 5 ? 10 : 18}" stroke="#cfe0ff" stroke-width="${i % 5 ? 1 : 1.6}"/>${i % 5 ? '' : `<text x="${ZOOM.w / 2 + 10}" y="${(y + 4).toFixed(1)}" class="gas-tick">${(i / 100).toFixed(2)}</text>`}`;
+    z += `<path d="M${ZOOM.w / 2 - 14} ${y.toFixed(1)} h${i % 5 ? 10 : 18}" stroke="#cfe0ff" stroke-width="${i % 5 ? 1 : 1.6}"/>${i % 5 ? '' : `<text x="${ZOOM.w / 2 + 18}" y="${(y + 4).toFixed(1)}" class="gas-tick">${(i / 100).toFixed(2)}</text>`}`;
   }
   if (phase === 'cooling') z += `<rect x="${ZOOM.w / 2 - 13}" y="${(mid - 9 * ZOOM.px / PIP.px).toFixed(1)}" width="26" height="${(9 * ZOOM.px / PIP.px).toFixed(1)}" rx="3" fill="#ff5d8f"/><rect x="${ZOOM.w / 2 - 13}" y="${mid.toFixed(1)}" width="26" height="${ZOOM.h}" fill="#7fe7ff33"/>`;
   setHTML('#zoom-scale', z);
@@ -154,7 +154,9 @@ function paintMeasure(dt) {
   const fall = CHARLES.refMl - (BOTTLE_ML + r);
   setText('#cool-state', { ready: '① 유리병을 뜨거운 물에 담그는 것부터 시작해요.', hot: '유리병 속 기체가 뜨거운 물(60 ℃)과 같은 온도가 되었어요.', cooling: coolAnim ? '물이 식는 중이에요…' : fall > .005 ? `60 ℃일 때보다 기체의 부피가 ${fall.toFixed(2)} mL 줄었어요.` : '물이 식으면 글리세롤이 어느 쪽으로 움직일까요?' }[phase]);
   // 글리세롤이 처음 자리(1 mL)보다 내려가면, 내려간 만큼 기체의 부피가 줄었다는 뜻이에요.
-  setHTML('#glyc-arrow', phase === 'cooling' && fall > .005 ? `<path d="M150 ${(pipY(PIPETTE_ML) - 4).toFixed(1)} V${(gy0 - 6).toFixed(1)}" stroke="#ff9fbf" stroke-width="3" marker-end="url(#arrow-head)"/><text x="142" y="${((pipY(PIPETTE_ML) + gy0) / 2 - 8).toFixed(1)}" text-anchor="end" class="gas-small">글리세롤이</text><text x="142" y="${((pipY(PIPETTE_ML) + gy0) / 2 + 8).toFixed(1)}" text-anchor="end" class="gas-small">내려가요</text><text x="142" y="${((pipY(PIPETTE_ML) + gy0) / 2 + 26).toFixed(1)}" text-anchor="end" class="gas-hot">= 부피 감소</text>` : '');
+  // 설명 글은 스탠드 팔(피펫 위쪽)과 겹치지 않게, 화살표 가운데보다 너무 위로 올라가지 않게 둬요.
+  const glycMid = Math.max((pipY(PIPETTE_ML) + gy0) / 2, pipY(PIPETTE_ML) + 40);
+  setHTML('#glyc-arrow', phase === 'cooling' && fall > .005 ? `<path d="M150 ${(pipY(PIPETTE_ML) - 4).toFixed(1)} V${(gy0 - 6).toFixed(1)}" stroke="#ff9fbf" stroke-width="3" marker-end="url(#arrow-head)"/><text x="142" y="${(glycMid - 8).toFixed(1)}" text-anchor="end" class="gas-small">글리세롤이</text><text x="142" y="${(glycMid + 8).toFixed(1)}" text-anchor="end" class="gas-small">내려가요</text><text x="142" y="${(glycMid + 26).toFixed(1)}" text-anchor="end" class="gas-hot">= 부피 감소</text>` : '');
   const steam = phase !== 'ready' && water > 35 ? Array.from({ length: 3 }, (_, i) => `<path d="M${150 + i * 40} 262 q-8 -14 0 -26 q8 -12 0 -26" stroke="#ffffff" stroke-width="2.4" fill="none" opacity="${(.14 + .5 * (water - 35) / 25).toFixed(2)}"/>`).join('') : '';
   setHTML('#steam', steam);
 }
@@ -183,12 +185,12 @@ function coolStep() {
 function record() {
   if (coolAnim) return;
   const c = Math.round(water), r = Math.round(pipetteReading(c) * 100) / 100, ml = Math.round((BOTTLE_ML + r) * 100) / 100;
-  if (records.some(x => x.c === c)) { toast(`${c} ℃는 이미 기록했어요. ③ 물을 5 ℃ 더 식힌 뒤 기록해요`); return; }
+  if (records.some(x => x.c === c)) { toast(`${c} ℃는 이미 기록했어요. ④ 물을 5 ℃ 더 식힌 뒤 기록해요`); return; }
   records.push({ c, reading: r, ml }); records.sort((a, b) => b.c - a.c);
   burst($('#fx'), gx(c), gy(ml), '#ffd166', 8);
   toast(`온도 ${c.toFixed(1)} ℃ · 부피 ${ml.toFixed(2)} mL를 기록했어요`);
   if (records.length === 5) toast('그래프의 점들을 이은 모양을 살펴보세요. 온도가 5 ℃씩 낮아질 때 부피는 어떻게 변하나요?');
-  else if (records.length < 5 && water > COOL_MIN) setTimeout(() => toast('③ ‘물이 5 ℃ 식을 때까지 기다리기’를 눌러요'), 1200);
+  else if (records.length < 5 && water > COOL_MIN) setTimeout(() => toast('④ ‘물을 5 ℃ 식히기’를 눌러요'), 1200);
   paintGraph(); renderControls();
 }
 
@@ -317,7 +319,7 @@ function markLife() { if (!lifeSeen.has(life)) { lifeSeen.add(life); toast(`${LI
 function renderText() {
   const T = {
     flask: ['풍선을 씌운 플라스크를 뜨거운 물과 얼음물에 넣어 보세요.', '플라스크 속 공기의 온도가 바뀌면 풍선이 어떻게 되는지 봐요. 그다음 ‘부피 재기’ 탭에서 부피를 직접 재요.'],
-    measure: ['뜨거운 물이 식을 때 유리병 속 기체의 부피를 재어 보세요.', '단추의 ①→②→③→④ 순서대로 눌러요. ③ 물을 5 ℃ 식히고 ④ 기록하기를 되풀이해 60, 55, 50, 45, 40 ℃에서 다섯 번 기록해요. 빛나는 단추가 지금 누를 단추예요.'],
+    measure: ['뜨거운 물이 식을 때 유리병 속 기체의 부피를 재어 보세요.', '단추를 ①→②→③→④ 순서대로 눌러요. 그다음 ③ 기록하기와 ④ 식히기를 되풀이해 60, 55, 50, 45, 40 ℃에서 다섯 번 기록해요. 빛나는 단추가 지금 누를 단추예요.'],
     particles: ['온도를 바꾸며 실린더 속 기체 입자를 관찰해 보세요.', '외부 압력은 1 기압으로 그대로예요. ‘가열하기’와 ‘냉각하기’를 눌러 입자의 운동과 피스톤의 높이가 어떻게 달라지는지 비교해요.'],
     life: ['생활 속에서 샤를 법칙을 찾아보세요.', '보기를 골라 단추를 눌러 보고, 기체의 부피가 왜 변하는지 온도로 생각해 봐요.'],
   }[mode];
@@ -339,8 +341,9 @@ function renderControls() {
     // 다음에 누를 단추를 빛나게(primary) 해요.
     const next = phase === 'ready' ? 'pour' : phase === 'hot' ? 'drop' : coolAnim ? '' : !recordedNow() ? 'record' : water > COOL_MIN && records.length < 7 ? 'cool-step' : '';
     const cls = id => (next === id ? 'class="primary"' : '');
-    $('#controls').innerHTML = `<div role="group" aria-label="실험 순서"><span class="group-label">순서</span><button id="pour" ${cls('pour')} ${phase === 'ready' ? '' : 'disabled'}>① 뜨거운 물에 담그기</button><button id="drop" ${cls('drop')} ${phase === 'hot' ? '' : 'disabled'}>② 글리세롤 떨어뜨리기</button><button id="cool-step" ${cls('cool-step')} ${phase === 'cooling' && !coolAnim && water > COOL_MIN ? '' : 'disabled'}>③ 물이 5 ℃ 식을 때까지 기다리기</button><button id="again" ${phase === 'ready' ? 'disabled' : ''}>처음부터 다시</button></div>`;
-    $('#actions').innerHTML = `<button id="record" ${cls('record')} ${phase === 'cooling' && !coolAnim && !recordedNow() ? '' : 'disabled'}>④ 온도와 부피 기록하기</button>`;
+    // 단추는 누르는 차례대로 번호를 붙이고 한 줄에 둬요: ① 담그기 → ② 글리세롤 → ③ 기록 → ④ 식히기 → ③ 기록 …(교사 의견: 순서가 어려워요)
+    $('#controls').innerHTML = `<div role="group" aria-label="실험 순서"><span class="group-label">순서</span><button id="pour" ${cls('pour')} ${phase === 'ready' ? '' : 'disabled'}>① 뜨거운 물에 담그기</button><button id="drop" ${cls('drop')} ${phase === 'hot' ? '' : 'disabled'}>② 글리세롤 떨어뜨리기</button><button id="record" ${cls('record')} ${phase === 'cooling' && !coolAnim && !recordedNow() ? '' : 'disabled'}>③ 온도와 부피 기록하기</button><button id="cool-step" ${cls('cool-step')} ${phase === 'cooling' && !coolAnim && water > COOL_MIN ? '' : 'disabled'}>④ 물을 5 ℃ 식히기</button><button id="again" ${phase === 'ready' ? 'disabled' : ''}>처음부터 다시</button></div>`;
+    $('#actions').innerHTML = '';
     $('#pour').onclick = pourHot;
     $('#drop').onclick = dropGlycerol;
     $('#cool-step').onclick = coolStep;
@@ -392,7 +395,7 @@ function frame(now) {
     flow?.update(checklist([
       ['풍선 씌운 플라스크를 뜨거운 물과 얼음물에 넣어 보기', hotSeen && iceSeen, '‘뜨거운 물(80 ℃)에 넣기’와 ‘얼음물(0 ℃)에 넣기’를 눌러 풍선을 봐요'],
       ['부피 재기: 뜨거운 물에 담그고 글리세롤 떨어뜨리기', phase === 'cooling', '‘부피 재기’ 탭 → ‘① 뜨거운 물에 담그기’ → ‘② 글리세롤 떨어뜨리기’를 눌러요', '#tab-measure'],
-      ['물을 5 ℃씩 식히며 온도와 부피 5번 기록하기', records.length >= 5, '‘④ 온도와 부피 기록하기’ → ‘③ 물이 5 ℃ 식을 때까지 기다리기’를 되풀이해요', '#record'],
+      ['물을 5 ℃씩 식히며 온도와 부피 5번 기록하기', records.length >= 5, '‘③ 온도와 부피 기록하기’ → ‘④ 물을 5 ℃ 식히기’를 되풀이해요', '#record'],
       // 가열과 냉각은 어느 쪽부터 해도 돼요.
       ['입자 모형: 가열(60 ℃ 이상)과 냉각(0 ℃) 모두 피스톤이 멈출 때까지 보기', heatSeen && coolSeen, '‘입자 모형’ 탭 → ‘가열하기 (+20 ℃)’를 두 번 이상 눌러 기다리고, ‘냉각하기 (−20 ℃)’로 0 ℃까지 낮춰 기다려요', '#tab-particles'],
       ['입자의 운동과 충돌 살펴보기', particlesDone, '위쪽의 ‘화살표·충돌 보기’를 켜고 온도에 따라 입자의 운동이 어떻게 다른지 봐요', '', '#show-detail'],

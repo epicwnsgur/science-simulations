@@ -100,7 +100,8 @@ ${headerHTML(cfg.unit)}
   watchChanges();
   setupFullView();
   const resetQuiz = () => $('[data-term="0"]').click();
-  const selectTab = id => cfg.tabs.forEach(t => $(`#tab-${t.id}`).setAttribute('aria-selected', t.id === id));
+  // 탭을 바꾸면 앞 탭의 안내 띠(‘③ … 눌러요’ 등)가 남아 헷갈리지 않게 닫아요.
+  const selectTab = id => { cfg.tabs.forEach(t => $(`#tab-${t.id}`).setAttribute('aria-selected', t.id === id)); $('#toast')?.classList.remove('show'); };
   return { resetQuiz, selectTab };
 }
 
