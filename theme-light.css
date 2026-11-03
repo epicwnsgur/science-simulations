@@ -284,9 +284,10 @@ html[data-theme=light] .challenge .challenge-score{color:var(--volt)}
 html[data-theme=light] .model-note-box>summary{border:1px solid var(--line-2);color:var(--muted)}
 html[data-theme=light] .model-note-box>summary:hover{border-color:var(--current);color:var(--ink)}
 html[data-theme=light] .next-target{outline:2px solid var(--volt)}
-html[data-theme=light] .model-badge{border:1px solid #b49cff;background:#f5c4d8;color:#38192d}
+html[data-theme=light] .model-tag{border:1px solid #b49cff;background:#f5c4d8;color:#38192d}
 html[data-theme=light] .look-ring{border:3px solid #ff9f6b;box-shadow:0 0 0 4px #ff9f6b33,0 0 24px #ff9f6b66}
 html[data-theme=light] .look-ring span{background:#ff9f6b;color:#2a1000}
+html[data-theme=light] .lab:fullscreen{background:var(--bg)}
 /* readable.css */
 html[data-theme=light] .lab-readable{--faint:#8f6683;--muted:#6f4462}
 html[data-theme=light] .lab-now{color:var(--volt)}

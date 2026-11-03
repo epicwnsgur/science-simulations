@@ -80,10 +80,10 @@ export function buildLab(cfg) {
 ${headerHTML(cfg.unit)}
 <main class="lab-page"><div class="breadcrumb">${UNITS[cfg.unit ?? 7].label} <span>/</span> ${cfg.crumb}</div>
 <section class="intro"><div><h1>${cfg.title}</h1><p>${cfg.intro}</p></div></section>
-<div class="workspace"><section class="lab"><div class="lab-toolbar"><div class="tabs" role="tablist" aria-label="활동 선택">${tabs}</div><button id="reset" class="reset">↻ <span>처음으로</span></button></div>
+<div class="workspace"><section class="lab"><div class="lab-toolbar"><div class="tabs" role="tablist" aria-label="활동 선택">${tabs}</div><div class="toolbar-right"><button type="button" class="reset lab-full" aria-pressed="false">${icon('expand')} <span>크게 보기</span></button><button id="reset" class="reset">↻ <span>처음으로</span></button></div></div>
 <div class="instruction"><span class="step-icon">↔</span><div><strong id="guide"></strong><p id="subguide"></p></div>${cfg.toggle ? `<label class="toggle"><input type="checkbox" id="show-detail"><span>${cfg.toggle}</span></label>` : ''}</div>
 <div id="controls" class="pair-controls choice-row"></div>
-<div class="stage night"><div class="stage-label"><span class="model-badge" title="실제 모습을 보기 쉽게 나타낸 모형 그림이에요">모형 그림</span><span id="stage-state" aria-live="polite"></span></div>
+<div class="stage night"><div class="stage-label"><span class="model-tag" title="실제 모습을 보기 쉽게 나타낸 모형 그림이에요">모형 그림</span><span id="stage-state" aria-live="polite"></span></div>
 <svg id="scene" viewBox="0 0 800 440" aria-label="${cfg.sceneLabel}">${FX_DEFS}${cfg.scene}</svg><div class="stage-hint" id="stage-hint"></div><div class="toast" id="toast" role="status" aria-live="polite"></div></div>
 <div class="lab-bottom">${cfg.legend ? `<div class="legend">${cfg.legend}</div>` : ''}<div id="actions" class="actions"></div></div>
 <details class="model-note-box"><summary>모형과 실제의 다른 점 보기</summary><p class="model-note" id="model-note"></p></details></section>
@@ -98,12 +98,28 @@ ${headerHTML(cfg.unit)}
     const [t, d] = cfg.terms[+b.dataset.term]; $('#term-definition').innerHTML = `<strong>${t}</strong> ${d}`;
   });
   watchChanges();
+  setupFullView();
   const resetQuiz = () => $('[data-term="0"]').click();
   const selectTab = id => cfg.tabs.forEach(t => $(`#tab-${t.id}`).setAttribute('aria-selected', t.id === id));
   return { resetQuiz, selectTab };
 }
 
-// 단추를 누르면 0.7초 뒤 ‘무엇이 달라졌나요?’의 값과 무대 위 상태 글 중 바뀐 곳을 잠깐 빛내요.
+// 크게 보기: 실험 칸(그림과 단추)을 화면 가득 키워요. 학생 의견: 수로 모형을 더 자세히 보고 싶어요.
+// 전체 화면을 쓸 수 없는 기기(아이폰 등)에서는 단추를 숨겨요. Esc나 ‘작게 보기’로 돌아와요.
+function setupFullView() {
+  const lab = $('.lab'), btn = $('.lab-full');
+  if (!lab || !btn) return;
+  btn.hidden = !document.fullscreenEnabled;
+  btn.onclick = () => { if (document.fullscreenElement) document.exitFullscreen(); else lab.requestFullscreen?.().catch(() => {}); };
+  document.addEventListener('fullscreenchange', () => {
+    const on = document.fullscreenElement === lab;
+    btn.innerHTML = `${icon(on ? 'shrink' : 'expand')} <span>${on ? '작게 보기' : '크게 보기'}</span>`;
+    btn.setAttribute('aria-pressed', String(on));
+    dispatchEvent(new Event('resize'));
+  });
+}
+
+// 단추를 누르면 1초 뒤(실험 동작이 끝난 뒤) ‘무엇이 달라졌나요?’의 값과 무대 위 상태 글 중 바뀐 곳을 잠깐 빛내요.
 // 학생 의견: 단추로 실험하면 무엇이 바뀌었는지 잘 모르겠어요. 값 칸은 실험마다 달라서, 글자만 담은 칸을 차례대로 견줘요.
 function watchChanges() {
   const cells = () => $$('#stage-state, #readout *').filter(el => !el.children.length && el.textContent.trim());
@@ -117,7 +133,7 @@ function watchChanges() {
         if (el.textContent === before[i]) return;
         el.classList.remove('just-changed'); void el.getBoundingClientRect(); el.classList.add('just-changed');
       });
-    }, 700);
+    }, 1000);
   });
 }
 

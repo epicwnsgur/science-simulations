@@ -245,7 +245,7 @@ test('스스로 평가: 결과 확인 뒤 옳게 고른 보기는 초록색, 틀
   }
 });
 
-test('관찰하기 단계에서 왼쪽 실험 순서 안내가 지금 할 일을 보여 줌', async ({ page }) => {
+test('관찰하기 단계에서 그림 위 실험 순서 안내가 지금 할 일을 보여 줌', async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 1000 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/simulations/series-parallel/'); await beginObservation(page);
@@ -254,7 +254,8 @@ test('관찰하기 단계에서 왼쪽 실험 순서 안내가 지금 할 일을
   await expect(guide.locator('li')).toHaveCount(6);
   await expect(guide.locator('li.current')).toContainText('전구 1개');
   const g = await guide.boundingBox(), lab = await page.locator('.lab').boundingBox();
-  expect(g.x + g.width).toBeLessThanOrEqual(lab.x);
+  // 큰 화면에서는 실험 순서 안내가 그림 위에 한 줄로 놓여요(학생 의견: 배치가 정신없어요).
+  expect(g.y + g.height).toBeLessThanOrEqual(lab.y);
   await page.locator('#close-all').click();
   await expect(guide.locator('li.done')).toHaveCount(1);
   await expect(guide.locator('li.current')).toContainText('직렬연결');

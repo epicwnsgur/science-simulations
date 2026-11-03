@@ -654,8 +654,8 @@ button.term:focus-visible{outline:2px solid var(--current);outline-offset:2px}
 @media(prefers-reduced-motion:reduce){.next-target{animation:none}}
 
 /* 무대 왼쪽 위 ‘모형 그림’ 꼬리표: 그림이 실제 모습을 보기 쉽게 나타낸 모형임을 알려요(오개념 막기). */
-.stage-label:has(.model-badge){display:flex;align-items:center;gap:8px}
-.model-badge{display:inline-block;flex:none;padding:1px 8px;border-radius:8px;border:1px solid #b49cff;background:#2a1f5a;color:#e6dcff;font-size:12px;font-weight:700;vertical-align:1px}
+.stage-label:has(.model-tag){display:flex;align-items:center;gap:8px}
+.model-tag{display:inline-block;flex:none;padding:1px 8px;border-radius:8px;border:1px solid #b49cff;background:#2a1f5a;color:#e6dcff;font-size:12px;font-weight:700;vertical-align:1px}
 /* 단추를 누른 뒤 바뀐 값: 잠깐 노랗게 빛나요. */
 .just-changed{animation:just-changed 2.4s ease-out}
 @keyframes just-changed{0%,30%{background:#ffd23f55;box-shadow:0 0 0 3px #ffd23f55;color:var(--ink)}100%{background:transparent;box-shadow:none}}
@@ -666,3 +666,19 @@ button.term:focus-visible{outline:2px solid var(--current);outline-offset:2px}
 .look-ring.below span{top:auto;bottom:-32px}
 @keyframes look-pulse{50%{box-shadow:0 0 0 10px #ff9f6b22,0 0 32px #ff9f6b99}}
 @media(prefers-reduced-motion:reduce){.just-changed,.look-ring.show{animation:none}}
+
+/* 메모 제목 줄을 끌어서 옮겨요. */
+.memo-head{cursor:move;touch-action:none;user-select:none}
+.memo-head button{cursor:pointer}
+
+/* 크게 보기(전체 화면): 그림이 화면 높이를 넘지 않게 하고, 넘치는 단추는 스크롤해서 봐요. */
+.toolbar-right{display:flex;align-items:center;gap:14px}
+.lab:fullscreen{overflow:auto;background:var(--bg);border-radius:0}
+.lab:fullscreen #scene{max-height:calc(100vh - 190px)}
+.lab:fullscreen .model-note-box{display:none}
+
+.poe-comparison .fix-observation{margin-top:10px;padding:6px 14px;font-size:14px}
+
+/* 마우스로 직접 문지를 수 있는 물체 */
+.rubbable{cursor:grab;touch-action:none}
+.rubbable:active{cursor:grabbing}

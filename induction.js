@@ -57,7 +57,7 @@ ${headerHTML()}
 <div class="instruction"><span class="step-icon">↔</span><div><strong id="guide"></strong><p id="subguide"></p></div><label class="toggle"><input type="checkbox" id="show-charges"><span>전하 보기</span></label></div>
 <div id="spoon-controls" class="pair-controls choice-row" role="group" aria-label="가까이 할 물체">${Object.entries(SPOON_OBJECTS).map(([key, o]) => `<button data-spoon="${key}" aria-pressed="${key === spoonKey}">${o.label}</button>`).join('')}</div>
 <div id="scope-controls" class="pair-controls choice-row" hidden><div role="group" aria-label="가까이 할 물체">${Object.entries(SCOPE_OBJECTS).map(([key, o]) => `<button data-scope="${key}" aria-pressed="${key === scopeKey}">${o.label}</button>`).join('')}</div><div role="group" aria-label="문지른 정도">${RUB_LEVELS.map(l => `<button data-rub="${l.id}" aria-pressed="${l.id === rubLevel}">${l.label}</button>`).join('')}</div><p id="rub-note"></p></div>
-<div class="stage night"><div class="stage-label"><span class="model-badge" title="실제 모습을 보기 쉽게 나타낸 모형 그림이에요">모형 그림</span><span id="stage-state" aria-live="polite"></span></div>
+<div class="stage night"><div class="stage-label"><span class="model-tag" title="실제 모습을 보기 쉽게 나타낸 모형 그림이에요">모형 그림</span><span id="stage-state" aria-live="polite"></span></div>
 <svg id="scene" viewBox="0 0 800 440" aria-label="대전체를 금속 물체에 가까이 하는 실험 공간">
 ${FX_DEFS}
 <defs>

@@ -121,7 +121,7 @@ export function setupPOEFlow(config) {
     </section>
     <section id="explain-panel" class="poe-panel explanation-panel" aria-labelledby="explain-title" hidden>
       <p class="poe-kicker">${L.explainKicker}</p><h2 id="explain-title" tabindex="-1">${L.explainTitle}</h2>
-      <div class="poe-comparison"><article><h3>${L.compareFirst}</h3><p data-prediction></p><p data-reason></p></article><article><h3>${L.compareSecond}</h3><p id="saved-observation"></p></article></div>
+      <div class="poe-comparison"><article><h3>${L.compareFirst}</h3><p data-prediction></p><p data-reason></p></article><article><h3>${L.compareSecond}</h3><p id="saved-observation"></p><button type="button" class="secondary fix-observation" id="fix-observation">관찰 기록의 오타 고치기</button></article></div>
       <form id="explanation-form" class="poe-form">
         <label class="writing-label" for="explanation-record"></label>
         <textarea id="explanation-record" rows="4" maxlength="1800" required placeholder="직접 본 움직임과 전하 표시의 변화를 근거로 내 말로 설명해 보세요."></textarea><p class="char-count" data-for="explanation-record" aria-live="polite"></p><p class="autosave-note" aria-hidden="true"></p>
@@ -713,6 +713,16 @@ export function setupPOEFlow(config) {
   }
   document.querySelectorAll('[data-experiment]').forEach(b => b.onclick = () => { if (+b.dataset.experiment !== state.current || isReviewing()) { state.onReview = false; selectExperiment(+b.dataset.experiment); } });
   $('#revisit-lab').onclick = () => changeStage('observe');
+  // 설명하기에서 관찰 기록의 오타를 보면 바로 고치러 가요(학생 의견). 고친 뒤 ‘관찰 저장하고 설명하기’를 다시 누르면 돌아와요.
+  // 예상은 실험 전의 내 생각을 그대로 남기려고 고치지 않아요.
+  $('#fix-observation').onclick = () => {
+    if (state.locked) return toast('보고서를 이미 제출해서 글을 고칠 수 없어요.');
+    changeStage('observe');
+    const box = partAreas()[0];
+    box?.scrollIntoView({ behavior: reducedMotion.matches ? 'instant' : 'smooth', block: 'center' });
+    box?.focus({ preventScroll: true });
+    toast('관찰 기록을 고친 뒤 ‘관찰 저장하고 설명하기’를 누르면 설명하기로 돌아가요.');
+  };
   $('#restart-poe').onclick = () => {
     if (!confirm('지금까지 쓴 예상·관찰·설명과 퀴즈 답을 모두 지우고 처음부터 할까요?')) return;
     restart(true);

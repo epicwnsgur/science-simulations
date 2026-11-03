@@ -278,6 +278,30 @@ function rub() {
   motion = { kind: 'rub', start: performance.now(), duration: instantLessons.matches ? 1 : 700, done: () => { rubs++; charge = rubs * PER_RUB; discharged = false; renderControls(); } };
   renderControls();
 }
+// 마우스(손가락)로 직접 문지르기: 플라스틱 접시나 털가죽을 누른 채 좌우로 문지르면, 한 번 문지를 만큼 움직일 때마다 1번 문질러요.
+// 학생 의견: 단추보다 마우스로 직접 비비며 실험할 때 더 이해하기 쉬웠어요. 단추로도 그대로 할 수 있어요.
+const RUB_STROKE = 140;
+let rubDrag = null;
+for (const id of ['#plastic', '#fur']) {
+  const el = $(id), scene = $('#scene');
+  const xOf = e => new DOMPoint(e.clientX, e.clientY).matrixTransform(scene.getScreenCTM().inverse()).x;
+  el.classList.add('rubbable');
+  el.addEventListener('pointerdown', e => {
+    if (mode !== 'neon' || placed) return;
+    e.preventDefault();
+    rubDrag = { x: xOf(e), travel: 0 };
+    el.setPointerCapture?.(e.pointerId);
+  });
+  el.addEventListener('pointermove', e => {
+    if (!rubDrag) return;
+    const x = xOf(e);
+    rubDrag.travel += Math.abs(x - rubDrag.x); rubDrag.x = x;
+    if (rubDrag.travel >= RUB_STROKE && !motion) { rubDrag.travel = 0; rub(); }
+  });
+  const end = () => { rubDrag = null; };
+  el.addEventListener('pointerup', end);
+  el.addEventListener('pointercancel', end);
+}
 function togglePlates() {
   if (motion) return;
   placed = !placed; touching = false; renderControls();
@@ -376,7 +400,7 @@ function renderControls() {
 function renderText() {
   if (mode === 'neon') {
     setText('#guide', '마찰 전기만으로 네온전구에 불을 켤 수 있을까요?');
-    setText('#subguide', '① 문지르기 → ② 알루미늄 접시 올려놓기 → ③ 네온전구 끝을 다른 접시에 대기 순서로 해 보세요.');
+    setText('#subguide', '① 문지르기 → ② 알루미늄 접시 올려놓기 → ③ 네온전구 끝을 다른 접시에 대기 순서로 해 보세요. 문지르기는 플라스틱 접시나 털가죽을 마우스로 누른 채 좌우로 문질러도 돼요.');
     setText('#stage-state', `문지른 횟수 ${rubs}번 · ${placed ? '알루미늄 접시를 올려놓음' : '알루미늄 접시를 듦'}${touching ? ' · 네온전구 닿음' : ''}`);
     setText('#note-title', seen.lit ? (seen.noLight ? '불빛이 계속 켜져 있었나요?' : '한 번 더 대 보면 어떻게 될까요?') : '네온전구를 관찰해 보세요');
     setText('#note-text', show ? '네온전구를 대는 순간 전하가 어디에서 어디로 이동하나요?' : '‘전하·방향 보기’를 켜면 접시에 있는 전하를 볼 수 있어요.');

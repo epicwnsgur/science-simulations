@@ -20,3 +20,14 @@ test('문제 누락·선택지 수·정답 오류를 거부함', () => {
     const copy = structuredClone(original); mutate(copy); assert.throws(() => validateQuiz(copy));
   }
 });
+
+test('5지선다의 모든 오답 보기에 ‘틀린 까닭’이 있고, 정답 보기에는 없음(학생 의견: 틀린 이유도 알려 주세요)', () => {
+  for (const [lab, questions] of Object.entries(CONCEPT_QUIZZES)) {
+    for (const q of questions.filter(v => v.type === 'choice')) {
+      for (const [value] of q.options) {
+        if (value === q.answer) assert.ok(!q.why?.[value], `${lab}: ${q.question}`);
+        else assert.ok(q.why?.[value]?.length > 8, `${lab}: ${q.question} 보기 ${value}`);
+      }
+    }
+  }
+});
