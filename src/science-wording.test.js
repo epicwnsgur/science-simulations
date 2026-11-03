@@ -70,3 +70,12 @@ test('중1 Ⅵ 기체의 성질: 실험 화면에 오개념 표현이 없고, �
   for (const f of ['boyles-law.js', 'src/glossary.js']) assert.match(visible(f), /(?:온도가 일정할 때|일정한 온도에서) 일정량의 기체의 압력과 부피는 서로 (?:<b>)?반비례/, `${f}: 보일 법칙의 조건`);
   for (const f of ['charles-law.js', 'src/glossary.js']) assert.match(visible(f), /(?:압력이 일정할 때|일정한 압력에서) 일정량의 기체(?:의)? 부피는/, `${f}: 샤를 법칙의 조건`);
 });
+
+// 전기 에너지의 이용: 전기 에너지는 사라지지 않고 바뀌어요. 전력량 계산식(W × h)은 화면에서 계산 문제로 내지 않아요(지도상 유의점).
+test('전기 에너지의 이용: 전기 에너지가 사라진다고 쓰지 않고, 소비 전력·전력량의 정의가 교과서와 같음', () => {
+  const text = visible('electric-energy.js');
+  assert.doesNotMatch(text, /전기 에너지[가는]? (?:없어져요|사라져요|사라진다)/);
+  assert.match(text, /1초 동안 전기 기구가 소모하는 전기 에너지의 양을 <b>소비 전력<\/b>/);
+  assert.match(text, /일정 시간 동안 소모하는 전기 에너지의 양을 <b>전력량<\/b>/);
+  assert.doesNotMatch(text, /에어컨[^'`.]{0,20}열에너지를 (?:만들|내)/, '에어컨은 열을 옮기는 기구예요');
+});

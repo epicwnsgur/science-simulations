@@ -4,7 +4,7 @@ import { test, expect } from '@playwright/test';
 test('첫 화면의 교사용 자료 폴더는 비밀번호를 물은 뒤 바로 들어감', async ({ page }) => {
   const errors = []; page.on('pageerror', e => errors.push(e.message));
   await page.goto('/');
-  await expect(page.locator('.available')).toHaveText('폴더 2개 · 실험 16개');
+  await expect(page.locator('.available')).toHaveText('폴더 2개 · 실험 17개');
   await page.getByRole('link', { name: /교사용 자료 폴더 열기/ }).click();
   await expect(page.locator('#gate-dialog')).toBeVisible();
   await page.locator('#gate-pass').fill('0000'); await page.locator('#gate-ok').click();
