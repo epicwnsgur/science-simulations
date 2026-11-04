@@ -1,6 +1,6 @@
 // 자리 뽑기(교사용 자료): 교실 자리(세로 줄 × 가로 줄)에 학생을 무작위로 앉혀요.
 // 뽑기 전에는 자리를 눌러 막은 자리·고정 학생을 정하고(‘자리 막기’를 켜면 누르는 자리마다 바로 막혀요), 뽑은 뒤에는 두 자리를 차례로 눌러 맞바꿔요.
-// ‘차례로 공개’는 5초쯤 긴장감을 줘요: 3·2·1 세는 동안 번호가 섞이고(북소리·조명), 이어서 앞줄부터 한 자리씩 열리고 끝에 꽃가루가 터져요.
+// ‘차례로 공개’는 5초 카운트다운 화면(5→1, 심장 소리·북소리·흩날리는 번호)이 끝나면 ‘공개!’와 함께 앞줄부터 빠르게 열리고 꽃가루가 터져요.
 // 계산은 src/seat-model.js(번호를 고르게 섞음, crypto 난수). 이름 명단은 이 화면에만 있고 어디에도 저장하거나 보내지 않아요.
 import './seat-draw.css';
 import { setupTheme } from './src/theme.js';
@@ -14,7 +14,8 @@ guardTeacherPage({ home: '../../' });
 const $ = id => document.getElementById(id);
 const rowsIn = $('sd-rows'), colsIn = $('sd-cols'), countIn = $('sd-count'), pairsIn = $('sd-pairs'), namesIn = $('sd-names-text');
 const grid = $('sd-grid'), room = $('sd-room'), status = $('sd-status'), drawBtn = $('sd-draw'), flipBtn = $('sd-flip'), skipBtn = $('sd-skip'), allBtn = $('sd-all');
-const blockBtn = $('sd-block'), soundBtn = $('sd-sound'), stage = $('sd-stage'), fsBtn = $('sd-fs'), fsDraw = $('sd-fs-draw'), countdown = $('sd-countdown'), fx = $('sd-fx');
+const blockBtn = $('sd-block'), soundBtn = $('sd-sound'), stage = $('sd-stage'), fsBtn = $('sd-fs'), fsDraw = $('sd-fs-draw'), fx = $('sd-fx');
+const show = $('sd-show'), showNum = $('sd-show-num'), showLine = $('sd-show-line'), floaters = $('sd-floaters');
 const dialog = $('sd-dialog'), blockedIn = $('sd-blocked'), fixedIn = $('sd-fixed'), dialogError = $('sd-dialog-error');
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -84,7 +85,7 @@ function updateStatus(text) {
 /* ---------- 뽑기와 공개 ---------- */
 function clearTimers() {
   timers.forEach(clearTimeout); timers = []; autoReveal = false; cancelAnimationFrame(spinning); spinning = null;
-  room.classList.remove('tension'); countdown.textContent = ''; countdown.className = 'sd-countdown';
+  closeShow();
 }
 function spinFaces() {
   const ids = students().map(s => s.id);
@@ -105,23 +106,47 @@ function draw() {
   result = drawSeats({ rows, cols, ...maps, students: list });
   revealed = new Set(); selected = -1;
   if (revealMode() === 'click') { phase = 'result'; render(); return; }
-  if (reduceMotion) { finishReveal(); return; }
   phase = 'drawing'; render();
-  // 0~3초: 3·2·1을 세는 동안 번호가 섞이고 북소리가 점점 커져요. 3~5초: 앞줄부터 한 자리씩 열려요.
-  room.classList.add('tension');
-  drumroll(3);
-  [3, 2, 1].forEach((n, k) => timers.push(setTimeout(() => {
-    countdown.textContent = n; countdown.className = 'sd-countdown';
-    void countdown.offsetWidth; countdown.className = 'sd-countdown show';
-  }, k * 1000)));
+  // 0~5초: 카운트다운 화면. 5초에 ‘공개!’ 번쩍임 → 앞줄부터 1.2초 안에 모두 열려요.
+  openShow(list.map(s => s.id));
+  drumroll(5);
+  SHOW_LINES.forEach((line, k) => timers.push(setTimeout(() => beat(5 - k, line), k * 1000)));
   const seats = result.map((id, i) => i).filter(i => result[i] !== null);
-  const step = 2000 / Math.max(1, seats.length);
+  const step = Math.min(60, 1200 / Math.max(1, seats.length));
+  timers.push(setTimeout(() => {
+    showNum.textContent = '공개!'; showLine.textContent = ''; show.classList.remove('hot'); show.classList.add('boom');
+    boom();
+    room.scrollIntoView({ block: 'center' }); // 화면이 걷히면 교실이 바로 보이게(카운트다운 뒤라 움직임은 보이지 않아요)
+  }, 5000));
   timers.push(setTimeout(() => {
     cancelAnimationFrame(spinning); spinning = null;
-    room.classList.remove('tension'); countdown.textContent = ''; countdown.className = 'sd-countdown';
+    closeShow();
     phase = 'result'; autoReveal = true; render();
     seats.forEach((i, n) => timers.push(setTimeout(() => { reveal(i); blip(n / seats.length); }, n * step)));
-  }, 3000));
+  }, 5450));
+}
+
+/* ---------- 5초 카운트다운 화면 ---------- */
+const SHOW_LINES = ['두근두근…', '누구 옆자리가 될까?', '짝꿍이 궁금해!', '마음의 준비!', '곧 공개!'];
+function openShow(ids) {
+  // 뒤에서 학생 번호가 흩날려요.
+  floaters.innerHTML = Array.from({ length: 36 }, () => {
+    const id = ids[Math.floor(Math.random() * ids.length)];
+    return `<span style="--x:${(Math.random() * 100).toFixed(1)}%;--d:${(2.2 + Math.random() * 2.6).toFixed(2)}s;--w:${(-Math.random() * 4).toFixed(2)}s;--s:${(0.7 + Math.random() * 1.3).toFixed(2)}">${id}</span>`;
+  }).join('');
+  show.className = 'sd-show'; show.hidden = false;
+  void show.offsetWidth; show.classList.add('run');
+  $('sd-show-skip').focus();
+}
+function beat(n, line) {
+  showNum.textContent = n; showLine.textContent = line;
+  showNum.classList.remove('pop'); showLine.classList.remove('pop');
+  void showNum.offsetWidth; showNum.classList.add('pop'); showLine.classList.add('pop');
+  show.classList.toggle('hot', n <= 2);
+  heartbeat(n);
+}
+function closeShow() {
+  show.hidden = true; show.className = 'sd-show'; floaters.innerHTML = '';
 }
 function reveal(i) {
   revealed.add(i);
@@ -229,12 +254,18 @@ function tone(at, freq, dur, vol = 0.06, type = 'triangle') {
   g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
   o.connect(g).connect(a.destination); o.start(t); o.stop(t + dur + 0.02);
 }
-// 북소리: 점점 빠르고 커져요.
+// 북소리: 처음엔 드문드문, 끝으로 갈수록 빠르고 커져요.
 function drumroll(seconds) {
   if (!ctx()) return;
-  for (let t = 0; t < seconds; ) { const k = t / seconds; noise(t, 0.05, 0.05 + 0.12 * k, 180 + 120 * k); t += 0.09 - 0.05 * k; }
-  [0, 1, 2].forEach(n => tone(n, 330 + n * 110, 0.18, 0.07, 'square'));
+  for (let t = 0; t < seconds; ) { const k = t / seconds; noise(t, 0.05, 0.03 + 0.13 * k * k, 180 + 140 * k); t += 0.2 - 0.16 * k; }
 }
+// 숫자가 바뀔 때마다 심장 소리 두 번과 째깍 소리(숫자가 작을수록 높게)
+function heartbeat(n) {
+  tone(0, 70, 0.16, 0.22, 'sine'); tone(0.18, 62, 0.2, 0.18, 'sine');
+  tone(0, 1320 - n * 140, 0.08, 0.05, 'square');
+}
+// 공개 순간: 쾅!
+function boom() { noise(0, 0.6, 0.25, 120); tone(0, 523, 0.5, 0.08); tone(0, 659, 0.5, 0.07); tone(0, 784, 0.6, 0.07); }
 const blip = k => tone(0, 520 + 700 * k, 0.07, 0.035);
 soundBtn.onclick = () => { sound = !sound; soundBtn.setAttribute('aria-pressed', String(sound)); };
 
@@ -285,6 +316,8 @@ pairsIn.addEventListener('change', render);
 drawBtn.onclick = draw;
 fsDraw.onclick = draw;
 skipBtn.onclick = finishReveal;
+$('sd-show-skip').onclick = () => { finishReveal(); drawBtn.focus(); };
+document.addEventListener('keydown', ev => { if (ev.key === 'Escape' && !show.hidden) { finishReveal(); drawBtn.focus(); } });
 allBtn.onclick = finishReveal;
 $('sd-reset').onclick = resetToSetup;
 $('sd-print').onclick = () => print();
