@@ -63,13 +63,13 @@ test('명단을 채우면 학번과 이름이 모두 맞아야 받는다', () =>
 
 test('수식처럼 보이는 글은 다시 정리한 뒤에도 글자로 남고, 새 실험은 실험 이름으로 탭을 만든다', () => {
   const { ss, post, report } = ready();
-  assert.equal(post(report({ title: '자기장 [심화]: 1/2', explanation: '=HYPERLINK("http://example.com")', studentId: '20501' })).ok, true);
+  assert.equal(post(report({ title: '자기장 [심화]: 1/2', explanation: '=HYPERLINK("http://a.kr") 전압이 커지면 전류도 커져서 전구가 밝아져요', studentId: '20501' })).ok, true);
   assert.equal(post(report({ title: '자기장 [심화]: 1/2', studentId: '20101' })).ok, true);
   assert.equal(post(report({ title: '설정' })).ok, true);
   assert.equal(post(report({ title: '' })).ok, true);
   assert.deepEqual(ss.getSheets().map(s => s.getName()), ['설정', '명단', '자기장 심화 1 2', '설정 실험', '이름 없는 실험']);
   const rows = ss.getSheetByName('자기장 심화 1 2').rows;
-  assert.equal(rows[4][8], '\'=HYPERLINK("http://example.com")');
+  assert.equal(rows[4][8], '\'=HYPERLINK("http://a.kr") 전압이 커지면 전류도 커져서 전구가 밝아져요');
   assert.equal(rows[4][2], "'20501");
 });
 

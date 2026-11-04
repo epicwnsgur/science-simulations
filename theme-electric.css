@@ -168,18 +168,29 @@ aside{color:var(--ink)}
 .char-count{margin:6px 0 0;font-size:12px;color:var(--volt);text-align:right}
 .char-count.enough{color:var(--ok)}
 
-/* 관찰하기 단계: 왼쪽 실험 순서 안내 */
+/* ---------- 관찰하기: 실험 순서 안내 ----------
+   교사 의견: 실험 순서 안내와 그림이 한 화면에 들어오지 않아, 지금 몇 번째 순서인지 알 수 없어요.
+   → 화면 크기에 맞춰 안내가 늘 보이게 해요. 그림은 화면 높이에 맞춰 줄여요(src/lab-shell.js의 fitStage).
+   · 기본(휴대폰, 세로로 든 태블릿, 좁은 창): 실험 위에 한 줄로 두고, 아래로 내려도 화면 맨 위에 붙어 있어요.
+     지금 할 단계만 펼치고 나머지 단계는 번호(✓, 자물쇠)만 보여요.
+   · 가로로 넓은 화면(노트북·데스크톱·가로로 든 태블릿): 실험 왼쪽 칸에 세로로 두고, 아래로 내려도 따라와요. */
 body[data-poe=observe] main{max-width:1640px}
-.observe-body{display:grid;grid-template-columns:270px minmax(0,1fr);gap:24px;align-items:start}
-.step-guide{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow:auto;padding:20px 18px;border-radius:12px;background:linear-gradient(180deg,#132050,#0c1433);border:1px solid var(--line-2);box-shadow:0 0 0 1px #38e1ff22,0 10px 30px #0008}
+.observe-body{display:block;scroll-margin-top:6px}
+.step-guide{position:sticky;top:0;z-index:40;margin:0 0 14px;padding:10px 14px;display:flex;flex-wrap:wrap;align-items:center;column-gap:14px;row-gap:8px;border-radius:12px;background:linear-gradient(180deg,#132050,#0c1433);border:1px solid var(--line-2);box-shadow:0 0 0 1px #38e1ff22,0 10px 30px #0008}
 .step-guide[hidden]{display:none}
-.guide-kicker{margin:0 0 12px;font-size:15px;font-weight:700;color:#fff}
-.guide-progress{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.guide-kicker{margin:0;font-size:15px;font-weight:700;color:#fff}
+.guide-progress{display:flex;flex:1;align-items:center;gap:10px;margin:0}
 .guide-bar{flex:1;height:8px;border-radius:8px;background:#0a1029;border:1px solid var(--line);overflow:hidden}
 .guide-bar span{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--current),var(--volt));box-shadow:0 0 10px #38e1ffaa;transition:width .5s}
 .guide-count{font-size:13px;color:var(--volt);font-variant-numeric:tabular-nums}
-.guide-steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;position:relative}
-.guide-steps li{display:flex;gap:10px;align-items:flex-start;padding:10px 10px;border-radius:10px;border:1px solid transparent;color:var(--muted);transition:background .3s,border-color .3s}
+.guide-steps{list-style:none;margin:0;padding:0;display:flex;flex:1 0 100%;flex-direction:row;flex-wrap:nowrap;align-items:stretch;gap:6px;position:relative}
+.guide-steps li{display:flex;flex:0 0 auto;gap:10px;align-items:flex-start;border-radius:10px;border:1px solid transparent;color:var(--muted);transition:background .3s,border-color .3s}
+.guide-steps li.current{flex:1 1 auto;min-width:0}
+.guide-steps li:not(.current) .guide-item>div{display:none}
+.guide-steps li:not(.current) .guide-item{padding:8px 7px;height:100%;align-items:center}
+.guide-steps li.current .guide-item{padding:6px 10px}
+.guide-steps li.current b{display:inline;margin-right:8px}
+.guide-steps li.current small.guide-how{display:none}
 .guide-num{flex:0 0 26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:700;background:#0a1029;border:1px solid var(--line-2);color:var(--muted)}
 .guide-steps b{display:block;font-size:13px;line-height:1.5;font-weight:600}
 .guide-steps small{display:block;font-size:12px;line-height:1.6;margin-top:3px;color:var(--faint)}
@@ -189,20 +200,38 @@ body[data-poe=observe] main{max-width:1640px}
 .guide-steps li.current{background:#16264f;border-color:var(--volt);color:#fff;box-shadow:0 0 0 1px #ffd23f55,0 0 18px #ffd23f33}
 .guide-steps li.current .guide-num{background:var(--volt);border-color:var(--volt);color:#2a1600;animation:guide-pulse 1.6s ease-in-out infinite}
 .guide-steps li.current small{color:#cfe6ff}
-.guide-steps .guide-now{display:inline-block!important;margin:4px 0 2px;padding:1px 8px;border-radius:10px;background:var(--volt);color:#2a1600!important;font-weight:700;font-size:11px}
+.guide-steps .guide-now{display:inline-block!important;margin:2px 0;padding:1px 8px;border-radius:10px;background:var(--volt);color:#2a1600!important;font-weight:700;font-size:11px;vertical-align:1px}
 @keyframes guide-pulse{0%,100%{box-shadow:0 0 0 0 #ffd23f88}50%{box-shadow:0 0 0 7px #ffd23f00}}
 .step-guide.advance{animation:guide-advance .7s ease-out}
 @keyframes guide-advance{0%{box-shadow:0 0 0 2px var(--ok),0 0 30px #5dff9a88}100%{box-shadow:0 0 0 1px #38e1ff22,0 10px 30px #0008}}
-/* 좁은 화면에서는 실험 위에 가로로 보여 줘요. */
-@media(max-width:1359px){
-  body[data-poe=observe] main{max-width:1280px}
-  .observe-body{grid-template-columns:1fr;gap:16px}
-  .step-guide{position:relative;top:0;max-height:none}
-  .guide-steps{flex-direction:row;flex-wrap:wrap}
-  .guide-steps li{flex:1 1 180px}
-  .guide-steps li.todo small:not(.guide-now){display:none}
+/* 휴대폰: 번호 단추를 작게 해서 지금 할 단계가 넓게 보여요. */
+@media(max-width:600px){
+  .step-guide{padding:8px 10px;column-gap:10px}
+  .guide-kicker{font-size:14px}
+  .guide-steps{gap:4px}
+  .guide-steps li:not(.current) .guide-item{padding:6px 3px}
+  .guide-num{flex-basis:22px;height:22px;font-size:12px}
+  /* 위에 붙는 띠가 화면을 너무 가리지 않게: ‘지금 할 일’ 표시는 노란 테두리가 대신하고, 이름과 할 일은 두 줄까지만 보여요(눌러서 다 볼 수 있어요). */
+  .guide-steps .guide-now{display:none!important}
+  .guide-steps li.current b,.guide-steps li.current small{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
 }
-@media(max-width:600px){.guide-steps li{flex:1 1 100%}.guide-steps li.done small{display:none}}
+/* 가로로 넓은 화면: 실험 왼쪽 칸에 세로로 두고 아래로 내려도 따라와요. 모든 단계의 이름이 보여요. */
+@media(min-width:1000px) and (orientation:landscape){
+  .observe-body{display:grid;grid-template-columns:236px minmax(0,1fr);gap:18px;align-items:start}
+  .observe-body:has(>.step-guide[hidden]){display:block}  /* 단계가 없는 실험은 칸을 나누지 않아요 */
+  .step-guide{top:10px;max-height:calc(100vh - 92px);overflow:auto;margin:0;padding:16px 12px;display:block}  /* 아래 ‘내 메모’ 단추를 가리지 않게 */
+  .guide-kicker{margin:0 0 10px}
+  .guide-progress{margin:0 0 12px}
+  .guide-steps{flex-direction:column;gap:6px}
+  .guide-steps li{flex:none}
+  .guide-steps li:not(.current) .guide-item>div{display:block}
+  .guide-steps li:not(.current) .guide-item{padding:8px;height:auto;align-items:flex-start}
+  .guide-steps li:not(.current) small{display:none}
+  .guide-steps li.current .guide-item{padding:10px 8px}
+  .guide-steps li.current b{display:block;margin:0}
+  .guide-steps li.current small.guide-how{display:block}
+}
+@media(min-width:1360px) and (orientation:landscape){.observe-body{grid-template-columns:268px minmax(0,1fr);gap:24px}}
 @media(prefers-reduced-motion:reduce){.guide-steps li.current .guide-num,.step-guide.advance{animation:none}}
 
 /* ---------- 학습 흐름: 단계 버튼, 실험 고르기, 복습, 낱말 뜻 ---------- */
@@ -437,12 +466,13 @@ button[data-gated]::before{content:'';display:inline-block;width:.95em;height:.9
 .step-guide.attention{border-color:var(--volt);box-shadow:0 0 0 3px #ffd23f88,0 0 32px #ffd23f66;animation:guide-attn .5s ease-in-out 3 alternate}
 @keyframes guide-attn{from{transform:translateX(0)}to{transform:translateX(6px)}}
 .step-guide.attention li.current{position:relative}
-.step-guide.attention li.current::before{content:'▶';color:var(--volt);position:absolute;left:-30px;top:50%;font-size:22px;transform:translateY(-50%);animation:guide-point .6s ease-in-out infinite alternate}
-@keyframes guide-point{from{left:-34px}to{left:-24px}}
+.step-guide.attention li.current::before{content:'▼';color:var(--volt);position:absolute;right:10px;top:-4px;font-size:16px;line-height:1;animation:guide-point .6s ease-in-out infinite alternate}
+@keyframes guide-point{from{transform:translateY(-3px)}to{transform:translateY(3px)}}
+@keyframes guide-point-x{from{transform:translateX(0)}to{transform:translateX(5px)}}
+@media(min-width:1000px) and (orientation:landscape){.step-guide.attention li.current::before{content:'◀';top:12px;right:6px;font-size:18px;animation-name:guide-point-x}}
 .step-target{position:relative;outline:3px solid var(--volt)!important;outline-offset:3px;box-shadow:0 0 0 6px #ffd23f44,0 0 24px #ffd23f88!important;animation:target-pulse 1s ease-in-out infinite}
 .step-target::after{content:attr(data-target-label);position:absolute;left:50%;top:calc(100% + 8px);z-index:5;transform:translateX(-50%);padding:3px 10px;border-radius:12px;background:var(--volt);color:#2a1600;font-size:13px;font-weight:800;white-space:nowrap;pointer-events:none}
 @keyframes target-pulse{50%{outline-color:#fff}}
-@media(max-width:800px){.step-guide.attention li.current::before{content:'▼';left:auto;right:12px;top:-6px;transform:none;animation:none}}
 @media(prefers-reduced-motion:reduce){.step-guide.attention,.step-guide.attention li.current::before,.step-target{animation:none}}
 
 /* ---------- 교사 모드 ---------- */
@@ -619,21 +649,9 @@ button.term:focus-visible{outline:2px solid var(--current);outline-offset:2px}
 @media print{.challenge{display:none!important}}
 
 /* ---------- 관찰하기 화면 배치(학생 의견: 배치가 정신없어요, 그림이 작아요) ----------
-   큰 화면에서는 실험 순서 안내를 그림 위 한 줄(진행 막대)로 두고, 그림을 화면 가로로 크게 써요.
    ‘무엇이 달라졌나요?’ 칸은 그림 오른쪽 대신 아래로 내려, 눈이 위에서 아래로만 읽게 해요.
-   지금 할 단계만 펼치고 나머지 단계는 번호(✓, 자물쇠)만 보여요. 단계를 누르면 할 일을 알려 주는 것은 그대로예요. */
+   (실험 순서 안내의 자리는 위 ‘관찰하기: 실험 순서 안내’에서 화면 크기에 맞춰 정해요.) */
 @media(min-width:801px){
-  .observe-body{display:block}
-  .step-guide{position:relative;top:0;max-height:none;margin:0 0 16px;padding:12px 16px;display:flex;flex-wrap:wrap;align-items:center;column-gap:16px;row-gap:10px}
-  .step-guide .guide-kicker{margin:0}
-  .step-guide .guide-progress{flex:1;margin:0}
-  .step-guide .guide-steps{flex:1 0 100%;flex-direction:row;flex-wrap:nowrap;align-items:stretch;gap:6px}
-  .step-guide .guide-steps li{flex:0 0 auto}
-  .step-guide .guide-steps li.current{flex:1 1 auto;min-width:0}
-  .step-guide .guide-steps li:not(.current) .guide-item>div{display:none}
-  .step-guide .guide-steps li:not(.current) .guide-item{padding:10px 8px;height:100%;align-items:center}
-  .step-guide .guide-steps li.current .guide-item{padding:8px 12px}
-  .step-guide.attention li.current::before{content:'▼';left:18px;top:-20px;transform:none;font-size:18px;animation:none}
   #simulation-mount .workspace{grid-template-columns:minmax(0,1fr)}
   #simulation-mount .workspace>aside{padding:4px 22px 0;border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,var(--panel-2),var(--panel))}
   #simulation-mount .observation{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:32px;align-items:start}
@@ -643,6 +661,8 @@ button.term:focus-visible{outline:2px solid var(--current);outline-offset:2px}
   body[data-poe=observe] .lab-page>.breadcrumb,body[data-poe=observe] .lab-page>.intro p{display:none}
   body[data-poe=observe] .lab-page>.intro{margin:12px 0 14px}
 }
+/* 화면에 맞춰 줄인 그림(src/lab-shell.js의 fitStage)은 가운데에 둬요. */
+.stage.fitted{margin-left:auto;margin-right:auto}
 /* 모형 설명: 접어 두고, 누르면 펼쳐져요. */
 .model-note-box{margin:12px 22px 20px}
 .model-note-box>summary{cursor:pointer;width:max-content;max-width:100%;padding:6px 14px;border-radius:16px;border:1px solid var(--line-2);color:var(--muted);font-size:14px;font-weight:600}
@@ -676,6 +696,9 @@ button.term:focus-visible{outline:2px solid var(--current);outline-offset:2px}
 .lab:fullscreen{overflow:auto;background:var(--bg);border-radius:0}
 .lab:fullscreen #scene{max-height:calc(100vh - 190px)}
 .lab:fullscreen .model-note-box{display:none}
+/* 관찰하기에서 크게 보기: 실험 순서 안내와 실험 칸을 함께 키워요. 그림 크기는 fitStage가 화면 높이에 맞춰요. */
+.observe-body:fullscreen{overflow:auto;padding:12px 16px;background:var(--bg)}
+.observe-body:fullscreen .model-note-box{display:none}
 
 .poe-comparison .fix-observation{margin-top:10px;padding:6px 14px;font-size:14px}
 

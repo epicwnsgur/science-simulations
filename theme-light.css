@@ -288,6 +288,7 @@ html[data-theme=light] .model-tag{border:1px solid #b49cff;background:#f5c4d8;co
 html[data-theme=light] .look-ring{border:3px solid #ff9f6b;box-shadow:0 0 0 4px #ff9f6b33,0 0 24px #ff9f6b66}
 html[data-theme=light] .look-ring span{background:#ff9f6b;color:#2a1000}
 html[data-theme=light] .lab:fullscreen{background:var(--bg)}
+html[data-theme=light] .observe-body:fullscreen{background:var(--bg)}
 html[data-theme=light] .sb-tools button[aria-pressed=true]{outline:2px solid var(--volt)}
 html[data-theme=light] .sb-readout .sb-bad{color:#c20000}
 html[data-theme=light] .sb-ghost{background:#ffd23f;color:#2a1600;box-shadow:0 6px 16px #81315130}

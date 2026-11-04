@@ -18,14 +18,16 @@ test('머리글: 테마·화면 크기·글씨 크기는 ‘설정’ 안에 있
   await expect(page.locator('[data-zoom="+"]')).toBeHidden();
 });
 
-test('관찰하기: 실험 순서 안내는 그림 위 한 줄, 기록 칸은 그림 아래, 다음에 누를 단추가 빛나고 모형 설명은 접혀 있음', async ({ page }) => {
+test('관찰하기: 넓은 화면에서 실험 순서 안내는 그림 왼쪽 칸, 기록 칸은 그림 아래, 다음에 누를 단추가 빛나고 모형 설명은 접혀 있음', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await startAt(page, 'electric-current', { ...OBSERVE, observed: false });
   await page.goto(CURRENT);
   const guide = await page.locator('#step-guide').boundingBox(), stage = await page.locator('.stage').boundingBox(), aside = await page.locator('#simulation-mount .workspace > aside').boundingBox();
-  expect(guide.y + guide.height).toBeLessThan(stage.y);
+  // 교사 의견(2026년 11월): 지금 할 단계가 그림과 한 화면에 늘 보이도록, 넓은 화면에서는 안내를 왼쪽 칸에 둬요(세로 화면·휴대폰은 위에 붙는 띠, tests/screen-fit.spec.js).
+  expect(guide.x + guide.width).toBeLessThan(stage.x);
   expect(aside.y).toBeGreaterThan(stage.y + stage.height);
-  expect(stage.width).toBeGreaterThan(1100);
+  // 그림은 화면 높이에 맞춰 줄어도 크게 보여요(학생 의견: 그림이 작아요).
+  expect(stage.width).toBeGreaterThan(900);
   await expect(page.locator('#rub-btn')).toHaveClass(/next-target/);
   await expect(page.locator('#model-note')).toBeHidden();
   await page.locator('.model-note-box summary').click();
@@ -104,13 +106,14 @@ test('설명하기: ‘관찰 기록의 오타 고치기’를 누르면 관찰 
   await expect(page.locator('#observation-parts textarea').first()).toBeFocused();
 });
 
-test('크게 보기: 실험 칸을 화면 가득 키우고 다시 작게 볼 수 있음', async ({ page }) => {
+test('크게 보기: 실험 칸(관찰하기에서는 실험 순서 안내도 함께)을 화면 가득 키우고 다시 작게 볼 수 있음', async ({ page }) => {
   await startAt(page, 'electric-current', OBSERVE);
   await page.goto(CURRENT);
   const btn = page.locator('.lab-full');
   test.skip(!(await btn.isVisible()), '이 브라우저는 전체 화면을 쓸 수 없어요.');
   await btn.click();
-  await expect.poll(() => page.evaluate(() => document.fullscreenElement?.classList.contains('lab'))).toBe(true);
+  await expect.poll(() => page.evaluate(() => document.fullscreenElement?.classList.contains('observe-body'))).toBe(true);
+  await expect(page.locator('#step-guide li.current')).toBeVisible();
   await expect(btn).toContainText('작게 보기');
   await btn.click();
   await expect.poll(() => page.evaluate(() => document.fullscreenElement)).toBeNull();

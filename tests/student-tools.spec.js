@@ -58,7 +58,7 @@ test('관찰 기록: 활동이 여럿인 실험은 활동마다 칸을 나눠 �
   await boxes.nth(1).fill('고무줄 X');
   await page.locator('#to-explanation').click();
   await expect(page.locator('#explain-panel')).toBeHidden();
-  expect(await boxes.nth(1).evaluate(el => el.validationMessage)).toContain('20자 이상');
+  expect(await boxes.nth(1).evaluate(el => el.validationMessage)).toContain('15자 이상');
   await boxes.nth(1).fill('구리선과 철 클립은 도체, 고무줄과 나무 막대는 부도체였어요.');
   await page.locator('#to-explanation').click();
   await expect(page.locator('#explain-panel')).toBeVisible();
