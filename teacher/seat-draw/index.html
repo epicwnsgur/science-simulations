@@ -60,9 +60,19 @@
         <button type="button" class="sd-fs" id="sd-fs" aria-label="전체 화면" title="전체 화면"></button>
         <div class="sd-board" id="sd-board"><span>칠판</span><i class="sd-desk-t" aria-hidden="true">교탁</i></div>
         <div class="sd-grid" id="sd-grid"></div>
-        <div class="sd-countdown" id="sd-countdown" aria-hidden="true"></div>
         <canvas class="sd-fx" id="sd-fx" aria-hidden="true"></canvas>
       </section>
+      <div class="sd-show" id="sd-show" hidden>
+        <div class="sd-rays" aria-hidden="true"></div>
+        <div class="sd-floaters" id="sd-floaters" aria-hidden="true"></div>
+        <p class="sd-show-kicker">자리 공개까지</p>
+        <div class="sd-ring">
+          <svg viewBox="0 0 200 200" aria-hidden="true"><circle class="sd-ring-track" cx="100" cy="100" r="88"/><circle class="sd-ring-bar" cx="100" cy="100" r="88"/></svg>
+          <strong id="sd-show-num" role="status">5</strong>
+        </div>
+        <p class="sd-show-line" id="sd-show-line"></p>
+        <button type="button" class="sd-btn sd-show-skip" id="sd-show-skip">바로 보기</button>
+      </div>
       <div class="sd-room-actions">
         <button type="button" class="sd-draw sd-fs-draw" id="sd-fs-draw">자리 뽑기</button>
         <button type="button" class="sd-btn" id="sd-skip" hidden>바로 보기</button>

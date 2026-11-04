@@ -77,22 +77,46 @@ main.sd-main{max-width:1280px;padding-bottom:60px}
 .sd-stage:fullscreen .sd-fs-draw{display:inline-flex}
 .sd-stage:fullscreen .sd-room-actions{margin-top:0}
 
-/* 긴장감: 셋·둘·하나, 흔들리는 책상, 지나가는 조명, 마지막 번쩍임 */
-.sd-countdown{position:absolute;inset:0;z-index:2;display:grid;place-items:center;pointer-events:none;font-family:var(--font-title);font-size:clamp(90px,18vw,240px);color:#ffe27a;text-shadow:0 0 30px #ffb703,0 6px 0 #0008;opacity:0}
-.sd-countdown.show{animation:sd-count 1s ease-out forwards}
-@keyframes sd-count{0%{opacity:0;transform:scale(1.8)}22%{opacity:1;transform:scale(1)}78%{opacity:.9}99%{opacity:0;transform:scale(.7)}}
-.sd-room.tension{box-shadow:0 20px 60px #000a,inset 0 0 120px #000c}
-.sd-room.tension:after{content:'';position:absolute;inset:0;z-index:1;pointer-events:none;background:radial-gradient(circle,#ffe9a838 0,transparent 26%) no-repeat;background-size:200% 200%;animation:sd-sweep 1.4s ease-in-out infinite alternate}
-@keyframes sd-sweep{0%{background-position:0 30%}99%{background-position:100% 70%}}
-.sd-room.tension .sd-desk.spin{animation:sd-shake .16s linear infinite}
-@keyframes sd-shake{0%{transform:translate(0,0) rotate(0)}34%{transform:translate(-1px,1px) rotate(-1.2deg)}67%{transform:translate(1px,-1px) rotate(1.2deg)}}
 .sd-fx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:2}
 .sd-room.flash{animation:sd-flash .9s ease-out}
 @keyframes sd-flash{0%{box-shadow:0 20px 60px #000a,inset 0 0 0 4px #ffe27a,0 0 70px #ffb70388}}
 .sd-dialog select{font-size:17px;padding:10px 12px;border-radius:12px;border:1px solid #4a4560;background:#0e0e18;color:#fff}
 
 @media(max-width:620px){.sd-setup{padding:14px}.sd-field input{width:76px;font-size:19px}.sd-desk{min-width:48px;min-height:60px}.sd-desk.gap{margin-right:12px}.sd-board{font-size:16px}}
-@media(prefers-reduced-motion:reduce){.sd-desk,.sd-desk.pop,.sd-room.tension .sd-desk.spin,.sd-room.tension:after,.sd-room.flash{transition:none;animation:none}}
+@media(prefers-reduced-motion:reduce){.sd-desk,.sd-desk.pop,.sd-room.flash{transition:none;animation:none}}
+
+/* 5초 카운트다운 화면: 빙글 도는 빛줄기, 흩날리는 번호, 줄어드는 고리, 숫자마다 쿵 */
+.sd-show{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2vh;overflow:hidden;background:radial-gradient(ellipse at 50% 45%,#2a1a4d 0,#120a24 45%,#05040b 100%);color:#fff;text-align:center}
+.sd-show[hidden]{display:none}
+.sd-rays{position:absolute;left:50%;top:45%;width:240vmax;height:240vmax;margin:-120vmax 0 0 -120vmax;background:repeating-conic-gradient(from 0deg,#ffd65a14 0 7deg,transparent 7deg 18deg);animation:sd-spin 9s linear infinite;pointer-events:none}
+.sd-show.hot .sd-rays{background:repeating-conic-gradient(from 0deg,#ff4d6d1f 0 7deg,transparent 7deg 18deg);animation-duration:3s}
+@keyframes sd-spin{100%{transform:rotate(360deg)}}
+.sd-floaters{position:absolute;inset:0;pointer-events:none}
+.sd-floaters span{position:absolute;left:var(--x);bottom:-12vh;font-family:var(--font-title);font-size:calc(5vmin * var(--s));color:#ffffff38;animation:sd-float var(--d) linear var(--w) infinite}
+@keyframes sd-float{100%{transform:translateY(-130vh) rotate(25deg)}}
+.sd-show-kicker{position:relative;margin:0;font-family:var(--font-title);font-size:clamp(20px,3.4vmin,40px);letter-spacing:.3em;color:#ffd65a;text-shadow:0 0 18px #ffb70399}
+.sd-ring{position:relative;width:min(56vmin,520px);aspect-ratio:1;display:grid;place-items:center}
+.sd-ring svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
+.sd-ring-track{fill:#0006;stroke:#ffffff1f;stroke-width:10}
+.sd-ring-bar{fill:none;stroke:#ffd65a;stroke-width:10;stroke-linecap:round;stroke-dasharray:553;stroke-dashoffset:0}
+.sd-ring:before{content:'';position:absolute;inset:4%;border-radius:50%;box-shadow:0 0 40px #ffb70355,inset 0 0 40px #ffb70333}
+.sd-show.hot .sd-ring:before{box-shadow:0 0 50px #ff2d5566,inset 0 0 40px #ff2d5533}
+.sd-show.run .sd-ring-bar{animation:sd-drain 5s linear forwards}
+@keyframes sd-drain{100%{stroke-dashoffset:553;stroke:#ff4d6d}60%{stroke:#ffd65a}61%{stroke:#ff4d6d}}
+.sd-ring strong{position:relative;font-family:var(--font-title);font-size:min(30vmin,280px);line-height:1;color:#ffe27a;text-shadow:0 0 40px #ffb703,0 8px 0 #0009}
+.sd-show.hot .sd-ring strong{color:#ff6b81;text-shadow:0 0 50px #ff2d55,0 8px 0 #0009}
+.sd-ring strong.pop{animation:sd-pop .9s cubic-bezier(.2,1.5,.4,1)}
+@keyframes sd-pop{0%{transform:scale(2.2);opacity:0;filter:blur(6px)}35%{transform:scale(.92);opacity:1;filter:none}}
+.sd-show-line{position:relative;margin:0;min-height:1.4em;font-family:var(--font-title);font-size:clamp(24px,4.6vmin,56px);text-shadow:0 4px 0 #0008}
+.sd-show-line.pop{animation:sd-line .6s ease-out}
+@keyframes sd-line{0%{transform:translateY(24px);opacity:0}}
+.sd-show.hot{animation:sd-quake .12s linear infinite}
+@keyframes sd-quake{75%{transform:translate(3px,-2px)}25%{transform:translate(-3px,2px)}}
+.sd-show.boom{animation:sd-boom .45s ease-out forwards}
+.sd-show.boom .sd-ring strong{font-size:min(20vmin,190px);color:#fff}
+@keyframes sd-boom{100%{opacity:0;transform:scale(1.15)}0%{background:#fff;filter:brightness(2)}}
+.sd-show-skip{position:absolute;right:3vw;bottom:3vh;background:#ffffff14;border-color:#ffffff40;color:#fff}
+@media(prefers-reduced-motion:reduce){.sd-rays,.sd-floaters span,.sd-show.hot,.sd-ring strong.pop,.sd-show-line.pop{animation:none}.sd-show.boom{animation:none;opacity:0}}
 
 /* 밝은 테마: 교실 밖의 판만 밝게 */
 html[data-theme=light] .sd-setup{background:#fff;border-color:#f3cfe0;box-shadow:0 10px 30px #d6336c14}
@@ -109,7 +133,7 @@ html[data-theme=light] .sd-dialog select{background:#fff;color:#3d1a33;border-co
 /* 인쇄: 교실 자리만 */
 @media print{
   html:has(body.seat-page),body.seat-page{background:#fff !important}
-  .seat-page .site-header,.sd-head,.sd-setup,.sd-status,.sd-room-actions,.sd-fs,.sd-fx{display:none !important}
+  .seat-page .site-header,.sd-head,.sd-setup,.sd-status,.sd-room-actions,.sd-fs,.sd-fx,.sd-show{display:none !important}
   .sd-room{box-shadow:none;border:1px solid #999;background:#fff;overflow:visible}
   .sd-board{border-color:#555;background:#eee;color:#000;box-shadow:none}
   .sd-desk{box-shadow:none !important;background:#fff;border:1.5px solid #333;color:#000}
