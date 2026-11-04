@@ -300,7 +300,7 @@ function paintObject() {
     el.dataset.shape = key;
   }
   const label = $('#object-name');
-  const labelAt = o.shape === 'balloon' ? { x: 78, y: -60 } : o.shape === 'glove' ? { x: 150, y: -40 } : { x: OBJECT_DIR.x * 150 + 34, y: OBJECT_DIR.y * 150 + 30 };
+  const labelAt = o.shape === 'balloon' ? { x: 78, y: -60 } : o.shape === 'glove' ? { x: 150, y: -40 } : { x: 40, y: 40 }; // 빨대 이름은 끝 옆에(처음 자리에서 빨대의 나머지는 화면 밖이에요)
   label.setAttribute('x', labelAt.x.toFixed(0)); label.setAttribute('y', labelAt.y.toFixed(0));
   label.textContent = o.name;
   el.setAttribute('aria-label', `${o.name}, ${o.charge ? (o.charge < 0 ? '(−)전하를 띰' : '(+)전하를 띰') : '전기를 띠지 않음'}. 방향키로 이동`);
@@ -453,8 +453,9 @@ function setMode(next) {
   $('#spoon-tab').setAttribute('aria-selected', next === 'spoon'); $('#scope-tab').setAttribute('aria-selected', next === 'scope');
   // SVG 요소에는 hidden 속성(property)이 없으므로 attribute로 바꿉니다.
   $('#spoon-scene').toggleAttribute('hidden', next !== 'spoon'); $('#scope-scene').toggleAttribute('hidden', next !== 'scope');
-  $('#stage-hint').hidden = next !== 'spoon';
   $('#spoon-controls').hidden = next !== 'spoon'; $('#scope-controls').hidden = next !== 'scope';
+  // 끌기 안내는 두 활동 모두에 보여요. 검전기 활동에서는 검전기 아래를 가리지 않게 오른쪽에 써요.
+  Object.assign($('#stage-hint').style, { textAlign: next === 'scope' ? 'right' : '', paddingRight: next === 'scope' ? '28px' : '' });
   resetScene();
 }
 

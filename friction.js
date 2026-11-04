@@ -236,7 +236,8 @@ function paintSpoon(t) {
   $('#spoon-a').setAttribute('transform', `translate(${PIVOT.x} ${PIVOT.y}) rotate(${(angle * 180 / Math.PI).toFixed(2)})`);
   $('#tool').setAttribute('transform', `translate(${toolPos.x.toFixed(1)} ${toolPos.y.toFixed(1)})`);
   setHTML('#tool-shape', toolShape());
-  const label = tool === 'spoon' ? { x: 150, y: -60 } : { x: 150, y: -40 };
+  // 이름은 가까이 가져가는 끝 옆에 써요(처음 자리에서 숟가락 ㉯는 화면 오른쪽 위로 길게 뻗어 있어 끝 쪽만 보여요).
+  const label = tool === 'spoon' ? { x: 34, y: 44 } : { x: 40, y: 64 };
   $('#tool-name').setAttribute('x', label.x); $('#tool-name').setAttribute('y', label.y);
   setText('#tool-name', SPOON_TOOLS[tool].label);
   // 문지르는 장갑: 문지를 때 잠깐 나타나 전자가 장갑에서 숟가락으로 옮겨 가는 모습을 보여 줘요.
