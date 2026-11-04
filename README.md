@@ -28,7 +28,7 @@
 - `theme-electric.css`: 전기와 자기 단원 공통 디자인(어두운 회로 기판 배경, 전류는 하늘색·전압은 노란색·자석은 빨강/파랑, 빛나는 버튼과 무대). 모든 실험이 마지막에 불러옵니다. 단원 페이지는 `unit-electric.css`를 씁니다.
 - `src/poe-flow.js`: 예상하기 → 관찰하기 → 설명하기 흐름. 실험마다 관찰 체크리스트를 모두 마쳐야 설명 단계로 넘어갑니다.
 - **PDF로 저장:** 보고서 제출 버튼 옆의 [PDF로 저장]은 같은 보고서(학생 정보, 실험별 예상·관찰·설명, 사용 후기)를 흰 바탕 A4 인쇄용으로 만들어 브라우저 인쇄 창을 엽니다. 대상에서 ‘PDF로 저장’을 고르면 됩니다(크롬은 파일 이름이 `실험 이름 탐구 보고서_학번_이름`). 학번·이름을 아직 안 적었으면 빈칸으로 둬 손으로 쓸 수 있습니다. 서버로는 보내지 않습니다.
-- `src/report-submit.js`, `apps-script/Code.gs`: 개념 확인 아래의 ‘선생님께 보고서 제출하기’(학번·이름 두 번 입력 확인, 퀴즈 결과는 보내지 않음). `src/submission-config.js`에 Apps Script 웹 앱 주소를 넣으면 나타나고, 학생 보고서가 선생님 구글 시트의 실험별 탭에 반별로 모여 쌓입니다(학번 5자리의 2~3번째 자리 = 반). 학년별로 시트를 나누려면 `SUBMIT_URL_BY_GRADE`에 학년(학번 첫 자리)마다 주소를 넣고, 시트마다 설정 탭의 ‘받을 학년’을 적어요(비운 학년은 `SUBMIT_URL`로 가요). 설정 순서는 [`docs/google-sheet-submission.md`](docs/google-sheet-submission.md)를 보세요.
+- `src/report-submit.js`, `apps-script/Code.gs`: 개념 확인 아래의 ‘선생님께 보고서 제출하기’(학번·이름 두 번 입력 확인, 퀴즈 결과는 보내지 않음). 학번 칸에는 숫자만 들어가고, 1·2·3으로 시작하는 5자리만 받아요(쓰는 동안 ‘2학년 3반 15번’처럼 풀어서 보여 줘요). `src/submission-config.js`에 Apps Script 웹 앱 주소를 넣으면 나타나고, 학생 보고서가 선생님 구글 시트의 실험별 탭에 반별로 모여 쌓입니다(학번 5자리의 2~3번째 자리 = 반). 학년별로 시트를 나누려면 `SUBMIT_URL_BY_GRADE`에 학년(학번 첫 자리)마다 주소를 넣고, 시트마다 설정 탭의 ‘받을 학년’을 적어요(비운 학년은 `SUBMIT_URL`로 가요). 설정 순서는 [`docs/google-sheet-submission.md`](docs/google-sheet-submission.md)를 보세요.
 - `src/*-model.js`: 실험별 모형과 `node --test`로 확인하는 단위 테스트.
 - **실험 전용 CSS 주의:** 배포(빌드)하면 실험 전용 CSS(예: `induction.css`)가 공통 CSS보다 나중에 읽혀요. 공통 CSS에 있는 선택자를 실험 전용 파일에서 다시 쓰면 어두운 테마를 덮어써 글씨가 안 보일 수 있어서(정전기 유도 설명하기의 안내 상자 사례), `src/css-scope.test.js`가 이를 막아요.
 - `vite.config.js`는 `simulations/` 아래 폴더를 자동으로 빌드에 넣습니다. 새 실험은 폴더를 만들고 `netlify.toml` 리다이렉트와 단원 카드만 추가하면 됩니다.

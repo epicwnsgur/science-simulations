@@ -9,8 +9,20 @@ import { blockPaste, PASTE_MESSAGE, hasBadWords } from './text-guard.js';
 // 학번과 이름은 비밀번호 확인처럼 두 번 적고, 두 칸이 같아야 제출할 수 있어요.
 // [PDF로 저장]은 같은 보고서 내용을 인쇄용 화면으로 만들어 브라우저 인쇄 창을 열어요(대상: ‘PDF로 저장’). 서버로는 보내지 않아요.
 const plain = value => value.replace(/\s/g, '');
-// 학번 5자리: 학년 1자리 + 반 2자리 + 번호 2자리. 시트는 반(2~3번째 자리)으로 줄을 모아요.
-const validId = id => /^\d{5}$/.test(id) && Number(id.slice(1, 3)) >= 1;
+// 학번 5자리: 학년 1자리(1·2·3) + 반 2자리 + 번호 2자리. 시트는 반(2~3번째 자리)으로 줄을 모아요.
+// 교사 의견: 1xxxx, 2xxxx, 3xxxx만 받아요(4자리·6자리로 잘못 적는 것을 막아요).
+const validId = id => /^[1-3]\d{4}$/.test(id) && Number(id.slice(1, 3)) >= 1;
+// 학번 칸에는 숫자만 들어가요. 전각 숫자(１２３)는 보통 숫자로 바꾸고, 글자·띄어쓰기는 빼고, 5자리까지만 남겨요.
+export const idDigits = value => String(value ?? '').replace(/[０-９]/g, d => String.fromCharCode(d.charCodeAt(0) - 0xfee0)).replace(/\D/g, '').slice(0, 5);
+// 학번 칸 아래 안내: 쓰는 동안 바로 알려 주고, 다 맞으면 ‘2학년 3반 15번’처럼 풀어서 보여 줘 한 번 더 확인하게 해요.
+// done: 칸을 떠났거나 제출하려 할 때(덜 쓴 학번도 그때는 고쳐야 할 점으로 알려요).
+export function idCheck(id, done = false) {
+  if (!id) return { text: '', state: '' };
+  if (!/^[1-3]/.test(id)) return { text: '✕ 학번은 학년(1, 2, 3)으로 시작해요.', state: 'error' };
+  if (id.length < 5) return done ? { text: `✕ 학번은 숫자 5자리예요. (지금 ${id.length}자리)`, state: 'error' } : { text: `숫자 5자리 중 ${id.length}자리`, state: '' };
+  if (Number(id.slice(1, 3)) < 1) return { text: '✕ 2~3번째 자리는 반이에요. (예: 3반 → 03)', state: 'error' };
+  return { text: `✓ ${id[0]}학년 ${Number(id.slice(1, 3))}반 ${Number(id.slice(3))}번`, state: 'done' };
+}
 const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const pad = n => String(n).padStart(2, '0');
 const stamp = iso => { const d = new Date(iso); return isNaN(d) ? '' : `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`; };
@@ -51,8 +63,8 @@ export function mountReportSubmit(container, { slug, report, check, onSubmitted 
       <p class="poe-hint">[보고서 제출하기]를 누르면 먼저 보낼 내용을 보여 줘요. 확인한 뒤 [최종 제출하기]를 눌러야 제출돼요.</p>
       <div class="submit-fields">
         <label class="submit-code">수업 코드<input id="submit-code" inputmode="numeric" autocomplete="off" maxlength="12" placeholder="칠판의 숫자"></label>
-        <label>학번<input id="submit-id" inputmode="numeric" autocomplete="off" maxlength="5" placeholder="예: 2학년 3반 15번 → 20315"></label>
-        <label>학번 확인<input id="submit-id-confirm" inputmode="numeric" autocomplete="off" maxlength="5" placeholder="학번 5자리를 한 번 더"><small class="submit-match" data-for="id" aria-live="polite"></small></label>
+        <label>학번<input id="submit-id" inputmode="numeric" pattern="[1-3][0-9]{4}" autocomplete="off" maxlength="5" placeholder="예: 2학년 3반 15번 → 20315"><small class="submit-match" data-for="id-check" aria-live="polite"></small></label>
+        <label>학번 확인<input id="submit-id-confirm" inputmode="numeric" pattern="[1-3][0-9]{4}" autocomplete="off" maxlength="5" placeholder="학번 5자리를 한 번 더"><small class="submit-match" data-for="id" aria-live="polite"></small></label>
         <label>이름<input id="submit-name" autocomplete="off" maxlength="20" placeholder="예: 홍길동"></label>
         <label>이름 확인<input id="submit-name-confirm" autocomplete="off" maxlength="20" placeholder="이름을 한 번 더"><small class="submit-match" data-for="name" aria-live="polite"></small></label>
       </div>
@@ -88,9 +100,14 @@ export function mountReportSubmit(container, { slug, report, check, onSubmitted 
   let sending = false, snapshot = null;
   const pageTitle = document.title;
 
-  // 두 칸이 같은지 보여 주고, 학번·이름이 모두 같을 때만 제출 버튼을 켭니다. 확인 칸을 다 쓰기 전에는 ‘다르다’고 하지 않아요.
+  // 두 칸이 같은지 보여 주고, 학번이 바르고 학번·이름이 모두 같을 때만 제출 버튼을 켭니다. 확인 칸을 다 쓰기 전에는 ‘다르다’고 하지 않아요.
+  let idLeft = false;
   function refresh() {
-    let ready = true;
+    const id = plain(pairs.id[0].value), check = idCheck(id, idLeft);
+    const idOut = form.querySelector('.submit-match[data-for="id-check"]');
+    idOut.textContent = check.text; idOut.dataset.state = check.state;
+    pairs.id[0].setAttribute('aria-invalid', String(check.state === 'error'));
+    let ready = validId(id);
     for (const [name, [first, again]] of Object.entries(pairs)) {
       const a = plain(first.value), b = plain(again.value), same = a !== '' && a === b;
       const out = form.querySelector(`.submit-match[data-for="${name}"]`);
@@ -102,8 +119,25 @@ export function mountReportSubmit(container, { slug, report, check, onSubmitted 
     }
     button.disabled = sending || !!store.submitted || !ready;
   }
+  // 학번 칸: 숫자만 남기고, 학년(1·2·3)이 아닌 숫자로 시작하면 받지 않아요. 6자리째는 들어가지 않고 5자리라고 알려 줘요.
+  const ID_START = '학번은 학년 숫자(1, 2, 3)로 시작해요. 예: 2학년 3반 15번 → 20315', ID_FULL = '학번은 숫자 5자리예요. 더 적을 수 없어요.';
+  const idNote = () => status.textContent === ID_START || status.textContent === ID_FULL;
+  for (const el of pairs.id) {
+    el.addEventListener('input', () => {
+      const digits = idDigits(el.value), bad = /^[^1-3]/.test(digits);
+      const next = bad ? digits.replace(/^[^1-3]+/, '') : digits;
+      if (next !== el.value) el.value = next;
+      if (bad) show(ID_START, 'error');
+      else if (idNote()) show('');
+    });
+    el.addEventListener('beforeinput', e => {
+      if (e.inputType.startsWith('insert') && /\d/.test(e.data ?? '') && idDigits(el.value).length >= 5 && el.selectionStart === el.selectionEnd) show(ID_FULL, 'error');
+    });
+  }
+  pairs.id[0].addEventListener('blur', () => { idLeft = true; refresh(); });
+  pairs.id[0].addEventListener('focus', () => { idLeft = false; });
   for (const [first, again] of Object.values(pairs)) {
-    for (const el of [first, again]) el.addEventListener('input', () => { if (status.dataset.state === 'error') show(''); refresh(); });
+    for (const el of [first, again]) el.addEventListener('input', () => { if (status.dataset.state === 'error' && !idNote()) show(''); refresh(); });
     // 위 칸을 복사해 붙이면 확인하는 뜻이 없으니 직접 다시 쓰게 해요.
     blockPaste(again, { onBlocked: () => show('확인 칸에는 붙여 넣지 말고 직접 한 번 더 적어 주세요.', 'error') });
   }
@@ -117,7 +151,7 @@ export function mountReportSubmit(container, { slug, report, check, onSubmitted 
     if (store.submitted || sending) return;
     const who = { code: input('code').value.trim(), studentId: plain(pairs.id[0].value), name: plain(pairs.name[0].value) };
     const problem = !who.code ? '수업 코드를 적어 주세요.'
-      : !validId(who.studentId) ? '학번은 숫자 5자리로 적어 주세요. (예: 2학년 3반 15번 → 20315)'
+      : !validId(who.studentId) ? '학번은 1, 2, 3으로 시작하는 숫자 5자리로 적어 주세요. (예: 2학년 3반 15번 → 20315)'
       : who.studentId !== plain(pairs.id[1].value) ? '학번 두 칸이 서로 달라요. 다시 확인해 주세요.'
       : !target(who.studentId) ? `${who.studentId.charAt(0)}학년 보고서를 받을 시트가 아직 없어요. 학번을 확인하고, 맞다면 선생님께 알려 주세요.`
       : !who.name ? '이름을 적어 주세요.'
