@@ -34,8 +34,8 @@ const FILLER = /(^|[^가-힣])(?:음+|흠+|엄+|어+|아+|헐+|엥+|그냥)(?=[^
 export function meaningfulLength(text) {
   return String(text ?? '').replace(DONT_KNOW, '').replace(DONT_KNOW_EN, '').replace(FILLER, '$1').replace(/[^\p{L}\p{N}\u2460-\u24ff\u3200-\u32ff]/gu, '').replace(/[ㄱ-ㅎㅏ-ㅣ]/g, '').replace(/(\D)\1{2,}/gu, '$1').length;
 }
-// 글자 수 안내에 함께 쓰는 ‘세지 않는 것’ 설명
-export const NOT_COUNTED = '공백·문장 부호와 ‘모르겠어요’, ‘그냥’, ‘음’은 세지 않아요';
+// 글자 수 안내에 함께 쓰는 ‘글자 수에 넣지 않는 것’ 설명(학생 의견: ‘세지 않아요’를 ‘쓰지 않아요’의 오타로 읽었어요)
+export const NOT_COUNTED = '띄어쓰기·문장 부호와 ‘모르겠어요’, ‘그냥’, ‘음’은 글자 수에 넣지 않아요';
 // 같은 말을 되풀이한 글인지 살펴요. 글자와 숫자만 보고 살펴요(공백·문장 부호는 빼요).
 // repeatedText는 apps-script/Code.gs의 repeatedText_와 똑같아야 해요(src/text-guard.test.js가 확인해요).
 const repetitive = text => repeatedText(String(text ?? '').replace(/[^\p{L}\p{N}\u2460-\u24ff\u3200-\u32ff]/gu, ''));

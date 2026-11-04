@@ -663,6 +663,9 @@ button.term:focus-visible{outline:2px solid var(--current);outline-offset:2px}
 }
 /* 화면에 맞춰 줄인 그림(src/lab-shell.js의 fitStage)은 가운데에 둬요. */
 .stage.fitted{margin-left:auto;margin-right:auto}
+/* 좁은 그림: 그림 위 상태 글(문지른 횟수 0번 · …)이 그림 속 이름과 겹치지 않게 숨기고 ‘모형 그림’ 꼬리표만 남겨요(학생 의견: 화면 크기를 키우면 글자가 겹쳐요).
+   같은 내용은 아래 ‘무엇이 달라졌나요?’에 있고, 화면 읽기 프로그램은 그대로 읽어요. */
+.stage.narrow #stage-state{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 /* 모형 설명: 접어 두고, 누르면 펼쳐져요. */
 .model-note-box{margin:12px 22px 20px}
 .model-note-box>summary{cursor:pointer;width:max-content;max-width:100%;padding:6px 14px;border-radius:16px;border:1px solid var(--line-2);color:var(--muted);font-size:14px;font-weight:600}

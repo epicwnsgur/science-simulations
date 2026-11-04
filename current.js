@@ -500,8 +500,8 @@ svgEl.addEventListener('keydown', e => {
 
 // 펌프 세기 손잡이: 멈춤 · 약하게 · 세게. 끌어서 돌리거나 글자를 누르거나 방향키로 바꿔요.
 const DIAL_ANGLES = [-60, 0, 60], DIAL_NAMES = ['멈춤', '약하게', '세게'];
-$('.stage').insertAdjacentHTML('beforeend', `<div id="pump-dial" role="slider" tabindex="0" aria-label="펌프 세기" aria-valuemin="0" aria-valuemax="2" style="position:absolute;right:12px;bottom:10px;width:172px;touch-action:none;user-select:none;z-index:4;cursor:grab;display:none">
-  <svg viewBox="0 0 172 140" width="172" height="140" style="display:block"><rect x="1" y="1" width="170" height="138" rx="16" fill="#0a1029" fill-opacity=".92" stroke="#3a4a7a"/>
+$('.stage').insertAdjacentHTML('beforeend', `<div id="pump-dial" role="slider" tabindex="0" aria-label="펌프 세기" aria-valuemin="0" aria-valuemax="2" style="position:absolute;right:1.5%;bottom:2%;width:clamp(112px,21.5%,172px);touch-action:none;user-select:none;z-index:4;cursor:grab;display:none">
+  <svg viewBox="0 0 172 140" style="display:block;width:100%;height:auto"><rect x="1" y="1" width="170" height="138" rx="16" fill="#0a1029" fill-opacity=".92" stroke="#3a4a7a"/>
   <path d="M42 80 A47 47 0 0 1 130 80" fill="none" stroke="#2c365a" stroke-width="12" stroke-linecap="round"/>
   ${DIAL_ANGLES.map((a, i) => { const r = a * Math.PI / 180, x = 86 + 66 * Math.sin(r), y = 96 - 66 * Math.cos(r); return `<text data-dial="${i}" x="${x.toFixed(0)}" y="${(y + 5).toFixed(0)}" text-anchor="middle" font-size="14" font-weight="800" style="fill:#cfe6ff;cursor:pointer">${DIAL_NAMES[i]}</text>`; }).join('')}
   <g id="dial-knob"><circle cx="86" cy="96" r="28" fill="#2c365a" stroke="#9fb0dc" stroke-width="2.5"/><path d="M86 96 V72" stroke="#ffd166" stroke-width="6" stroke-linecap="round"/><circle cx="86" cy="96" r="6" fill="#9fb0dc"/></g>
