@@ -218,3 +218,9 @@ test('화면과 선생님 시트의 ‘세지 않는 군말’ 규칙이 같음'
   const filler = src => src.match(/const FILLER = (\/.*\/g);/)[1];
   assert.equal(filler(server), filler(client));
 });
+
+test('글자 수 안내: ‘세지 않아요’를 ‘쓰지 않아요’의 오타로 읽지 않게 ‘글자 수에 넣지 않아요’로 써요(학생 의견)', async () => {
+  const { NOT_COUNTED } = await import('./text-guard.js');
+  assert.doesNotMatch(NOT_COUNTED, /세지/);
+  assert.match(NOT_COUNTED, /글자 수에 넣지 않아요/);
+});

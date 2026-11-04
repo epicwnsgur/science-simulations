@@ -178,3 +178,37 @@ test('옴의 법칙: 스위치를 오래 닫아 두면 니크롬선 과열 경�
   await expect(alert).toHaveClass(/show/);
   await expect(alert).not.toHaveClass(/show/, { timeout: 3000 });
 });
+
+// 교사 의견(2026년 11월): 학번은 1xxxx, 2xxxx, 3xxxx만 받아요. 4자리·6자리로 잘못 적는 것을 막아요.
+test('학번 칸: 숫자만 들어가고, 1·2·3이 아닌 숫자로 시작하거나 5자리가 아니면 제출 단추가 켜지지 않아요', async ({ page }) => {
+  const done = { stage: 'explain', reached: 2, prediction: { index: 0, choice: '예상', reason: REASON }, choice: null, reason: '', observation: '', saved: '전압을 높일수록 전류계의 값이 커졌어요. 2 V에서 100 mA였어요.', observed: true, explanation: '저항이 일정하면 전류의 세기는 전압에 비례해서 전압이 2배면 전류도 2배예요.', explained: true };
+  await page.addInitScript(v => { if (!sessionStorage.getItem('poe:ohms-law')) sessionStorage.setItem('poe:ohms-law', v); }, JSON.stringify({ current: 0, reviewed: true, onReview: false, reviewAnswers: [], quiz: null, locked: false, exps: [done] }));
+  await page.goto(URL_);
+  const id = page.locator('#submit-id'), check = page.locator('.submit-match[data-for="id-check"]'), status = page.locator('.submit-status');
+  for (const f of ['#submit-name', '#submit-name-confirm']) await page.locator(f).fill('홍길동');
+  // 4로 시작하면 들어가지 않고 알려 줘요.
+  await id.click();
+  await page.keyboard.type('4');
+  await expect(id).toHaveValue('');
+  await expect(status).toContainText('학번은 학년 숫자(1, 2, 3)로 시작해요');
+  // 글자는 빠지고 숫자만 남아요. 쓰는 중에는 몇 자리인지 알려 줘요.
+  await page.keyboard.type('2학0번3');
+  await expect(id).toHaveValue('203');
+  await expect(status).toHaveText('');
+  await expect(check).toHaveText('숫자 5자리 중 3자리');
+  // 4자리만 쓰고 칸을 떠나면 고칠 점으로 알려 주고, 확인 칸이 같아도 제출 단추는 꺼져 있어요.
+  await page.keyboard.type('1');
+  await page.locator('#submit-id-confirm').click();
+  await page.keyboard.type('2031');
+  await expect(check).toHaveText('✕ 학번은 숫자 5자리예요. (지금 4자리)');
+  await expect(page.locator('#submit-report')).toBeDisabled();
+  // 5자리가 되면 ‘2학년 3반 15번’으로 풀어 보여 줘요. 6자리째는 들어가지 않아요.
+  await id.click(); await page.keyboard.press('End');
+  await page.keyboard.type('56');
+  await expect(id).toHaveValue('20315');
+  await expect(status).toContainText('학번은 숫자 5자리예요');
+  await expect(check).toHaveText('✓ 2학년 3반 15번');
+  await page.locator('#submit-id-confirm').click(); await page.keyboard.press('End');
+  await page.keyboard.type('5');
+  await expect(page.locator('#submit-report')).toBeEnabled();
+});

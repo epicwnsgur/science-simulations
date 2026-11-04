@@ -134,14 +134,18 @@ test('자리 뽑기: 막은 자리·고정 자리를 지키고 모두 한 번씩
   await deskAt(page, 0, 0).click();
   await page.getByLabel('이 자리에 고정할 학생').selectOption('7');
   await page.locator('#sd-dialog-ok').click();
-  // 차례로 공개는 5초쯤 걸려요(3·2·1 세기 3초 + 한 자리씩 공개 2초).
+  // 차례로 공개: 5초 카운트다운 화면(5→1) 뒤에 ‘공개!’, 이어서 1.2초 안에 모든 자리가 열려요.
   await page.evaluate(() => { window.__t0 = performance.now(); });
   await page.locator('#sd-draw').click();
-  await expect(page.locator('#sd-countdown')).toHaveText(/[321]/);
+  await expect(page.locator('#sd-show')).toBeVisible();
+  await expect(page.locator('#sd-show-num')).toHaveText('5');
+  await expect(page.locator('#sd-show-num')).toHaveText('1', { timeout: 6000 });
+  await expect(page.locator('#sd-show')).toBeHidden({ timeout: 4000 });
   await expect(page.locator('#sd-status')).toHaveText('두 자리를 차례로 누르면 서로 바꿔요.', { timeout: 10000 });
   const took = await page.evaluate(() => performance.now() - window.__t0);
-  expect(took).toBeGreaterThan(4500);
-  expect(took).toBeLessThan(7000);
+  expect(took).toBeGreaterThan(5400);
+  expect(took).toBeLessThan(8500);
+  await expect(page.locator('#sd-room')).toBeInViewport();
   const seats = await page.evaluate(() => seatDraw.result);
   expect(seats[0]).toBe(7);
   expect(seats[29]).toBeNull();
@@ -213,4 +217,14 @@ test('자리 뽑기: 전체 화면 단추로 교실만 크게 보고 다시 돌�
   await fs.click();
   await expect.poll(() => page.evaluate(() => document.fullscreenElement)).toBeNull();
   await expect(page.locator('#sd-fs-draw')).toBeHidden();
+});
+
+test('자리 뽑기: 카운트다운 화면에서 ‘바로 보기’를 누르면 바로 결과', async ({ page }) => {
+  await openSeats(page);
+  await page.locator('#sd-draw').click();
+  await expect(page.locator('#sd-show')).toBeVisible();
+  await page.getByRole('button', { name: '바로 보기' }).first().click();
+  await expect(page.locator('#sd-show')).toBeHidden();
+  await expect(page.locator('.sd-desk.hidden-card, .sd-desk.spin')).toHaveCount(0);
+  expect((await page.evaluate(() => seatDraw.result)).filter(Boolean)).toHaveLength(30);
 });

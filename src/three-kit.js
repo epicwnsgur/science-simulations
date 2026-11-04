@@ -118,15 +118,19 @@ export function createStage3D({ stage, svg, reducedMotion, ariaLabel, views, mod
   let mode = firstMode, tween = null, dirty = true, size = [0, 0], frames = 0, renderMs = 0, lastSig = '';
 
   /* ---------- 화질 자동 조절 ---------- */
-  const dpr = devicePixelRatio || 1;
+  // 설정의 ‘화면 크기’로 페이지를 키우면(CSS zoom) 3D 그림도 그만큼 촘촘히 그려야 깨져 보이지 않아요(학생 의견: 화면 크기를 최대로 하면 픽셀이 깨져요).
+  const pageZoom = () => Number(document.documentElement.style.zoom) || 1;
+  const dpr = () => (devicePixelRatio || 1) * pageZoom();
   // 느린 컴퓨터에서도 화면 해상도(1배) 아래로는 낮추지 않아요. 더 낮추면 3D 물체가 픽셀로 깨져 보여요(학생 의견). 대신 반사 표현을 꺼서 빠르게 해요.
-  const LEVELS = [{ pr: Math.min(dpr, 2), env: true }, { pr: Math.min(dpr, 1.5), env: true }, { pr: Math.min(dpr, 1), env: false }];
+  const LEVELS = [{ max: 2, env: true }, { max: 1.5, env: true }, { max: 1, env: false }];
+  let zoomUsed = pageZoom();
   let level = -1, slow = { ema: 16, n: 0, prev: 0 };
   const known = new Set(); // 장면에 잠깐 없는 재질(바꿔 끼우는 재질)도 화질에 맞춰요.
   function setQuality(next) {
     level = Math.min(LEVELS.length - 1, next);
     const q = LEVELS[level];
-    renderer.setPixelRatio(q.pr);
+    zoomUsed = pageZoom();
+    renderer.setPixelRatio(Math.min(dpr(), q.max * zoomUsed));
     scene.environment = q.env ? envMap : null;
     sky.intensity = q.env ? .9 : 1.9; // 반사 표현이 없으면 금속이 어두워 보여서 하늘빛을 밝히고 금속 느낌을 줄여요.
     const all = new Set(known);
@@ -174,6 +178,7 @@ export function createStage3D({ stage, svg, reducedMotion, ariaLabel, views, mod
     const w = svg.clientWidth, h = svg.clientHeight;
     if (!w || !h) return;
     Object.assign(canvas.style, { left: `${svg.offsetLeft}px`, top: `${svg.offsetTop}px`, width: `${w}px`, height: `${h}px` });
+    if (zoomUsed !== pageZoom() && level >= 0) { setQuality(level); size = [0, 0]; }
     if (w === size[0] && h === size[1]) return;
     size = [w, h];
     renderer.setSize(w, h, false);

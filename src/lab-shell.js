@@ -143,7 +143,7 @@ function setupFitStage() {
   function fit() {
     if (!stage.offsetParent) return;
     stage.style.maxWidth = '';
-    stage.classList.remove('fitted');
+    stage.classList.remove('fitted', 'narrow');
     const z = Number(document.documentElement.style.zoom) || 1;
     const vb = scene.viewBox?.baseVal, ratio = vb?.width ? vb.height / vb.width : 440 / 800;
     const s = box(stage), l = box(lab), svg = box(scene);
@@ -152,8 +152,12 @@ function setupFitStage() {
     const guideOnTop = g && g.height && getComputedStyle(guide).position === 'sticky' && g.right > l.left + 1;
     const below = Math.min(140, Math.max(0, ...['.view-bar:not([hidden])', '.lab-bottom'].map(q => lab.querySelector(q)).filter(Boolean).map(el => box(el).bottom - s.bottom)));
     const room = innerHeight - (guideOnTop ? g.height + 8 : 0) - (s.top - l.top) - (s.height - svg.height) - below - 12;
-    if (room >= svg.height - 4) return;
-    const h = Math.max(room, Math.min(svg.height, 260)), width = h / ratio + s.width - svg.width;
+    // 그림이 좁으면 위의 상태 글(모형 그림 · …)을 그림 위에 겹치지 않고 그림 바로 위 한 줄로 내려요(학생 의견: 글자가 겹쳐요).
+    const narrow = w => stage.classList.toggle('narrow', w / z < 640);
+    if (room >= svg.height - 4) { narrow(svg.width); return; }
+    // 화면 크기(확대)를 키웠으면 그만큼 그림도 덜 줄여요. 키운 뜻과 달리 그림이 작아지면 글자가 깨져 보여요.
+    const h = Math.max(room, Math.min(svg.height, 260 * z)), width = h / ratio + s.width - svg.width;
+    narrow(Math.min(width, s.width));
     if (width >= s.width - 1) return;
     stage.style.maxWidth = `${width / z}px`;
     stage.classList.add('fitted');
