@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { loadAppsScript } from '../apps-script/fake-google.js';
-import { SUBMIT_URL } from '../src/submission-config.js';
+// 기본 주소와 학년별 주소(src/submission-config.js) 어디로 보내도 가로채요(진짜 선생님 시트로는 보내지 않아요).
+const SUBMIT_ROUTE = 'https://script.google.com/**';
 import { CONCEPT_QUIZZES } from '../src/concept-quizzes.js';
 import { beginObservation, openObserveUnlocked, peelAll, fillObservation } from './poe-helpers.js';
 
@@ -230,7 +231,7 @@ test('보고서 제출: 발생 학습 모형 실험은 모형에 맞는 칸 이�
   const server = loadAppsScript(); server.context.setup();
   const code = server.ss.getSheetByName('설정').rows[1][1];
   const calls = [];
-  await page.route(SUBMIT_URL, async route => {
+  await page.route(SUBMIT_ROUTE, async route => {
     const body = route.request().postData(); calls.push(JSON.parse(body));
     await route.fulfill({ status: 200, contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify(server.post(body)) });
   });

@@ -306,3 +306,29 @@ test('한꺼번에 몰려 차례를 오래 기다리면 다시 보내라고(retr
   assert.deepEqual(view(sheet), ['1반 일반', '', '2반 이반', '', '3반 삼반']);
   assert.equal(ss.cache.has('deferred'), false);
 });
+
+// 교사 의견(2026년 11월): 1학년과 2학년 보고서를 다른 시트로 받고 싶어요. 학번 첫 자리(학년)로 나눠요.
+// 실험 페이지는 학년별 주소(src/submission-config.js의 SUBMIT_URL_BY_GRADE)로 보내고, 시트는 설정 탭의 ‘받을 학년’으로 한 번 더 확인해요.
+test('학년별 시트: 설정 탭의 ‘받을 학년’에 적은 학년의 보고서만 받고, 비워 두면 모두 받아요', () => {
+  const { ss, post, report, setSetting, context } = ready();
+  // setup이 ‘받을 학년’ 줄을 비워서 만들어요(예전 시트도 setup을 다시 실행하면 생겨요).
+  assert.deepEqual(ss.getSheetByName('설정').rows.find(r => r[0] === '받을 학년').slice(0, 2), ['받을 학년', '']);
+  assert.equal(post(report({ studentId: '10315', title: '기체의 압력' })).ok, true);
+  setSetting('받을 학년', '2');
+  const wrong = post(report({ studentId: '10316', title: '기체의 압력' }));
+  assert.equal(wrong.ok, false);
+  assert.match(wrong.message, /이 시트는 2학년 보고서를 받아요.*Ctrl\+F5/);
+  assert.equal(post(report({ studentId: '20315' })).ok, true);
+  // 다른 학년이면 수업 코드가 달라도 학년 안내를 먼저 보여 줘요(학년별 시트의 수업 코드가 다를 수 있어요).
+  assert.match(post(report({ studentId: '10316', code: '000000' })).message, /2학년 보고서를 받아요/);
+  assert.match(post(report({ studentId: '20316', code: '000000' })).message, /수업 코드가 맞지 않아요/);
+  // ‘2학년’, ‘1, 2’처럼 적어도 학년 숫자만 읽어요.
+  setSetting('받을 학년', '1, 2');
+  assert.equal(post(report({ studentId: '10317', title: '기체의 압력' })).ok, true);
+  setSetting('받을 학년', '1학년');
+  assert.match(post(report({ studentId: '20317' })).message, /1학년 보고서를 받아요/);
+  // setup을 다시 실행해도 적어 둔 학년은 그대로예요.
+  context.setup();
+  assert.equal(ss.getSheetByName('설정').rows.filter(r => r[0] === '받을 학년').length, 1);
+  assert.equal(ss.getSheetByName('설정').rows.find(r => r[0] === '받을 학년')[1], '1학년');
+});

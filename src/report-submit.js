@@ -1,4 +1,4 @@
-import { SUBMIT_URL } from './submission-config.js';
+import { SUBMIT_URL, SUBMIT_URL_BY_GRADE } from './submission-config.js';
 import { draftStore } from './draft-store.js';
 import { blockPaste, PASTE_MESSAGE, hasBadWords } from './text-guard.js';
 
@@ -19,14 +19,19 @@ function newSubmissionId() {
   return [...crypto.getRandomValues(new Uint8Array(16))].map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
+// 학년별로 시트를 나눠 받기(교사 의견): 학번 첫 자리(학년)에 맞는 시트 주소로 보내요. 그 학년 주소가 비어 있으면 기본 주소로 보내요.
+export const submitUrlFor = (studentId, base = SUBMIT_URL, byGrade = SUBMIT_URL_BY_GRADE) => (byGrade && byGrade[String(studentId ?? '').charAt(0)]) || base || '';
+
 // 응답을 기다리는 시간과, 저절로 다시 보내기 전에 기다리는 시간(밀리초, 조금씩 흩어 보내요).
 export const TIMEOUT_MS = 30000;
 export const RETRIES = [2000, 5000, 9000];
 // 자동 시험(웹드라이버)에서는 기다리는 시간만 줄여요(다시 보내는 횟수와 순서는 같아요).
 const RETRY_SCALE = globalThis.navigator?.webdriver ? 0.02 : 1;
 
-export function mountReportSubmit(container, { slug, report, check, onSubmitted = () => {} }, url = SUBMIT_URL) {
-  if (!url) return { reset() {} };
+export function mountReportSubmit(container, { slug, report, check, onSubmitted = () => {} }, url = SUBMIT_URL, byGrade = SUBMIT_URL_BY_GRADE) {
+  // 받을 시트 주소가 하나도 없으면 제출 칸을 만들지 않아요.
+  if (!url && !Object.values(byGrade ?? {}).some(Boolean)) return { reset() {} };
+  const target = studentId => submitUrlFor(studentId, url, byGrade);
   // 임시 저장(src/draft-store.js): 수업 코드, 쓰던 후기, 이 보고서의 제출 ID, 제출 완료 여부. 창을 다시 열어도 남아요.
   // 제출을 마치면 이 컴퓨터에 남긴 것은 지우고 이 탭에만 남겨요(함께 쓰는 컴퓨터의 다음 학생에게 보이지 않게).
   // 학번·이름은 함께 쓰는 컴퓨터에서 앞 학생 이름으로 제출되지 않도록 기억하지 않아요.
@@ -114,6 +119,7 @@ export function mountReportSubmit(container, { slug, report, check, onSubmitted 
     const problem = !who.code ? '수업 코드를 적어 주세요.'
       : !validId(who.studentId) ? '학번은 숫자 5자리로 적어 주세요. (예: 2학년 3반 15번 → 20315)'
       : who.studentId !== plain(pairs.id[1].value) ? '학번 두 칸이 서로 달라요. 다시 확인해 주세요.'
+      : !target(who.studentId) ? `${who.studentId.charAt(0)}학년 보고서를 받을 시트가 아직 없어요. 학번을 확인하고, 맞다면 선생님께 알려 주세요.`
       : !who.name ? '이름을 적어 주세요.'
       : who.name !== plain(pairs.name[1].value) ? '이름 두 칸이 서로 달라요. 다시 확인해 주세요.'
       : hasBadWords(who.name) || hasBadWords(feedback.value) ? '바르지 않은 말이 있어요. 바른 말로 고쳐 써 주세요.'
@@ -152,7 +158,7 @@ export function mountReportSubmit(container, { slug, report, check, onSubmitted 
         const controller = new AbortController(), timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
         try {
           // 글자(text/plain)로 보내면 사전 확인 요청 없이 Apps Script 웹 앱에 바로 전달돼요.
-          const response = await fetch(url, { method: 'POST', body: JSON.stringify({ ...sheetData(snapshot), submissionId: store.submissionId }), signal: controller.signal });
+          const response = await fetch(target(snapshot.studentId), { method: 'POST', body: JSON.stringify({ ...sheetData(snapshot), submissionId: store.submissionId }), signal: controller.signal });
           result = await response.json();
         } catch {
           // 요청은 갔지만 답을 못 받았을 수도 있어요. 다시 보내도 같은 제출 ID라서 두 번 저장되지 않아요.
