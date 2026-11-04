@@ -5,7 +5,7 @@ export const SUBMIT_URL = 'https://script.google.com/macros/s/AKfycbyjuAbB04MMUR
 // 학년별로 시트를 나눠 받기: 학번 첫 자리(학년)마다 받을 시트의 웹 앱 주소를 넣으세요.
 // 비워 둔 학년의 보고서는 위의 SUBMIT_URL로 가요. 예: 1학년 주소만 넣으면 1xxxx는 1학년 시트로, 2xxxx는 SUBMIT_URL(지금 시트)로 가요.
 export const SUBMIT_URL_BY_GRADE = {
-  1: '', // 1학년 시트의 웹 앱 주소
+  1: 'https://script.google.com/macros/s/AKfycbynekpVlxHzTEFYlq4lbgFdhrU_yQkB3lu9eM1sTQNfrxgEBqbpMPLKyq9a2eeL954qHQ/exec', // 1학년 시트의 웹 앱 주소
   2: '', // 2학년 시트의 웹 앱 주소(비워 두면 SUBMIT_URL)
   3: '', // 3학년 시트의 웹 앱 주소(비워 두면 SUBMIT_URL)
 };
