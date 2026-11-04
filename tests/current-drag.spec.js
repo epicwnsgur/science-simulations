@@ -4,6 +4,8 @@ import { openObserveUnlocked } from './poe-helpers.js';
 // 전류와 전압: 단추 대신 손으로 옮기는 조작(교사 의견: 단추로만 조작하니 흥미가 떨어져요). 단추로도 그대로 할 수 있어요.
 const URL_ = '/simulations/electric-current/';
 const center = async (page, sel) => { const b = await page.locator(sel).first().boundingBox(); return [b.x + b.width / 2, b.y + b.height / 2]; };
+// 그림은 화면 크기에 맞춰 줄어들어요(fitStage). 끄는 거리는 그림 좌표(가로 800)로 정해 화면 픽셀로 바꿔요.
+const unit = async page => (await page.locator('#scene').boundingBox()).width / 800;
 async function dragTo(page, from, to) {
   await page.mouse.move(...from); await page.mouse.down();
   for (let i = 1; i <= 10; i++) await page.mouse.move(from[0] + (to[0] - from[0]) * i / 10, from[1] + (to[1] - from[1]) * i / 10);
@@ -16,19 +18,19 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('네온전구: 털가죽을 문지르고, 알루미늄 접시를 끌어 내려놓고, 네온전구 끝을 끌어 오른쪽 접시에 대면 불이 켜짐', async ({ page }) => {
-  const fur = await center(page, '#fur');
-  await page.mouse.move(fur[0] - 120, fur[1]); await page.mouse.down();
-  for (let k = 0; k < 4; k++) for (let i = 0; i <= 10; i++) await page.mouse.move(fur[0] + (k % 2 ? 120 - 24 * i : -120 + 24 * i), fur[1]);
+  const fur = await center(page, '#fur'), u = await unit(page), d = 75 * u;
+  await page.mouse.move(fur[0] - d, fur[1]); await page.mouse.down();
+  for (let k = 0; k < 4; k++) for (let i = 0; i <= 10; i++) await page.mouse.move(fur[0] + (k % 2 ? d - d / 5 * i : -d + d / 5 * i), fur[1]);
   await page.mouse.up();
   await expect(page.locator('#stage-state')).toContainText('문지른 횟수 4번');
   // 접시를 내려놓기 전에는 네온전구 끝을 끌 수 없어요.
   await page.locator('#lead-tip-hit').dispatchEvent('pointerdown');
   await expect(page.locator('#toast')).toContainText('먼저 알루미늄 접시를 끌어 내려놓아요');
   const plate = await center(page, '#plate-a rect');
-  await dragTo(page, plate, [plate[0], plate[1] + 140]);
+  await dragTo(page, plate, [plate[0], plate[1] + 88 * u]);
   await expect(page.locator('#stage-state')).toContainText('알루미늄 접시를 올려놓음');
   const tip = await center(page, '#lead-tip-hit'), plateB = await center(page, '#plate-b ellipse');
-  await dragTo(page, tip, [plateB[0] - 60, plateB[1]]);
+  await dragTo(page, tip, [plateB[0] - 38 * u, plateB[1]]);
   await expect(page.locator('#stage-state')).toContainText('네온전구 닿음');
   await expect(page.locator('#toast')).toContainText('네온전구에 불이 켜졌어요');
 });

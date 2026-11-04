@@ -108,6 +108,7 @@ ${headerHTML(cfg.unit)}
   });
   watchChanges();
   setupFullView();
+  setupFitStage();
   const resetQuiz = () => $('[data-term="0"]').click();
   // 탭을 바꾸면 앞 탭의 안내 띠(‘③ … 눌러요’ 등)가 남아 헷갈리지 않게 닫아요.
   const selectTab = id => { cfg.tabs.forEach(t => $(`#tab-${t.id}`).setAttribute('aria-selected', t.id === id)); $('#toast')?.classList.remove('show'); };
@@ -115,18 +116,57 @@ ${headerHTML(cfg.unit)}
 }
 
 // 크게 보기: 실험 칸(그림과 단추)을 화면 가득 키워요. 학생 의견: 수로 모형을 더 자세히 보고 싶어요.
+// 관찰하기 화면에서는 실험 순서 안내도 함께 키워서, 크게 볼 때도 지금 몇 번째 순서인지 보여요(교사 의견).
 // 전체 화면을 쓸 수 없는 기기(아이폰 등)에서는 단추를 숨겨요. Esc나 ‘작게 보기’로 돌아와요.
 function setupFullView() {
   const lab = $('.lab'), btn = $('.lab-full');
   if (!lab || !btn) return;
+  const target = () => lab.closest('.observe-body') ?? lab;
   btn.hidden = !document.fullscreenEnabled;
-  btn.onclick = () => { if (document.fullscreenElement) document.exitFullscreen(); else lab.requestFullscreen?.().catch(() => {}); };
+  btn.onclick = () => { if (document.fullscreenElement) document.exitFullscreen(); else target().requestFullscreen?.().catch(() => {}); };
   document.addEventListener('fullscreenchange', () => {
-    const on = document.fullscreenElement === lab;
+    const on = !!document.fullscreenElement && document.fullscreenElement === target();
     btn.innerHTML = `${icon(on ? 'shrink' : 'expand')} <span>${on ? '작게 보기' : '크게 보기'}</span>`;
     btn.setAttribute('aria-pressed', String(on));
     dispatchEvent(new Event('resize'));
   });
+}
+
+// 화면에 맞추기(교사 의견: 실험 순서 안내와 그림이 한 화면에 들어오지 않아요).
+// 실험 칸(활동 탭·안내·단추·그림·아래 단추)이 한 화면에 들어오도록 그림을 줄여요. 화면이 넉넉하면 그대로예요.
+// 실험 위에 붙는 실험 순서 안내(좁은 화면)가 있으면 그 높이도 빼요. 그림이 너무 작아지지 않게 260px보다는 줄이지 않아요.
+// 화면 크기·화면 확대·글씨 크기·활동 탭이 바뀌어 칸의 높이가 달라지면 다시 맞춰요.
+function setupFitStage() {
+  const lab = $('.lab'), stage = $('.stage'), scene = $('#scene');
+  if (!lab || !stage || !scene) return;
+  const box = el => el.getBoundingClientRect();
+  function fit() {
+    if (!stage.offsetParent) return;
+    stage.style.maxWidth = '';
+    stage.classList.remove('fitted');
+    const z = Number(document.documentElement.style.zoom) || 1;
+    const vb = scene.viewBox?.baseVal, ratio = vb?.width ? vb.height / vb.width : 440 / 800;
+    const s = box(stage), l = box(lab), svg = box(scene);
+    const guide = document.querySelector('#step-guide:not([hidden])');
+    const g = guide ? box(guide) : null;
+    const guideOnTop = g && g.height && getComputedStyle(guide).position === 'sticky' && g.right > l.left + 1;
+    const below = Math.min(140, Math.max(0, ...['.view-bar:not([hidden])', '.lab-bottom'].map(q => lab.querySelector(q)).filter(Boolean).map(el => box(el).bottom - s.bottom)));
+    const room = innerHeight - (guideOnTop ? g.height + 8 : 0) - (s.top - l.top) - (s.height - svg.height) - below - 12;
+    if (room >= svg.height - 4) return;
+    const h = Math.max(room, Math.min(svg.height, 260)), width = h / ratio + s.width - svg.width;
+    if (width >= s.width - 1) return;
+    stage.style.maxWidth = `${width / z}px`;
+    stage.classList.add('fitted');
+  }
+  let queued = false;
+  const later = () => { if (!queued) { queued = true; requestAnimationFrame(() => { queued = false; fit(); }); } };
+  addEventListener('resize', later);
+  document.addEventListener('fullscreenchange', later);
+  new ResizeObserver(later).observe(lab);
+  // 실험 순서 안내는 학습 흐름(src/poe-flow.js)이 나중에 만들어요. 생기면 그 높이도 지켜봐요.
+  const watchGuide = () => { const g = $('#step-guide'); if (g) new ResizeObserver(later).observe(g); return !!g; };
+  if (!watchGuide()) requestAnimationFrame(watchGuide);
+  later();
 }
 
 // 단추를 누르면 1초 뒤(실험 동작이 끝난 뒤) ‘무엇이 달라졌나요?’의 값과 무대 위 상태 글 중 바뀐 곳을 잠깐 빛내요.
@@ -164,7 +204,7 @@ export function checklist(steps) {
   return {
     ready: done === steps.length,
     message: done === steps.length ? `${steps.length}가지 관찰을 모두 해 보았어요. 직접 본 결과를 기록해 주세요.` : `관찰 ${done}/${steps.length} · 다음: ${next[0]}`,
-    // 왼쪽 실험 순서 안내와 순서 잠금에 쓰는 단계 목록
+    // 실험 순서 안내와 순서 잠금에 쓰는 단계 목록
     // press(다섯째 값, 고를 수 있어요): 안내 글에 단추 이름(‘…’)이 없을 때 눌러야 할 조작의 CSS 선택자
     // look(여섯째 값, 고를 수 있어요): [무대 속 요소의 선택자, 이름]. 그 단계의 단추를 누르면 무대에서 그곳을 잠깐 동그라미로 가리켜요(‘지금 볼 곳’).
     steps: steps.map(([label, isDone, hint, unlocks, press, look]) => ({ label, done: !!isDone, hint: hint ?? '', unlocks: unlocks ?? '', press: press ?? '', look: look ?? null })),

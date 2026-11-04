@@ -6,7 +6,7 @@ import { enableGlossary } from './glossary.js';
 import { teacherMode, mountTeacherMode } from './teacher-mode.js';
 import { modelOf } from './teaching-models.js';
 import { draftStore, pruneDrafts, KEEP_HOURS } from './draft-store.js';
-import { blockPaste, PASTE_MESSAGE, writingProblem, meaningfulLength, junkProblem } from './text-guard.js';
+import { blockPaste, PASTE_MESSAGE, writingProblem, meaningfulLength, junkProblem, MIN_CHARS, OTHER_MIN_CHARS, NOT_COUNTED } from './text-guard.js';
 import { CHALLENGES } from './challenges.js';
 import { mountChallenge } from './challenge-ui.js';
 import { mountMemo } from './memo.js';
@@ -14,9 +14,7 @@ import { icon } from './icons.js';
 import { previewOf } from './previews.js';
 import { sceneOf, playStep } from './preview-scenes.js';
 const $ = selector => document.querySelector(selector);
-export const MIN_CHARS = 20;
-// 예상의 ‘기타(직접 쓰기)’ 칸: 보기 대신 쓰는 짧은 예상이라 10자 이상이에요(그렇게 생각한 까닭은 따로 20자 이상 써요).
-export const OTHER_MIN_CHARS = 10;
+// 글자 수의 최소(MIN_CHARS 15자, 기타 칸 OTHER_MIN_CHARS 10자)는 src/text-guard.js에 있어요.
 const OTHER_LABEL = '기타: 다른 생각이 있어요 (직접 쓰기)';
 const STAGES = ['predict', 'observe', 'explain'];
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
@@ -395,7 +393,9 @@ export function setupPOEFlow(config) {
     if (initial) return;
     const focus = reviewing ? $('#review-title') : $(`#${next}-title`);
     focus.focus({ preventScroll: true });
-    (multi ? $('.experiment-switch') : $('.flow-nav')).scrollIntoView({ behavior: reducedMotion.matches ? 'instant' : 'smooth', block: 'start' });
+    // 관찰하기는 실험 순서 안내와 실험 칸(그림·단추)이 한 화면에 들어오도록 그 칸부터 보여 줘요(교사 의견).
+    const top = next === 'observe' && !reviewing ? $('.observe-body') : multi ? $('.experiment-switch') : $('.flow-nav');
+    top.scrollIntoView({ behavior: reducedMotion.matches ? 'instant' : 'smooth', block: 'start' });
   }
   // progress: { ready, message } — 실험에서 필요한 관찰을 모두 했는지 알려 줍니다.
   // 한 번 관찰을 마친 실험은 새로 고침한 뒤에도 다음 단계로 넘어갈 수 있어요.
@@ -551,7 +551,7 @@ export function setupPOEFlow(config) {
   }
   const nextStepLabel = () => (lastProgress?.steps ?? []).find(v => !v.done)?.label;
 
-  // 왼쪽 실험 순서 안내: 끝낸 단계는 ✓, 지금 할 단계는 강조, 뒤 단계는 자물쇠, 모두 끝나면 마지막 ‘기록하기’ 단계를 강조해요.
+  // 실험 순서 안내(넓은 화면은 왼쪽 칸, 좁은 화면은 위에 붙는 띠): 끝낸 단계는 ✓, 지금 할 단계는 강조, 뒤 단계는 자물쇠, 모두 끝나면 마지막 ‘기록하기’ 단계를 강조해요.
   let guideDone = -1;
   function renderGuide(progress) {
     const steps = progress.steps ?? [];
@@ -581,7 +581,7 @@ export function setupPOEFlow(config) {
     if (!out) return;
     // 뜻 없는 글(자음·모음만 쓴 글자, 잘 쓰지 않는 글자, 덧붙인 글자)은 쓰는 동안 바로 알려 줘요. ✓가 나오면 저장도 돼요.
     const junk = junkProblem(el.value);
-    out.textContent = junk ? `${n}자 · 고쳐 주세요: ${junk}` : n >= min ? `✓ ${n}자 · 좋아요!` : `${n} / ${min}자 · ${min - n}자 더 써 주세요 (공백·문장 부호, ‘모르겠어요’는 세지 않아요)`;
+    out.textContent = junk ? `${n}자 · 고쳐 주세요: ${junk}` : n >= min ? `✓ ${n}자 · 좋아요!` : `${n} / ${min}자 · ${min - n}자 더 써 주세요 (${NOT_COUNTED})`;
     out.classList.toggle('enough', !junk && n >= min);
   }
   // 같은 글이면 안 되는 앞 칸: 관찰은 예상한 까닭과, 설명은 예상한 까닭·관찰과 달라야 해요.

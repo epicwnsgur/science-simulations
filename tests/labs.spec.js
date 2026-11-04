@@ -223,12 +223,12 @@ test('저항의 연결: 직렬연결한 전구는 꺼진 것이 아니라 어둡
   expect(series).toBeLessThan(single * .7);
 });
 
-test('서술은 공백을 빼고 20자 이상이어야 다음 단계로 넘어감', async ({ page }) => {
+test('서술은 공백을 빼고 15자 이상이어야 다음 단계로 넘어감', async ({ page }) => {
   await page.goto('/simulations/series-parallel/');
   await finishReview(page);
   await page.locator('input[name="prediction"][value="0"]').check();
   await page.locator('#prediction-reason').fill('직렬은 어두울 것 같아요');
-  await expect(page.locator('.char-count[data-for="prediction-reason"]')).toContainText('10 / 20자');
+  await expect(page.locator('.char-count[data-for="prediction-reason"]')).toContainText('10 / 15자');
   await page.locator('#start-observation').click();
   await expect(page.locator('#predict-panel')).toBeVisible();
   await page.locator('#prediction-reason').fill('                    가나다라마바사아자차카타파하                 ');
@@ -251,6 +251,11 @@ test('뜻 없는 글(자음·모음 섞기, 잘 쓰지 않는 글자, 문장 뒤
     ['잘모루겟야요잘묘루겟어요잫모르ㅛ세ㅛ러료잫모수게ㅛ어려', /자음이나 모음만/],
     ['잘모루겟야요잘묘루겟어요잫모르세러료잫모수게어려 전구가', /잘 쓰지 않는 글자/],
     ['그냥 잠깐 불이 켜졌다가 꺼질것 같습니당다가가', /문장이 끝난 뒤/],
+    // 교사 의견(2026년 11월): 인사말·이름·유행어·마무리 말로 글자 수를 채운 글, 문장 뒤에 뜻 없는 글자를 붙인 글
+    ['잠깐 불이 켰다가 꺼질거 같아요 안녕하세요 안녕', /인사말/],
+    ['안녕하세요 제 이름은 권준서입니다 박재성 이동규', /인사말/],
+    ['당연히 2~3배 커지니까 커진다 유남쌩~?? 그리고 끝', /유행어/],
+    ['음 전류랑 정비례할거같아서 입니드리미도래시', /문장이 끝난 뒤/],
   ]) {
     await page.locator('#prediction-reason').fill(text);
     await expect(count).toContainText('고쳐 주세요');
@@ -283,7 +288,7 @@ test('스스로 평가: 결과 확인 뒤 옳게 고른 보기는 초록색, 틀
   }
 });
 
-test('관찰하기 단계에서 그림 위 실험 순서 안내가 지금 할 일을 보여 줌', async ({ page }) => {
+test('관찰하기 단계에서 실험 순서 안내가 지금 할 일을 보여 줌', async ({ page }) => {
   await page.setViewportSize({ width: 1600, height: 1000 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/simulations/series-parallel/'); await beginObservation(page);
@@ -292,8 +297,8 @@ test('관찰하기 단계에서 그림 위 실험 순서 안내가 지금 할 �
   await expect(guide.locator('li')).toHaveCount(6);
   await expect(guide.locator('li.current')).toContainText('전구 1개');
   const g = await guide.boundingBox(), lab = await page.locator('.lab').boundingBox();
-  // 큰 화면에서는 실험 순서 안내가 그림 위에 한 줄로 놓여요(학생 의견: 배치가 정신없어요).
-  expect(g.y + g.height).toBeLessThanOrEqual(lab.y);
+  // 넓은 화면에서는 실험 순서 안내가 실험 왼쪽 칸에 놓여, 그림과 함께 늘 보여요(교사 의견, tests/screen-fit.spec.js).
+  expect(g.x + g.width).toBeLessThanOrEqual(lab.x);
   await page.locator('#close-all').click();
   await expect(guide.locator('li.done')).toHaveCount(1);
   await expect(guide.locator('li.current')).toContainText('직렬연결');

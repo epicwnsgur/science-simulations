@@ -31,7 +31,7 @@ const LOCK_WAIT_MS = 20000;
 // 장난 제출 막기(설정 탭에서 바꿀 수 있어요): 같은 학번이 같은 실험에 낼 수 있는 횟수, 다시 내기까지 기다리는 시간(초).
 const DEFAULT_MAX_SUBMITS = 3;
 const DEFAULT_GAP_SECONDS = 60;
-// 뜻 있는 설명의 최소 글자 수(화면은 20자를 요구하고, 여기서는 화면을 우회한 장난 글만 걸러요).
+// 뜻 있는 설명의 최소 글자 수(화면은 15자를 요구하고, 여기서는 화면을 우회한 장난 글만 걸러요).
 const MIN_MEANINGFUL = 10;
 
 /** 처음 한 번 실행: 설정·명단 탭을 만들고 6자리 수업 코드를 정합니다. */
@@ -391,29 +391,68 @@ const COMMON_HANGUL = '가각간갇갈갉갊감갑값갓갔강갖갗같갚갛개
 const DONT_KNOW = /(?:잘\s*)?(?:(?:[모묘무머뭐][르루러로를흐]|몰[르루]?)[겠겟갰갯게개것겄]|몰라|모름)[가-힣]{0,3}/g;
 // 영어로 쓴 ‘모르겠어요’(I don't know, idk, no idea)와 소리 나는 대로 쓴 것(moreugesseoyo, molla)도 세지 않아요(학생 의견: 영어로 쓰면 넘어가요).
 const DONT_KNOW_EN = /(?:\bi\s*)?\bdo\s*n['’]?t\s*know|\bidk\b|\bdunno\b|\bno\s*idea\b|\bnot\s*sure\b|\bmor(?:eu|e|u)?(?:ge|kke)[a-z]*|\bmoll?a\b/gi;
+// ‘음’, ‘어’, ‘흠’ 같은 군말과 ‘그냥’도 내 생각이 아니므로 글자 수에 세지 않아요(설문 조사에서 ‘채우기 말’로 거르는 글). 따로 떨어진 낱말일 때만 빼요(‘음식’, ‘어떻게’는 그대로 세요).
+const FILLER = /(^|[^가-힣])(?:음+|흠+|엄+|어+|아+|헐+|엥+|그냥)(?=[^가-힣]|$)/g;
 // 뜻 없는 글을 찾아 안내 글을 돌려줘요(없으면 ''). junkProblem은 apps-script/Code.gs와 똑같아야 해요(src/text-guard.test.js가 확인해요).
 // 뜻 없는 글을 거르는 도구들이 흔히 쓰는 규칙(같은 글자 되풀이, 자판 마구 치기, 잘 쓰지 않는 글자)을 한글에 맞게 골랐어요.
 function junkProblem(text) {
   // 한글을 치는 중이면 마지막 글자가 아직 자음·모음일 수 있어요. 마지막 한 글자는 봐줘요.
   // ‘ㄱ자 유리관’, ‘ㄱ. ㄴ.’처럼 보기 기호로 쓴 자음은 받아요.
   const s = String(text == null ? '' : text).replace(/[ㄱ-ㅣ]$/, '').replace(/(^|[^가-힣ㄱ-ㅣ])[ㄱ-ㅎ](?=자|[.,)])/g, '$1');
+  // 안내 글에 학생이 쓴 말을 따옴표로 보여 줘요(앞뒤의 띄어쓰기·문장 부호는 빼요).
+  const quote = m => '‘' + String(m).replace(/^[^가-힣A-Za-z0-9]+|[^가-힣A-Za-z0-9]+$/g, '') + '’';
+  // 찾은 말이 낱말의 한 부분이면 낱말 전체를 보여 줘요(‘안녕’ → ‘안녕하세요’, ‘킹받’ → ‘킹받네’).
+  const whole = m => (/^[가-힣A-Za-z0-9]/.test(m[0]) ? s.slice(0, m.index).match(/[가-힣A-Za-z0-9]*$/)[0] : '') + m[0] + s.slice(m.index + m[0].length).match(/^[가-힣A-Za-z0-9]*/)[0];
   // ① 자음이나 모음만 따로 쓴 글자(ㅛ, ㅁㅁㅁ, ㅋㅋ, ㅠㅠ)
   const jamo = s.match(/[ㄱ-ㆎᄀ-ᇿ]/g);
   if (jamo) return '‘' + Array.from(new Set(jamo)).slice(0, 4).join('’, ‘') + '’처럼 자음이나 모음만 따로 쓴 글자가 있어요. 완성된 글자로 바르게 고쳐 써 주세요.';
   // ② 잘 쓰지 않는 글자(잫, 젛, 덯)
   const rare = Array.from(s).filter(c => c >= '가' && c <= '힣' && COMMON_HANGUL.indexOf(c) < 0);
   if (rare.length) return '‘' + Array.from(new Set(rare)).slice(0, 4).join('’, ‘') + '’처럼 잘 쓰지 않는 글자가 있어요. 자판을 마구 치거나 오타를 낸 곳을 바르게 고쳐 써 주세요.' + (rare.indexOf('됬') >= 0 ? ' (‘됬’은 ‘됐’으로 써요.)' : '');
-  // ③ 문장이 끝난 뒤에 덧붙인 글자(‘같습니당다가가’, ‘같습니다다다수구’)
-  if (/니[다당](?!만)[가-힣]/.test(s)) return '문장이 끝난 뒤(‘…습니다’)에 뜻 없는 글자를 덧붙였어요. 덧붙인 글자를 지우고 내 생각을 문장으로 더 써 주세요.';
+  // ③ 문장이 끝난 뒤에 덧붙인 글자(‘같습니당다가가’, ‘같습니다다다수구’, ‘…입니드리미도래시’): 받침 ㅂ 뒤의 ‘니’ 다음에는 ‘다’나 ‘까’로 문장이 끝나요.
+  //    ‘돌아다니다가’처럼 받침 없는 글자 뒤의 ‘니다’는 보통 낱말이라 막지 않아요. ‘…습니다만’, 띄어 쓰지 않고 이어 쓴 ‘…습니다그리고’도 받아요.
+  const c = Array.from(s);
+  const tail = c.findIndex((ch, i) => ch === '니' && i > 0 && c[i - 1] >= '가' && c[i - 1] <= '힣' && (c[i - 1].charCodeAt(0) - 0xac00) % 28 === 17 && /[가-힣]/.test(c[i + 1] || '') && (!/[다당까]/.test(c[i + 1]) || (/[가-힣]/.test(c[i + 2] || '') && c[i + 2] !== '만' && !/^(?:그리고|그래서|그런데|그러나|그러면|그러므로|하지만|왜냐하면|따라서|그때|이때|만약|또)/.test(c.slice(i + 2).join('')))));
+  if (tail >= 0) return '문장이 끝난 뒤(‘…습니다’)에 뜻 없는 글자를 덧붙였어요(' + quote(c.slice(Math.max(0, tail - 1), tail + 6).join('')) + '). 덧붙인 글자를 지우고 내 생각을 문장으로 더 써 주세요.';
   // ④ 같은 글자를 세 번 넘게 이어 쓴 곳(다다다, 아아아)
   const run = s.match(/(\p{L})\1{2,}/u);
   if (run) return '‘' + run[0].slice(0, 5) + '’처럼 같은 글자를 이어서 여러 번 썼어요. 뜻이 통하는 문장으로 써 주세요.';
   // ⑤ 영어 자판으로 친 한글(dkssudgktpdy)이나 자판 줄을 따라 친 글자(asdf, qwer)
   if (/[b-df-hj-np-tv-xz]{5,}|qwer|asdf|zxcv/i.test(s)) return '자판을 마구 치거나 영어 자판으로 친 것 같은 글자가 있어요. 한글 자판으로 바꿔 내 생각을 문장으로 써 주세요.';
+  // ⑥ 질문과 관계없는 말: 인사말(안녕하세요), 자기소개(제 이름은, 2학년 3반), 사람 이름 늘어놓기(박재성 이동규)
+  const greet = s.match(/안녕|반가워|반갑습니다|감사합니다|고맙습니다|수고하세요|수고하셨습니다|잘\s*부탁|(?:^|[^가-힣A-Za-z])(?:하이루?|헬로|바이바이|빠이|hello|hi|hey|bye)(?![가-힣A-Za-z])/i);
+  if (greet) return quote(whole(greet)) + ' 같은 인사말은 빼고, 질문에 대한 내 생각만 써 주세요.';
+  const intro = s.match(/(?:제|내|저의|나의)\s*이름|\d\s*학년\s*\d+\s*반|\d+\s*반\s*\d+\s*번|(?:저는|나는)\s*[가-힣]{2,4}(?:입니다|이에요|예요|이야|이고|임)(?![가-힣])/);
+  if (intro) return quote(intro[0]) + '처럼 자기소개는 빼고, 질문에 대한 내 생각만 써 주세요.';
+  //    사람 이름: 흔한 성(김, 이, 박…)과 이름에 흔한 글자로 된 세 글자 낱말이 두 개 넘게 잇달아 나와요. 과학 낱말(진동수, 우주선, 이상한)은 걸리지 않게 글자를 골랐어요.
+  const SUR = '김이박최정강조윤장임한오서신권황안송류유홍고문양손배백허남심노하곽성차우구민';
+  const GIV = '민준서도윤예시우하원지호후건현훈진선재연유정승혁은환찬성영수태규한결이온안율빈람아채다소린가나혜인경미희숙석철상종용동일광남순보';
+  const LAST = '민준서윤예우원호후건현훈진선재연유정승혁환찬성영수태규결온안율빈람아채소린혜인경미희숙석철상종용동일광남순보';
+  const nameLike = w => w.length === 3 && SUR.indexOf(w[0]) >= 0 && GIV.indexOf(w[1]) >= 0 && LAST.indexOf(w[2]) >= 0;
+  const words = s.split(/[\s,·]+/).map(w => w.replace(/^[^가-힣]+|[^가-힣]+$/g, ''));
+  const named = words.findIndex((w, i) => nameLike(w) && nameLike(words[i + 1] || ''));
+  if (named >= 0) return quote(words[named] + ' ' + words[named + 1]) + '처럼 사람 이름을 쓴 것 같아요. 이름은 빼고, 질문에 대한 내 생각만 써 주세요.';
+  // ⑦ 인터넷 말투·유행어(유남생, 킹받네, 인정?)와 웃음소리·장난 소리(하하, 히히, 메롱)
+  const slang = s.match(/유\s*남\s*[생쌩씽셍]|유노\s*왓|킹받|킹정|레게노|레전드|실화냐|어쩔티비|저쩔티비|안물안궁|알잘딱|머선\s*129|무야호|가보자고|렛츠\s*고|레츠\s*고|쌉[가인파]|그\s*잡채|중꺾마|갑분싸|별다줄|꿀잼|노잼|핵잼|존잼|개꿀|뇌절|국룰|띵작|개웃|인정\s*[?？~]|(?:^|[^가-힣])오지(?:다|네|고|게|는데)(?![가-힣])|지린다|지리네|지렸|(?:^|[^A-Za-z])(?:lol|lmao|omg|wtf|bruh)(?![A-Za-z])/i);
+  if (slang) return quote(whole(slang)) + ' 같은 인터넷 말투나 유행어는 빼고, 내 생각을 바른 문장으로 써 주세요.';
+  const noise = s.match(/하하|히히|헤헤|크크|키키|큭큭|킥킥|낄낄|깔깔|흐흐|껄껄|메롱|냠냠|룰루|랄라|야호|오예|아싸|앗싸|뿌잉|짜잔|빠밤/);
+  if (noise) return quote(whole(noise)) + ' 같은 웃음소리나 장난스러운 소리는 빼고, 내 생각을 문장으로 써 주세요.';
+  // ⑧ 글자 수를 채우려고 끝에 붙인 마무리 말(‘그리고 끝’, ‘이상 끝’, ‘…커진다. 끝!’). ‘막대의 끝’처럼 문장 속 낱말은 받아요.
+  const ending = s.match(/(?:그리고|이상|이제|여기까지|이걸로|이것으로|그럼)\s*(?:끝|끗|끄읕|땡)(?:이다|입니다|이에요|임|이야|남|냄)?[.!?~\s]*$|(?:[다요죠네까함음임됨듯][.!?~]*|[.!?~])\s+(?:끝|끗|끄읕|땡|이상입니다|이상이에요|이상임|이상이다)(?:이다|입니다|이에요|임|이야|남|냄)?[.!?~\s]*$/);
+  if (ending) return quote(ending[0].replace(/^[다요죠네까함음임됨듯]/, '')) + ' 같은 마무리 말은 빼고, 내 생각을 문장으로 써 주세요.';
+  // ⑨ 글자를 차례대로 늘어놓은 것(가나다라, 도레미파, 아야어여, abcd)
+  const flat = s.replace(/[\s.,·~!?]/g, '').replace(/래/g, '레').toLowerCase();
+  const orders = ['가나다라마바사아자차카타파하', '도레미파솔라시도', '아야어여오요우유으이', 'abcdefghijklmnopqrstuvwxyz'];
+  for (let k = 0; k < orders.length; k++) {
+    for (let i = 0; i + 4 <= orders[k].length; i++) if (flat.indexOf(orders[k].slice(i, i + 4)) >= 0) return quote(orders[k].slice(i, i + 4)) + '처럼 글자를 차례대로 늘어놓았어요. 뜻이 통하는 내 생각을 문장으로 써 주세요.';
+  }
+  // ⑩ 질문과 다른 말로 쓴 글: 영어로만 쓴 글(mL, LED, V처럼 짧은 영어 단위·기호는 받아요)
+  const latin = (s.match(/[A-Za-z]/g) || []).length, hangul = (s.match(/[가-힣]/g) || []).length;
+  if (latin >= 8 && latin > hangul) return '영어로 쓴 글이에요. 내 생각을 우리말 문장으로 써 주세요.';
   return '';
 }
 function meaningfulLength_(text) {
-  return String(text == null ? '' : text).replace(DONT_KNOW, '').replace(DONT_KNOW_EN, '').replace(/[^\p{L}\p{N}\u2460-\u24ff\u3200-\u32ff]/gu, '').replace(/[ㄱ-ㅎㅏ-ㅣ]/g, '').replace(/(\D)\1{2,}/gu, '$1').length;
+  return String(text == null ? '' : text).replace(DONT_KNOW, '').replace(DONT_KNOW_EN, '').replace(FILLER, '$1').replace(/[^\p{L}\p{N}\u2460-\u24ff\u3200-\u32ff]/gu, '').replace(/[ㄱ-ㅎㅏ-ㅣ]/g, '').replace(/(\D)\1{2,}/gu, '$1').length;
 }
 function repetitive_(text) {
   return repeatedText_(String(text == null ? '' : text).replace(/[^\p{L}\p{N}\u2460-\u24ff\u3200-\u32ff]/gu, ''));
