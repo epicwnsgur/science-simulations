@@ -31,6 +31,8 @@ const LOCK_WAIT_MS = 20000;
 // 장난 제출 막기(설정 탭에서 바꿀 수 있어요): 같은 학번이 같은 실험에 낼 수 있는 횟수, 다시 내기까지 기다리는 시간(초).
 const DEFAULT_MAX_SUBMITS = 3;
 const DEFAULT_GAP_SECONDS = 60;
+// 학년별로 시트를 나눠 받기: 설정 탭의 이 칸에 학년(예: 1)을 적으면 학번 첫 자리가 그 학년인 보고서만 받아요. 비워 두면 모두 받아요.
+const GRADE_SETTING = '받을 학년';
 // 뜻 있는 설명의 최소 글자 수(화면은 15자를 요구하고, 여기서는 화면을 우회한 장난 글만 걸러요).
 const MIN_MEANINGFUL = 10;
 
@@ -53,7 +55,8 @@ function setup() {
   const settings = ss.getSheetByName(SETTINGS_SHEET);
   const have = settings.getDataRange().getDisplayValues().map(row => String(row[0]).trim());
   [['같은 실험 최대 제출', DEFAULT_MAX_SUBMITS, '한 학생이 같은 실험 보고서를 몇 번까지 낼 수 있는지예요. 다시 내게 하려면 숫자를 늘려요.'],
-    ['다시 제출 간격(초)', DEFAULT_GAP_SECONDS, '같은 학생이 다시 내려면 기다려야 하는 시간이에요. 장난으로 여러 번 내는 것을 막아요.']]
+    ['다시 제출 간격(초)', DEFAULT_GAP_SECONDS, '같은 학생이 다시 내려면 기다려야 하는 시간이에요. 장난으로 여러 번 내는 것을 막아요.'],
+    [GRADE_SETTING, '', '학년별로 시트를 나눠 받을 때 이 시트가 받을 학년(학번 첫 자리)이에요. 예: 1학년 시트는 1, 2학년 시트는 2. 비워 두면 모든 학년을 받아요.']]
     .filter(row => have.indexOf(row[0]) === -1)
     .forEach(row => settings.appendRow(row));
   if (!ss.getSheetByName(ROSTER_SHEET)) {
@@ -120,10 +123,11 @@ function doPost(e) {
     const ss = SpreadsheetApp.getActive();
     const settings = readSettings_(ss);
     if (!settings.open) fail_('지금은 제출을 받지 않고 있어요. 선생님께 여쭈어 보세요.');
-    if (!settings.code || clean_(data.code, 20) !== settings.code) fail_('수업 코드가 맞지 않아요. 칠판의 코드를 다시 확인해 주세요.');
-
     const id = clean_(data.studentId, 20).replace(/\s/g, '');
     const name = clean_(data.name, 20).replace(/\s/g, '');
+    // 학년별로 나눈 시트: 다른 학년의 보고서가 오면(예전 페이지를 연 채로 낸 경우 등) 수업 코드보다 먼저 알려 줘요.
+    if (settings.grades.length && /^\d{5}$/.test(id) && settings.grades.indexOf(id.charAt(0)) === -1) fail_('이 시트는 ' + settings.grades.join('·') + '학년 보고서를 받아요. 학번 첫 자리(학년)를 확인하고, 맞다면 페이지를 새로 고친 뒤(Ctrl+F5) 다시 제출해 주세요.');
+    if (!settings.code || clean_(data.code, 20) !== settings.code) fail_('수업 코드가 맞지 않아요. 칠판의 코드를 다시 확인해 주세요.');
     if (!/^\d{5}$/.test(id) || Number(id.slice(1, 3)) < 1) fail_('학번은 숫자 5자리로 적어 주세요. (예: 2학년 3반 15번 → 20315)');
     if (!name) fail_('이름을 적어 주세요.');
     checkRoster_(ss, id, name);
@@ -213,6 +217,8 @@ function readSettings_(ss) {
     code: values['수업 코드'] || '', open: String(values['제출 받기']).toUpperCase() === 'TRUE',
     maxSubmits: number(values['같은 실험 최대 제출'], DEFAULT_MAX_SUBMITS) || DEFAULT_MAX_SUBMITS,
     gapSeconds: number(values['다시 제출 간격(초)'], DEFAULT_GAP_SECONDS),
+    // ‘1’, ‘2학년’, ‘1, 2’처럼 적어도 학년 숫자만 읽어요.
+    grades: String(values[GRADE_SETTING] || '').match(/[1-9]/g) || [],
   };
 }
 

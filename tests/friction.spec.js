@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { loadAppsScript } from '../apps-script/fake-google.js';
-import { SUBMIT_URL } from '../src/submission-config.js';
+// 기본 주소와 학년별 주소(src/submission-config.js) 어디로 보내도 가로채요(진짜 선생님 시트로는 보내지 않아요).
+const SUBMIT_ROUTE = 'https://script.google.com/**';
 import { CONCEPT_QUIZZES } from '../src/concept-quizzes.js';
 import { finishReview, savePrediction, openObserveUnlocked, peelAll, fillObservation } from './poe-helpers.js';
 
@@ -62,7 +63,7 @@ async function fakeServer(page) {
   const code = server.ss.getSheetByName('설정').rows[1][1];
   const calls = [];
   const state = { mode: 'ok' };
-  await page.route(SUBMIT_URL, async route => {
+  await page.route(SUBMIT_ROUTE, async route => {
     const body = route.request().postData();
     calls.push(JSON.parse(body));
     if (state.mode === 'down') return route.abort('failed');
