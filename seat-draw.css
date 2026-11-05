@@ -32,13 +32,14 @@ main.sd-main{max-width:1280px;padding-bottom:60px}
 .sd-room{display:flex;flex-direction:column;gap:22px;padding:22px clamp(12px,3vw,34px) 30px;border-radius:22px;border:1px solid #3b3424;background:radial-gradient(ellipse at 50% 0,#3a2f22,#1d1812 75%);box-shadow:0 20px 60px #000a,inset 0 0 0 1px #ffffff08;overflow-x:auto;position:relative}
 .sd-room.flipped{flex-direction:column-reverse}
 .sd-board{position:relative;align-self:center;width:min(640px,86%);min-height:58px;display:grid;place-items:center;border-radius:8px;border:6px solid #8a6a43;background:linear-gradient(160deg,#2c4a38,#1b3226);box-shadow:inset 0 0 24px #0008,0 8px 20px #0007;color:#e8efe0;font-family:var(--font-title);font-size:20px;letter-spacing:6px}
-.sd-desk-t{position:absolute;bottom:-34px;left:50%;transform:translateX(-50%);padding:3px 16px;border-radius:6px;background:#6b4f30;color:#f3e3c8;font-style:normal;font-size:12px;letter-spacing:2px;box-shadow:0 4px 10px #0006}
-.sd-room.flipped .sd-desk-t{bottom:auto;top:-34px}
-.sd-grid{display:flex;flex-direction:column;gap:12px;margin-top:22px;min-width:max-content}
-.sd-room.flipped .sd-grid{margin-top:0;margin-bottom:22px}
-.sd-row{display:flex;gap:8px;justify-content:center}
-.sd-desk{position:relative;flex:0 1 104px;min-width:56px;min-height:72px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:6px 4px;border-radius:10px;border:1px solid #a98458;background:linear-gradient(180deg,#d9b484,#b88d5b);color:#2a1b0c;cursor:pointer;box-shadow:0 5px 0 #7b5a35,0 10px 18px #0006;transition:transform .15s}
-.sd-desk.gap{margin-right:22px}
+/* 교실 판: 칸마다 자리 하나. 자리가 없는 통로·여유 칸은 좁게(JS가 grid-template을 정해요). */
+.sd-grid{--cell-min:56px;--cell-max:104px;--cell-h:72px;--aisle:30px;display:grid;gap:8px;justify-content:center;min-width:max-content}
+.sd-slot{border-radius:10px}
+.sd-room.dragging .sd-slot{border:2px dashed #ffffff26;background:#ffffff08}
+.sd-room.dragging .sd-slot.front{border-color:#ffd65a40}
+.sd-slot.over,.sd-desk.over{outline:3px solid #2ee6a6;outline-offset:2px;background:#2ee6a622}
+.sd-teacher{display:grid;place-items:center;border-radius:8px;background:linear-gradient(180deg,#7a5a37,#5d4429);border:1px solid #9a774c;color:#f3e3c8;font-family:var(--font-title);font-size:15px;letter-spacing:3px;box-shadow:0 5px 0 #3e2c19,0 10px 18px #0006}
+.sd-desk{position:relative;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:6px 4px;border-radius:10px;border:1px solid #a98458;background:linear-gradient(180deg,#d9b484,#b88d5b);color:#2a1b0c;cursor:pointer;box-shadow:0 5px 0 #7b5a35,0 10px 18px #0006;transition:transform .15s}
 .sd-desk:hover{transform:translateY(-2px)}
 .sd-desk strong{font-family:var(--font-title);font-size:clamp(20px,2.4vw,30px);line-height:1;font-variant-numeric:tabular-nums}
 .sd-desk small{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:700}
@@ -54,6 +55,16 @@ main.sd-main{max-width:1280px;padding-bottom:60px}
 @keyframes sd-flip{0%{transform:rotateY(90deg) scale(.9);filter:brightness(1.6)}}
 .sd-desk.selected{outline:4px solid #2ee6a6;outline-offset:3px;transform:translateY(-4px)}
 .sd-room-actions{display:flex;justify-content:center;gap:10px;margin-top:14px}
+.sd-room.editable .sd-desk{touch-action:none;user-select:none;-webkit-user-select:none;cursor:grab}
+.sd-desk.dragging{opacity:.3}
+.sd-ghost{position:fixed;left:0;top:0;z-index:60;margin:0;pointer-events:none;cursor:grabbing;opacity:.92;box-shadow:0 18px 40px #000b !important;rotate:-3deg}
+.sd-trash{display:none;position:absolute;left:50%;bottom:10px;z-index:3;transform:translateX(-50%);padding:10px 18px;border-radius:12px;border:2px dashed #c0563f;background:#2a1712ee;color:#ffb3a6;font-size:14px;font-weight:700;white-space:nowrap}
+.sd-room.dragging .sd-trash{display:block}
+.sd-trash.over{background:#7a2a1c;color:#fff}
+.sd-room.dragging{padding-bottom:64px}
+/* 제외한 번호가 앉은 막은 자리 */
+.sd-desk.shown.special{background:linear-gradient(180deg,#d9c8ff,#a58be0);border-color:#7c5cc4;box-shadow:0 5px 0 #4f3a85,0 10px 18px #0006}
+.sd-exclude input{width:180px;text-align:left;font-size:18px;padding:10px 12px}
 .sd-fs-draw{display:none}
 /* 막은 자리: X 표시 */
 .sd-desk.blocked:before,.sd-desk.blocked:after{content:'';position:absolute;left:18%;right:18%;top:50%;height:3px;border-radius:2px;background:#c0563f;opacity:.75}
@@ -70,7 +81,7 @@ main.sd-main{max-width:1280px;padding-bottom:60px}
 .sd-stage:fullscreen{display:flex;flex-direction:column;gap:12px;padding:2vh 2vw;background:#120e0a;overflow:auto}
 .sd-stage:fullscreen .sd-status{margin:0;text-align:center;font-size:clamp(15px,1.6vw,22px)}
 .sd-stage:fullscreen .sd-room{flex:1;justify-content:center}
-.sd-stage:fullscreen .sd-desk{flex-basis:clamp(80px,11vw,180px);min-height:clamp(64px,10vh,130px)}
+.sd-stage:fullscreen .sd-grid{--cell-min:64px;--cell-max:180px;--cell-h:clamp(64px,9vh,130px);--aisle:clamp(24px,2.5vw,44px)}
 .sd-stage:fullscreen .sd-desk strong{font-size:clamp(26px,3.4vw,52px)}
 .sd-stage:fullscreen .sd-desk small{font-size:clamp(13px,1.4vw,20px)}
 .sd-stage:fullscreen .sd-board{font-size:clamp(20px,2vw,30px);min-height:clamp(52px,7vh,90px)}
@@ -82,7 +93,7 @@ main.sd-main{max-width:1280px;padding-bottom:60px}
 @keyframes sd-flash{0%{box-shadow:0 20px 60px #000a,inset 0 0 0 4px #ffe27a,0 0 70px #ffb70388}}
 .sd-dialog select{font-size:17px;padding:10px 12px;border-radius:12px;border:1px solid #4a4560;background:#0e0e18;color:#fff}
 
-@media(max-width:620px){.sd-setup{padding:14px}.sd-field input{width:76px;font-size:19px}.sd-desk{min-width:48px;min-height:60px}.sd-desk.gap{margin-right:12px}.sd-board{font-size:16px}}
+@media(max-width:620px){.sd-setup{padding:14px}.sd-field input{width:76px;font-size:19px}.sd-exclude input{width:150px}.sd-grid{--cell-min:44px;--cell-h:60px;--aisle:16px;gap:6px}.sd-board{font-size:16px}}
 @media(prefers-reduced-motion:reduce){.sd-desk,.sd-desk.pop,.sd-room.flash{transition:none;animation:none}}
 
 /* 5초 카운트다운 화면: 빙글 도는 빛줄기, 흩날리는 번호, 줄어드는 고리, 숫자마다 쿵 */
@@ -122,7 +133,7 @@ main.sd-main{max-width:1280px;padding-bottom:60px}
 html[data-theme=light] .sd-setup{background:#fff;border-color:#f3cfe0;box-shadow:0 10px 30px #d6336c14}
 html[data-theme=light] :is(.sd-field label,.sd-reveal legend,.sd-names label){color:#3d1a33}
 html[data-theme=light] :is(.sd-check,.sd-reveal label){color:#3d1a33}
-html[data-theme=light] :is(.sd-field input,.sd-names textarea){background:#fff;color:#3d1a33;border-color:#e8b0c9}
+html[data-theme=light] :is(.sd-field input,.sd-names textarea,.sd-exclude input){background:#fff;color:#3d1a33;border-color:#e8b0c9}
 html[data-theme=light] .sd-names summary{color:#a05a00}
 html[data-theme=light] .sd-btn{background:#fff0f6;color:#3d1a33;border-color:#e8b0c9}
 html[data-theme=light] .sd-btn[aria-pressed=true]{background:#e6fcf5;color:#0c5a3e;border-color:#0c8a5a}
@@ -138,4 +149,6 @@ html[data-theme=light] .sd-dialog select{background:#fff;color:#3d1a33;border-co
   .sd-board{border-color:#555;background:#eee;color:#000;box-shadow:none}
   .sd-desk{box-shadow:none !important;background:#fff;border:1.5px solid #333;color:#000}
   .sd-desk.blocked,.sd-desk.vacant{background:#eee}
+  .sd-teacher{box-shadow:none;background:#ddd;color:#000;border-color:#555}
+  .sd-trash{display:none !important}
 }

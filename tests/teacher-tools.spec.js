@@ -117,14 +117,15 @@ async function openSeats(page) {
   await page.goto('/teacher/seat-draw/');
   await expect(page.locator('#gate-dialog')).toHaveCount(0);
 }
-const deskAt = (page, r, c) => page.locator(`.sd-desk[data-r="${r}"][data-c="${c}"]`);
+// 기본 배치(짝)의 r번째 줄·c번째 자리 → 교실 판의 칸(0번 줄은 교탁 줄, 두 자리마다 통로, 양옆 여유 칸)
+const deskAt = (page, r, c) => page.locator(`.sd-desk[data-r="${r + 1}"][data-c="${1 + c + Math.floor(c / 2)}"]`);
 
 test('자리 뽑기: 막은 자리·고정 자리를 지키고 모두 한 번씩 앉으며, 두 자리를 맞바꿀 수 있음', async ({ page }) => {
   const errors = []; page.on('pageerror', e => errors.push(e.message));
   await openSeats(page);
   await expect(page.locator('.sd-desk')).toHaveCount(30);
   await deskAt(page, 4, 5).click();
-  await page.getByLabel('이 자리 막기(아무도 앉지 않아요)').check();
+  await page.getByLabel('이 자리 막기(제외한 번호만 앉을 수 있어요)').check();
   await page.locator('#sd-dialog-ok').click();
   await expect(deskAt(page, 4, 5)).toHaveText('막은 자리');
   // 자리 수보다 학생이 많으면 까닭을 알려 줘요.
@@ -157,7 +158,8 @@ test('자리 뽑기: 막은 자리·고정 자리를 지키고 모두 한 번씩
   await expect(deskAt(page, 0, 2)).toHaveText(String(a));
   await page.getByRole('button', { name: '교사 시점' }).click();
   await expect(page.locator('#sd-room')).toHaveClass(/flipped/);
-  await expect(page.locator('.sd-row').first().locator('.sd-desk').first()).toHaveAttribute('data-r', '4');
+  // 교사 시점: 앞줄이 아래쪽(칠판 쪽)으로
+  expect((await deskAt(page, 0, 0).boundingBox()).y).toBeGreaterThan((await deskAt(page, 4, 0).boundingBox()).y);
   expect(errors).toEqual([]);
 });
 
@@ -227,4 +229,76 @@ test('자리 뽑기: 카운트다운 화면에서 ‘바로 보기’를 누르�
   await expect(page.locator('#sd-show')).toBeHidden();
   await expect(page.locator('.sd-desk.hidden-card, .sd-desk.spin')).toHaveCount(0);
   expect((await page.evaluate(() => seatDraw.result)).filter(Boolean)).toHaveLength(30);
+});
+
+test('자리 뽑기: 제외할 번호는 막은 자리에만 무작위로 앉고, 끄면 아무 데도 앉지 않음', async ({ page }) => {
+  await openSeats(page);
+  await page.getByRole('button', { name: '자리 막기' }).click();
+  for (const [r, c] of [[0, 0], [0, 5]]) await deskAt(page, r, c).click();
+  await page.getByRole('button', { name: '자리 막기' }).click();
+  await page.getByLabel('눌러서 한 자리씩').check();
+  await page.getByLabel('제외할 번호').fill('3, 17, 21');
+  await page.locator('#sd-draw').click();
+  await expect(page.locator('#sd-status')).toContainText('막은 자리(2자리)가 적어요');
+  await page.getByLabel('제외할 번호').fill('3, 17');
+  await page.locator('#sd-draw').click();
+  let seats = await page.evaluate(() => seatDraw.result);
+  expect([seats[0], seats[5]].sort((a, b) => a - b)).toEqual([3, 17]);
+  expect(seats.filter(Boolean)).toHaveLength(30);
+  await page.getByRole('button', { name: '모두 공개' }).click();
+  await expect(page.locator('.sd-desk.special')).toHaveCount(2);
+  await page.getByLabel('제외한 번호는 막은 자리에 무작위로').uncheck();
+  await page.locator('#sd-draw').click();
+  seats = await page.evaluate(() => seatDraw.result);
+  expect(seats).not.toContain(3);
+  expect(seats).not.toContain(17);
+  expect([seats[0], seats[5]]).toEqual([null, null]);
+});
+
+test('자리 뽑기: 자리를 끌어 교탁 옆 칸에 놓으면 딱 맞게 들어가고, 배치를 기억함', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 1000 });
+  await openSeats(page);
+  await page.locator('#sd-room').evaluate(el => el.scrollIntoView({ block: 'start', behavior: 'instant' })); // 교실 전체가 한 화면에 보이게
+  const { tc } = await page.evaluate(() => seatDraw.layout);
+  const drag = async (from, to) => {
+    const a = await from.boundingBox();
+    await page.mouse.move(a.x + a.width / 2, a.y + a.height / 2); await page.mouse.down();
+    await page.mouse.move(a.x + a.width / 2 + 12, a.y + a.height / 2 + 12, { steps: 3 });
+    await expect(page.locator('#sd-trash')).toBeVisible(); // 끌기 시작하면 빈칸과 휴지통이 보여요.
+    const b = await to.boundingBox();
+    await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2, { steps: 6 });
+    await page.mouse.up();
+  };
+  await drag(deskAt(page, 4, 5), page.locator(`.sd-slot[data-r="0"][data-c="${tc - 1}"]`));
+  await expect(page.locator(`.sd-desk[data-r="0"][data-c="${tc - 1}"]`)).toHaveCount(1);
+  await expect(page.locator('#sd-dialog')).not.toBeVisible();
+  // 다른 자리 위에 놓으면 서로 바꿔요.
+  const a = await deskAt(page, 0, 0).getAttribute('data-id'), b = await deskAt(page, 1, 1).getAttribute('data-id');
+  await drag(deskAt(page, 0, 0), deskAt(page, 1, 1));
+  await expect(deskAt(page, 1, 1)).toHaveAttribute('data-id', a);
+  await expect(deskAt(page, 0, 0)).toHaveAttribute('data-id', b);
+  // 휴지통에 놓으면 자리가 없어지고, 자리 더하기로 다시 생겨요.
+  await drag(deskAt(page, 2, 2), page.locator('#sd-trash'));
+  await expect(page.locator('.sd-desk')).toHaveCount(29);
+  await page.getByRole('button', { name: '자리 더하기' }).click();
+  await expect(page.locator('.sd-desk')).toHaveCount(30);
+  // 새로 열어도 배치가 그대로예요.
+  await page.reload();
+  await expect(page.locator(`.sd-desk[data-r="0"][data-c="${tc - 1}"]`)).toHaveCount(1);
+  await expect(page.locator('.sd-desk')).toHaveCount(30);
+  // 뽑으면 교탁 옆 자리가 맨 앞 차례로 채워져요.
+  await page.getByLabel('눌러서 한 자리씩').check();
+  await page.locator('#sd-draw').click();
+  expect((await page.evaluate(() => seatDraw.result))[0]).not.toBeNull();
+});
+
+test('자리 뽑기: 끌기 대신 Shift+방향키로 한 칸씩 옮기고, 설정 창에서 자리를 없앰', async ({ page }) => {
+  await openSeats(page);
+  const desk = deskAt(page, 0, 0), id = await desk.getAttribute('data-id');
+  await desk.focus();
+  await page.keyboard.press('Shift+ArrowUp');
+  await expect(page.locator(`.sd-desk[data-id="${id}"]`)).toHaveAttribute('data-r', '0');
+  await page.locator(`.sd-desk[data-id="${id}"]`).click();
+  await page.getByRole('button', { name: '이 자리 없애기' }).click();
+  await expect(page.locator('.sd-desk')).toHaveCount(29);
 });
