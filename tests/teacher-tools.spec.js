@@ -302,3 +302,14 @@ test('자리 뽑기: 끌기 대신 Shift+방향키로 한 칸씩 옮기고, 설�
   await page.getByRole('button', { name: '이 자리 없애기' }).click();
   await expect(page.locator('.sd-desk')).toHaveCount(29);
 });
+
+test('자리 뽑기: 설정 창 제목은 그 줄의 자리만 세고, 망가진 저장 배치는 쓰지 않음', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('seat-draw-layout', JSON.stringify({ v: 1, layout: { w: 'x', seats: [{ id: 1, r: 99, c: 0 }] } })));
+  await openSeats(page);
+  await expect(page.locator('.sd-desk')).toHaveCount(30);
+  await deskAt(page, 0, 0).click();
+  await expect(page.locator('#sd-dialog-title')).toHaveText('앞에서 1째 줄 왼쪽에서 1째 자리');
+  await page.locator('#sd-dialog-cancel').click();
+  await deskAt(page, 2, 5).click();
+  await expect(page.locator('#sd-dialog-title')).toHaveText('앞에서 3째 줄 왼쪽에서 6째 자리');
+});

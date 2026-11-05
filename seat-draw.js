@@ -38,7 +38,9 @@ const revealMode = () => document.querySelector('input[name="sd-reveal"]:checked
 const seatById = id => layout.seats.find(s => s.id === id);
 const seatAt = (r, c) => layout.seats.find(s => s.r === r && s.c === c);
 const deskEl = id => grid.querySelector(`.sd-desk[data-id="${id}"]`);
-const where = s => (s.r === 0 ? `교탁 줄 왼쪽에서 ${s.c + 1}째 칸` : `앞에서 ${s.r}째 줄 왼쪽에서 ${s.c + 1}째 칸`);
+// 몇째 자리인지는 그 줄에 놓인 자리만 세요(통로·여유 칸은 세지 않아요).
+const nth = s => layout.seats.filter(o => o.r === s.r && o.c <= s.c).length;
+const where = s => (s.r === 0 ? `교탁 줄 왼쪽에서 ${nth(s)}째 칸` : `앞에서 ${s.r}째 줄 왼쪽에서 ${nth(s)}째 칸`);
 const unrevealedLeft = () => result && [...result].some(([id, st]) => st !== null && !revealed.has(id));
 
 /* ---------- 배치 만들기·기억하기 ---------- */
@@ -54,7 +56,14 @@ function save() {
 function load() {
   try {
     const d = JSON.parse(localStorage.getItem(STORE));
-    if (d?.v !== 1 || !Array.isArray(d.layout?.seats)) return false;
+    // 저장한 값이 망가져 있으면 쓰지 않고 기본 배치로 시작해요.
+    const L = d?.layout, int = n => Number.isInteger(n) && n >= 0;
+    if (d?.v !== 1 || !Array.isArray(L?.seats) || ![L.w, L.h, L.tc].every(int) || L.w > 16 || L.h > 13) return false;
+    const cells = new Set();
+    for (const s of L.seats) {
+      if (![s.id, s.r, s.c].every(int) || s.r >= L.h || s.c >= L.w || isTeacherCell(L, s.r, s.c) || cells.has(`${s.r},${s.c}`)) return false;
+      cells.add(`${s.r},${s.c}`);
+    }
     rowsIn.value = d.rows; colsIn.value = d.cols; pairsIn.checked = d.pairs;
     layout = d.layout;
     nextId = Math.max(0, ...layout.seats.map(s => s.id)) + 1;
