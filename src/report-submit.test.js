@@ -41,3 +41,10 @@ test('학번 칸: 숫자만 5자리까지 남기고, 학년(1·2·3)·자리 수
   assert.equal(idCheck('10101').text, '✓ 1학년 1반 1번');
   assert.equal(idCheck('31234').text, '✓ 3학년 12반 34번');
 });
+
+test('시트 코드 버전: 화면이 기대하는 버전(src/sheet-version.js)과 apps-script/Code.gs의 CODE_VERSION이 같아요', async () => {
+  const { readFileSync } = await import('node:fs');
+  const { SHEET_CODE_VERSION } = await import('./sheet-version.js');
+  const server = readFileSync(new URL('../apps-script/Code.gs', import.meta.url), 'utf8');
+  assert.equal(server.match(/const CODE_VERSION = '([^']+)';/)[1], SHEET_CODE_VERSION);
+});

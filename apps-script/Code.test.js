@@ -138,13 +138,13 @@ test('같은 제출 ID는 한 번만 저장하고 처음 저장한 결과를 돌
 test('실험이 둘인 보고서는 실험마다 예상·관찰·설명 칸을 따로 만든다', () => {
   const { ss, post, report } = ready();
   const sections = [
-    { name: '풍선과 털', prediction: '끌려온다', reason: '까닭1', observation: '관찰1', explanation: '설명1: 털의 전자가 풍선으로 옮겨 갔어요.' },
-    { name: '숟가락', prediction: '밀려난다', reason: '까닭2', observation: '관찰2', explanation: '설명2: 같은 전하끼리 서로 밀어내요.' },
+    { name: '풍선과 털', prediction: '끌려온다', reason: '까닭1: 문지르면 전자가 옮겨 갈 것 같아요.', observation: '관찰1: 털이 풍선 쪽으로 끌려 올라갔어요.', explanation: '설명1: 털의 전자가 풍선으로 옮겨 갔어요.' },
+    { name: '숟가락', prediction: '밀려난다', reason: '까닭2: 같은 전하끼리는 밀 것 같아요.', observation: '관찰2: 숟가락이 반대쪽으로 돌아갔어요.', explanation: '설명2: 같은 전하끼리 서로 밀어내요.' },
   ];
   assert.equal(post(report({ title: '마찰 전기', sections, prediction: '합친 예상' })).ok, true);
   const sheet = ss.getSheetByName('마찰 전기');
   assert.deepEqual(sheet.rows[1].slice(5), ['[풍선과 털] 예상', '[풍선과 털] 예상한 까닭', '[풍선과 털] 관찰', '[풍선과 털] 설명', '[숟가락] 예상', '[숟가락] 예상한 까닭', '[숟가락] 관찰', '[숟가락] 설명', '사용 후기', '제출 ID']);
-  assert.deepEqual(sheet.rows[2].slice(5, 13), ['끌려온다', '까닭1', '관찰1', '설명1: 털의 전자가 풍선으로 옮겨 갔어요.', '밀려난다', '까닭2', '관찰2', '설명2: 같은 전하끼리 서로 밀어내요.']);
+  assert.deepEqual(sheet.rows[2].slice(5, 13), ['끌려온다', '까닭1: 문지르면 전자가 옮겨 갈 것 같아요.', '관찰1: 털이 풍선 쪽으로 끌려 올라갔어요.', '설명1: 털의 전자가 풍선으로 옮겨 갔어요.', '밀려난다', '까닭2: 같은 전하끼리는 밀 것 같아요.', '관찰2: 숟가락이 반대쪽으로 돌아갔어요.', '설명2: 같은 전하끼리 서로 밀어내요.']);
 });
 
 // 지난 버전이 만든 탭: 1행이 바로 머리글이고, 반 사이에 빈 줄이 있어요.
@@ -186,7 +186,8 @@ test('칸 구성이 다른 탭(실험 수가 다르거나 아주 예전 모양)�
   legacyTab(ss);
   assert.equal(post(report()).ok, true);
   const explanation = '저항이 일정하면 전류는 전압에 비례해요.';
-  assert.equal(post(report({ sections: [{ name: 'A', explanation }, { name: 'B', explanation }] })).ok, true);
+  const filled = { reason: '전압이 커지면 전류도 커질 것 같아요.', observation: '전압을 높일수록 전류계 값이 커졌어요.', explanation };
+  assert.equal(post(report({ sections: [{ name: 'A', ...filled }, { name: 'B', ...filled }] })).ok, true);
   // 예전 학생 데이터는 (이전) 탭에 그대로 남아요.
   assert.deepEqual(view(ss.getSheetByName('옴의 법칙 (이전)'), [3]), ['일반', '', '삼반먼저', '삼반늦게', '홍길동']);
   assert.equal(ss.getSheetByName('옴의 법칙').rows[1][5], '[A] 예상');
@@ -287,24 +288,39 @@ test('뜻 없는 글: 화면을 거치지 않고 보내도 예상·관찰·설�
   assert.equal(post(report({ explanation: '왜 그런지 잘 모르겠지만 피스톤을 밀었더니 압력이 2배로 커졌어요.' })).ok, true);
 });
 
-test('한꺼번에 몰려 차례를 오래 기다리면 다시 보내라고(retry) 답하고, 정리는 마지막 제출 때 한 번에 해요', () => {
+test('한꺼번에 몰려 차례를 오래 기다리면 다시 보내라고(retry) 답하고, 새 줄은 그 반 자리에 바로 끼워 넣어요', () => {
   const { ss, post, report, view } = ready();
   ss.busy = true;
   const busy = post(report());
   assert.deepEqual(busy, { ok: false, retry: true, message: '제출하는 친구들이 많아요. 잠시 뒤 다시 보내 주세요.' });
   ss.busy = false;
-  // 기다리는 학생이 있는 동안 낸 제출은 정리를 미뤄요(반이 섞인 채 아래에 붙어요).
+  // 탭 전체를 다시 쓰지 않고 새 줄을 반 자리에 끼워 넣어서, 기다리는 학생이 있어도 바로 반별로 정리돼요.
   post(report({ studentId: '20301', name: '삼반' }));
   ss.cache.set('waiting', '2');
   post(report({ studentId: '20101', name: '일반' }));
   const sheet = ss.getSheetByName('옴의 법칙');
-  assert.deepEqual(view(sheet), ['3반 삼반', '1반 일반']);
-  assert.ok(JSON.parse(ss.cache.get('deferred')).includes('옴의 법칙'));
-  // 마지막 학생(기다리는 사람 없음)이 내면 미뤄 둔 정리까지 한 번에 해요.
-  ss.cache.set('waiting', '0');
+  assert.deepEqual(view(sheet), ['1반 일반', '', '3반 삼반']);
   post(report({ studentId: '20201', name: '이반' }));
-  assert.deepEqual(view(sheet), ['1반 일반', '', '2반 이반', '', '3반 삼반']);
+  post(report({ studentId: '20102', name: '일반둘' }));
+  assert.deepEqual(view(sheet), ['1반 일반', '1반 일반둘', '', '2반 이반', '', '3반 삼반']);
+  assert.deepEqual(sheet.colors.slice(2, 8), ['#f7c9c9', '#f7c9c9', null, '#f7dfc9', null, '#f7f0c9']);
+  // 선생님이 직접 정렬해 반이 섞인 탭은 끝에 붙이고, 기다리는 학생이 없을 때 한 번에 다시 정리해요.
+  const swap = sheet.rows[2]; sheet.rows[2] = sheet.rows[7]; sheet.rows[7] = swap;
+  post(report({ studentId: '20103', name: '일반셋' }));
+  assert.ok(JSON.parse(ss.cache.get('deferred')).includes('옴의 법칙'));
+  ss.cache.set('waiting', '0');
+  post(report({ studentId: '20202', name: '이반둘' }));
+  assert.deepEqual(view(sheet), ['1반 일반', '1반 일반둘', '1반 일반셋', '', '2반 이반', '2반 이반둘', '', '3반 삼반']);
   assert.equal(ss.cache.has('deferred'), false);
+});
+
+test('화면을 거치지 않고 보내도 예상한 까닭·관찰이 너무 짧으면 받지 않고, 웹 앱 주소는 코드 버전을 알려 줘요', () => {
+  const { post, report, context } = ready();
+  assert.match(post(report({ reason: '몰라' })).message, /예상한 까닭/);
+  assert.match(post(report({ observation: '커짐' })).message, /관찰/);
+  const got = JSON.parse(context.doGet().content);
+  assert.equal(got.ok, true);
+  assert.match(got.version, /^\d{4}-\d{2}-\d{2}$/);
 });
 
 // 교사 의견(2026년 11월): 1학년과 2학년 보고서를 다른 시트로 받고 싶어요. 학번 첫 자리(학년)로 나눠요.

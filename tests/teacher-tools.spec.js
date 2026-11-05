@@ -228,3 +228,24 @@ test('자리 뽑기: 카운트다운 화면에서 ‘바로 보기’를 누르�
   await expect(page.locator('.sd-desk.hidden-card, .sd-desk.spin')).toHaveCount(0);
   expect((await page.evaluate(() => seatDraw.result)).filter(Boolean)).toHaveLength(30);
 });
+
+// 보고서 시트 점검: 시트마다 웹 앱이 작동하는지, Code.gs가 최신인지 알려 줘요(진짜 시트 대신 가로챈 답으로 시험해요).
+test('보고서 시트 점검: 최신 코드·예전 코드·응답 없음을 시트마다 알려 줌', async ({ page }) => {
+  const { SUBMIT_URL_BY_GRADE } = await import('../src/submission-config.js');
+  const { SHEET_CODE_VERSION } = await import('../src/sheet-version.js');
+  await page.route('https://script.google.com/**', route => {
+    const first = route.request().url() === SUBMIT_URL_BY_GRADE[1];
+    return route.fulfill({ contentType: 'application/json', headers: { 'access-control-allow-origin': '*' }, body: JSON.stringify(first ? { ok: true, version: SHEET_CODE_VERSION } : { ok: true }) });
+  });
+  await page.goto('/');
+  await page.getByRole('link', { name: /교사용 자료 폴더 열기/ }).click();
+  await page.locator('#gate-pass').fill('0421'); await page.locator('#gate-ok').click();
+  await page.locator('#sheet-check-btn').click();
+  const items = page.locator('#sheet-check-list li');
+  await expect(items.filter({ hasText: '1학년 시트: 작동해요 · 최신 코드' })).toHaveCount(1);
+  await expect(items.filter({ hasText: '예전 코드예요' })).toHaveCount(1);
+  await page.unroute('https://script.google.com/**');
+  await page.route('https://script.google.com/**', route => route.abort('failed'));
+  await page.locator('#sheet-check-btn').click();
+  await expect(items.filter({ hasText: '응답이 없어요' })).toHaveCount(2);
+});
