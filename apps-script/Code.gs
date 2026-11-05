@@ -10,6 +10,8 @@
 
 // 실험 탭은 실험 페이지가 보내 준 실험 이름으로 자동으로 만듭니다. 새 실험을 추가해도 이 코드를 고칠 필요가 없어요.
 // 실험 탭 모양: 1행 정렬 버튼(체크박스) · 2행 머리글 · 3행부터 반별로 모은 보고서(반 사이 빈 줄 한 칸).
+// 코드 버전: 저장소의 Code.gs를 고칠 때마다 날짜를 바꿔요. 교사용 자료의 ‘보고서 시트 점검’이 시트마다 최신 코드인지 확인해요(src/sheet-version.js와 같아야 해요).
+const CODE_VERSION = '2026-11-05';
 const SETTINGS_SHEET = '설정';
 const ROSTER_SHEET = '명단';
 const BASE_HEADERS = ['제출 시각', '반', '학번', '이름', '제출 횟수'];
@@ -70,7 +72,7 @@ function setup() {
   ss.getSheets().forEach(sheet => {
     if (/^(시트|Sheet)1$/.test(sheet.getName()) && sheet.getLastRow() === 0 && ss.getSheets().length > 1) ss.deleteSheet(sheet);
   });
-  console.log('준비 완료. 수업 코드: ' + readSettings_(ss).code);
+  console.log('준비 완료. 수업 코드: ' + readSettings_(ss).code + ' · 코드 버전: ' + CODE_VERSION);
 }
 
 /** 시트를 열면 위쪽 메뉴에 ‘보고서 정리’가 생깁니다. */
@@ -110,7 +112,7 @@ function onEdit(e) {
 
 /** 웹 앱 주소를 브라우저에서 열어 작동하는지 확인할 때 씁니다. */
 function doGet() {
-  return json_({ ok: true, message: '보고서 제출 주소가 작동하고 있어요.' });
+  return json_({ ok: true, version: CODE_VERSION, message: '보고서 제출 주소가 작동하고 있어요. (코드 버전 ' + CODE_VERSION + ')' });
 }
 
 /**
@@ -156,10 +158,14 @@ function doPost(e) {
       const row = [now, cls + '반', "'" + id, name, count];
       sections.forEach(s => SECTION_FIELDS.forEach(f => row.push(s[f[0]])));
       row.push(clean_(data.feedback, MAX_TEXT), submissionId);
-      sheet.getRange(Math.max(sheet.getLastRow() + 1, FIRST_ROW), 1, 1, row.length).setValues([row.map(safe_)]);
-      // 반별 정리는 시간이 걸려요. 차례를 기다리는 학생이 있으면 미뤄 두고, 마지막으로 낸 학생 때 한 번에 정리해요.
-      if (waiting_() > 0) defer_(sheet.getName());
-      else { arrange_(sheet); arrangeDeferred_(sheet.getName()); }
+      // 보통은 새 줄을 그 반 자리에 바로 끼워 넣어요(보고서가 많이 쌓여도 빨라요).
+      // 탭이 반별로 정리되어 있지 않으면(선생님이 직접 정렬한 경우 등) 예전처럼 끝에 쓰고 전체를 다시 정리해요.
+      if (!placeRow_(sheet, row.map(safe_), cls, id)) {
+        sheet.getRange(Math.max(sheet.getLastRow() + 1, FIRST_ROW), 1, 1, row.length).setValues([row.map(safe_)]);
+        // 반별 정리는 시간이 걸려요. 차례를 기다리는 학생이 있으면 미뤄 두고, 마지막으로 낸 학생 때 한 번에 정리해요.
+        if (waiting_() > 0) defer_(sheet.getName());
+        else { arrange_(sheet); arrangeDeferred_(sheet.getName()); }
+      } else if (waiting_() === 0) arrangeDeferred_(sheet.getName());
       return json_({ ok: true, count: count, submittedAt: now.toISOString(), message: name + ' 학생의 ‘' + lab + '’ 보고서를 제출했어요.' + (count > 1 ? ' (' + count + '번째 제출)' : '') });
     });
   } catch (err) {
@@ -324,6 +330,62 @@ function arrange_(sheet) {
   if (out.length) sheet.getRange(FIRST_ROW, 1, out.length, width).setValues(out);
   sheet.getRange(FIRST_ROW, 1, height, 1).setNumberFormat('yyyy-mm-dd hh:mm');
   groups.forEach(g => sheet.getRange(FIRST_ROW + g.start, 1, g.size, sheet.getMaxColumns()).setBackground(CLASS_COLORS[g.cls - 1] || OTHER_COLOR));
+}
+
+// 새 보고서 한 줄을 반별로 정리된 탭의 알맞은 자리에 끼워 넣어요. 끼웠으면 true, 탭이 정리된 모양이 아니면 false예요.
+// 정리된 모양: 3행부터 반 순서대로 모여 있고, 반 사이에 빈 줄이 하나, 반 안은 1행에서 고른 순서(학번 순 / 제출 시각 순)예요.
+// 탭 전체를 다시 쓰지 않으므로 학기 말에 보고서가 많이 쌓여도 제출이 느려지지 않아요.
+function placeRow_(sheet, row, cls, id) {
+  const last = sheet.getLastRow();
+  const paint = (at, n) => {
+    sheet.getRange(at, 1, n, sheet.getMaxColumns()).setBackground(null).setFontWeight('normal').setWrap(true).setVerticalAlignment('top');
+    sheet.getRange(at, 1, 1, sheet.getMaxColumns()).setBackground(CLASS_COLORS[cls - 1] || OTHER_COLOR);
+    sheet.getRange(at, 1, 1, 1).setNumberFormat('yyyy-mm-dd hh:mm');
+  };
+  if (last < FIRST_ROW) {
+    sheet.getRange(FIRST_ROW, 1, 1, row.length).setValues([row]);
+    paint(FIRST_ROW, 1);
+    return true;
+  }
+  const byId = sheet.getRange(1, SORT_BY_ID.col).getValue() === true;
+  const cells = sheet.getRange(FIRST_ROW, 1, last - FIRST_ROW + 1, 3).getValues();
+  const key = r => ({ cls: parseInt(String(r[1]), 10) || parseInt(String(r[2]).slice(1, 3), 10) || 999, id: String(r[2]).replace(/^'/, ''), time: r[0] instanceof Date ? r[0].getTime() : Number(new Date(r[0])) || 0 });
+  const before = (a, b) => byId ? (a.id < b.id || (a.id === b.id && a.time <= b.time)) : (a.time < b.time || (a.time === b.time && a.id <= b.id));
+  // 정리된 모양인지 확인하면서 반마다 [첫 줄, 끝 줄] 위치를 모아요.
+  const groups = [];
+  let prev = null;
+  for (let i = 0; i < cells.length; i++) {
+    const empty = cells[i].every(v => v === '' || v === null);
+    if (empty) { if (!prev || (i + 1 < cells.length && cells[i + 1].every(v => v === '' || v === null))) return false; prev = null; continue; }
+    const k = key(cells[i]);
+    if (prev) {
+      if (k.cls !== prev.cls || !before(prev, k)) return false;
+      groups[groups.length - 1].end = i;
+    } else {
+      if (groups.length && groups[groups.length - 1].cls >= k.cls) return false;
+      groups.push({ cls: k.cls, start: i, end: i });
+    }
+    prev = k;
+  }
+  const mine = { cls: cls, id: id, time: row[0] instanceof Date ? row[0].getTime() : Number(new Date()) };
+  const group = groups.filter(g => g.cls === cls)[0];
+  let at, rows;
+  if (group) {
+    // 반 안에서 들어갈 자리: 나보다 뒤에 와야 할 첫 줄 앞.
+    let i = group.start;
+    while (i <= group.end && before(key(cells[i]), mine)) i++;
+    at = FIRST_ROW + i; rows = [row];
+  } else {
+    const next = groups.filter(g => g.cls > cls)[0];
+    if (next) { at = FIRST_ROW + next.start; rows = [row, Array(row.length).fill('')]; }
+    else { at = FIRST_ROW + (groups.length ? groups[groups.length - 1].end + 1 : 0); rows = groups.length ? [Array(row.length).fill(''), row] : [row]; }
+  }
+  sheet.insertRowsBefore(at, rows.length);
+  sheet.getRange(at, 1, rows.length, row.length).setValues(rows);
+  const rowAt = rows[0] === row ? at : at + 1;
+  sheet.getRange(at, 1, rows.length, sheet.getMaxColumns()).setBackground(null);
+  paint(rowAt, 1);
+  return true;
 }
 
 // 제출 ID 칸(맨 오른쪽, 숨김)에서 같은 ID를 찾아 그 보고서의 제출 시각을 돌려줍니다.
@@ -491,7 +553,10 @@ function checkWriting_(sections) {
   sections.forEach(s => {
     if (SECTION_FIELDS.some(f => hasBadWords_(s[f[0]]))) fail_('바르지 않은 말이 있어요. 바른 말로 고쳐 써 주세요.');
     SECTION_FIELDS.forEach(f => { const junk = junkProblem(s[f[0]]); if (junk) fail_(f[1] + ': ' + junk); });
-    if (meaningfulLength_(s.explanation) < MIN_MEANINGFUL || repetitive_(s.explanation)) fail_('설명이 뜻이 통하는 문장이 아니에요. 내 생각을 문장으로 다시 써 주세요.');
+    // 화면을 거치지 않고 보내도 예상한 까닭·관찰·설명은 뜻 있는 글자가 MIN_MEANINGFUL자 넘게 있어야 해요(화면은 15자).
+    [['reason', '예상한 까닭'], ['observation', '관찰'], ['explanation', '설명']].forEach(f => {
+      if (meaningfulLength_(s[f[0]]) < MIN_MEANINGFUL || repetitive_(s[f[0]])) fail_(f[1] + '이(가) 뜻이 통하는 문장이 아니에요. 내 생각을 문장으로 다시 써 주세요.');
+    });
   });
 }
 

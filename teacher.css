@@ -55,3 +55,20 @@ html[data-theme=light] .gate-cancel{color:#6f4462;border-color:#e7c98a}
 html[data-theme=light] .gate-icon{background:#fff3d6;color:#8a5a00}
 html[data-theme=light] .gate-error{color:#c92a2a}
 html[data-theme=light] .teacher-off{background:#fff3d6;color:#7a4f00;border-color:#e7c98a}
+
+/* 교사용 자료: 보고서 시트 점검 */
+.sheet-check{max-width:1080px;margin:28px auto 0;padding:20px 24px;border:1px solid #5a4a2f;border-radius:14px;background:#16151fcc;color:#f3ead8}
+.sheet-check h2{margin:0 0 6px;font-size:20px}
+.sheet-check p{margin:0 0 12px;color:#d9ccb3}
+.sheet-check button{padding:9px 18px;border-radius:999px;border:1px solid #ffd98a;background:#2a2318;color:#ffd98a;font:inherit;font-weight:700;cursor:pointer}
+.sheet-check button:disabled{opacity:.5;cursor:default}
+.sheet-check ul{margin:12px 0 0;padding-left:20px;line-height:1.8}
+.sheet-check li[data-state=ok]{color:#7dffb0}
+.sheet-check li[data-state=old]{color:#ffd98a}
+.sheet-check li[data-state=error]{color:#ff9aa5}
+html[data-theme=light] .sheet-check{background:#fffaf0;color:#3d2a12;border-color:#e2c98f}
+html[data-theme=light] .sheet-check p{color:#6b5530}
+html[data-theme=light] .sheet-check button{background:#fff3d6;color:#7a4a00;border-color:#c99a3a}
+html[data-theme=light] .sheet-check li[data-state=ok]{color:#0c7a4f}
+html[data-theme=light] .sheet-check li[data-state=old]{color:#9a5a00}
+html[data-theme=light] .sheet-check li[data-state=error]{color:#c20000}

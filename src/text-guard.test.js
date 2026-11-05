@@ -204,7 +204,7 @@ test('뜻 없는 글(2): 과학 낱말과 보통 문장은 새 규칙에 걸리�
 test('뜻 없는 글(2): 실험 화면의 모든 글(보기·안내·이름 칸 예시)은 뜻 없는 글 규칙에 걸리지 않아요', () => {
   // 선생님 시트는 고른 보기 글도 같은 규칙으로 살펴요. 길이와 상관없이 화면의 글이 걸리면 안 돼요.
   // 학번 칸 예시(2학년 3반), 단원 번호(VIII), 주소 안내(https), 사진 출처(영어 이름)처럼 답이 아닌 글이 있는 파일은 빼요.
-  const notAnswers = ['text-guard.js', 'report-submit.js', 'teacher-gate.js', 'teacher-mode.js', 'lab-shell.js', 'space-photos.js'];
+  const notAnswers = ['text-guard.js', 'report-submit.js', 'teacher-gate.js', 'teacher-mode.js', 'lab-shell.js', 'space-photos.js', 'teacher-page.js'];
   const files = [...readdirSync('.').filter(f => f.endsWith('.js')), ...readdirSync('src').filter(f => f.endsWith('.js') && !f.includes('test') && !notAnswers.includes(f)).map(f => `src/${f}`)];
   // 코드 조각(=>, ${…}, .map, 속성 글)은 빼고 화면에 보이는 글만 살펴요.
   const strings = files.flatMap(f => [...readFileSync(f, 'utf8').matchAll(/'([^'\n]{4,})'|`([^`\n]{4,})`/g)].map(m => m[1] ?? m[2]).filter(t => !/=>|\$\{|\.map|\.join|=["'`]|aria-|===|!==|&&|\|\|/.test(t)).map(t => t.replace(/<[^>]+>/g, ' ')).filter(t => /[가-힣]{2}/.test(t)));
