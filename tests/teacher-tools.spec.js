@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { TEACHER_PASS, NEED_PASS } from './teacher-pass.js';
 
 // 교사용 자료 폴더: 교사 모드 비밀번호로만 들어가요. 첫 도구는 레이싱 번호 뽑기예요.
 test('첫 화면의 교사용 자료 폴더는 비밀번호를 물은 뒤 바로 들어감', async ({ page }) => {
@@ -10,7 +11,8 @@ test('첫 화면의 교사용 자료 폴더는 비밀번호를 물은 뒤 바로
   await page.locator('#gate-pass').fill('0000'); await page.locator('#gate-ok').click();
   await expect(page.locator('#gate-error')).toContainText('맞지 않아요');
   await expect(page).toHaveURL(/\/$/);
-  await page.locator('#gate-pass').fill('0421'); await page.locator('#gate-ok').click();
+  test.skip(!TEACHER_PASS, NEED_PASS);
+  await page.locator('#gate-pass').fill(TEACHER_PASS); await page.locator('#gate-ok').click();
   await expect(page).toHaveURL(/\/teacher\/$/);
   await expect(page.getByRole('heading', { name: '교사용 자료', exact: true })).toBeVisible();
   await page.getByRole('link', { name: '레이싱 번호 뽑기 열기' }).click();
@@ -239,7 +241,8 @@ test('보고서 시트 점검: 최신 코드·예전 코드·응답 없음을 �
   });
   await page.goto('/');
   await page.getByRole('link', { name: /교사용 자료 폴더 열기/ }).click();
-  await page.locator('#gate-pass').fill('0421'); await page.locator('#gate-ok').click();
+  test.skip(!TEACHER_PASS, NEED_PASS);
+  await page.locator('#gate-pass').fill(TEACHER_PASS); await page.locator('#gate-ok').click();
   await page.locator('#sheet-check-btn').click();
   const items = page.locator('#sheet-check-list li');
   await expect(items.filter({ hasText: '1학년 시트: 작동해요 · 최신 코드' })).toHaveCount(1);

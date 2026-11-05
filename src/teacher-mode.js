@@ -1,21 +1,26 @@
 // 교사 모드: 실험 첫 화면 위쪽의 ‘교사용’ 단추 → 비밀번호를 넣으면 켜져요.
 // 켜지면 예상·관찰·설명 단계를 자유롭게 오가고, 복습·실험 순서 잠금·다음 실험 잠금이 모두 풀려요(src/poe-flow.js).
 // 이 탭을 닫으면 꺼져요(sessionStorage). 다른 실험으로 옮겨 가도 같은 탭이면 켜진 채로 있어요.
-// 비밀번호는 글자 그대로 두지 않고 SHA-256 값만 두어요. 다만 화면 코드는 누구나 내려받을 수 있어서,
-// 학생이 실수로 켜는 것을 막는 가벼운 잠금이에요(시험지처럼 꼭 지켜야 하는 것을 숨기는 용도로는 쓰지 않아요).
-const PASS_SHA256 = 'c5cc15b6430ca720613daef384c58149870660959a4ecbb76ba3b55ba02ad77e';
+// 비밀번호는 글자 그대로 두지 않고, 소금(salt)을 친 PBKDF2-SHA256(30만 번 반복) 값만 두어요.
+// 코드를 열어 봐도 비밀번호가 보이지 않고, 한 번 맞혀 보는 데 시간이 걸려 마구 넣어 보기가 느려져요.
+// 다만 화면 코드는 누구나 내려받을 수 있고 비밀번호가 숫자 4자리라, 시간을 들이면 알아낼 수는 있어요.
+// 학생이 실수로 켜는 것을 막는 가벼운 잠금이에요(학생 정보는 이 잠금이 아니라 구글 시트 공유 설정이 지켜요).
+// 비밀번호를 바꾸려면: node -e "..."로 새 소금과 값을 만들어 아래 세 값을 바꿔요(docs/scientific-review.md 참고).
+const PASS = { salt: '8f749ff6553f2e4b49fea8766e2ff4b9', iterations: 300000, hash: '7cb4c226865f7f72898739904d6914d3a88aa41a2d7f368aedddfbb949434f04' };
 const KEY = 'poe-teacher';
 
 const read = () => { try { return sessionStorage.getItem(KEY) === 'on'; } catch { return false; } };
 export const teacherMode = { on: read() };
 
-async function sha256(text) {
-  const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
-  return [...new Uint8Array(bytes)].map(b => b.toString(16).padStart(2, '0')).join('');
+const hex = bytes => [...new Uint8Array(bytes)].map(b => b.toString(16).padStart(2, '0')).join('');
+async function derive(text) {
+  const salt = new Uint8Array(PASS.salt.match(/../g).map(h => parseInt(h, 16)));
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(text), 'PBKDF2', false, ['deriveBits']);
+  return hex(await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt, iterations: PASS.iterations }, key, 256));
 }
 export async function checkTeacherPassword(text) {
   if (!globalThis.crypto?.subtle) return false;
-  return (await sha256(String(text).trim())) === PASS_SHA256;
+  return (await derive(String(text).trim())) === PASS.hash;
 }
 // 교사 모드를 켜고 끄며 이 탭에 기억해요. 교사용 자료 폴더(src/teacher-gate.js)도 같은 값을 써요.
 export function setTeacherMode(on) {

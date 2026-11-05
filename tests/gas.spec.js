@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { TEACHER_PASS, NEED_PASS } from './teacher-pass.js';
 import { openObserveUnlocked } from './poe-helpers.js';
 
 // 중학교 1학년 Ⅵ. 기체의 성질: 폴더와 실험 화면의 과학 내용(docs/scientific-review.md ‘중1 Ⅵ’)
@@ -136,7 +137,8 @@ test('6단원 폴더: 중단원 이름이 한 줄을 다 쓰고, 실험 카드�
 test('보일 법칙: 교사 모드로 단계 단추(예상·관찰)와 미리 보기 단계를 눌러도 피스톤·압력계가 그대로 움직이고 숫자로 기록됨', async ({ page }) => {
   const errors = []; page.on('pageerror', e => errors.push(e.message));
   await page.goto('/simulations/boyles-law/');
-  await page.locator('#teacher-btn').click(); await page.locator('#teacher-pass').fill('0421'); await page.locator('#teacher-ok').click();
+  test.skip(!TEACHER_PASS, NEED_PASS);
+  await page.locator('#teacher-btn').click(); await page.locator('#teacher-pass').fill(TEACHER_PASS); await page.locator('#teacher-ok').click();
   await page.locator('[data-goto="observe"]').click();
   await page.locator('[data-goto="predict"]').click();
   for (const s of await page.locator('.preview-step').all()) await s.click();
